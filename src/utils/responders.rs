@@ -1,15 +1,13 @@
 use httpstatus::StatusCode;
 use rocket::http::{ContentType, Status};
-use rocket::response::{Responder, Response, Result, Body};
+use rocket::response::{Responder, Response, Result};
 use rocket::tokio::fs::{File};
-use rocket::tokio::io::{AsyncRead, AsyncSeek};
-use std::io::{Cursor, Read};
+use std::io::{Cursor};
 
 pub enum HbpContent {
     Plain(String),
     Html(String),
     File(Box<ContentType>, File),
-    Sized(Box<ContentType>, dyn Into<Option<usize>>, dyn AsyncRead + AsyncSeek + Send)
 }
 
 pub struct HbpResponse {

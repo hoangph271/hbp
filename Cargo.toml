@@ -24,6 +24,8 @@ serde = { version = "1.0.117", features = ["derive"] }
 walkdir = "2.3.2"
 zip = "0.5.13"
 tempfile = "3.3.0"
+# dotenv = "0.15.0"
+dotenv_codegen = "0.15.0"
 
 [profile.dev]
 overflow-checks = true

@@ -1,0 +1,29 @@
+[package]
+name = "hbp"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rocket = "0.5.0-rc.1"
+chrono = "0.4.19"
+log = "0.4"
+fern = "0.6"
+httpstatus = "0.1.2"
+anyhow = "1.0.53"
+pulldown-cmark = { version = "0.9.1", default-features = false, features = [
+  "simd",
+] }
+serde_derive = "1.0.136"
+mustache = "*"
+jwt = "0.16.0"
+hmac = "0.12.1"
+sha2 = "0.10.2"
+serde = { version = "1.0.117", features = ["derive"] }
+walkdir = "2.3.2"
+zip = "0.5.13"
+tempfile = "3.3.0"
+
+[profile.dev]
+overflow-checks = true

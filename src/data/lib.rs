@@ -10,6 +10,7 @@ pub fn create_post<'a>(conn: &SqliteConnection, title: &'a str, body: &'a str) -
         .execute(conn)
         .expect("insert new_post failed");
 
+    // FIXME: This is a shame, I know
     let new_post: Post = tbl_posts::table
         .order(tbl_posts::id.desc())
         .first(conn)

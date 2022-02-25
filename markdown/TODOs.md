@@ -4,8 +4,10 @@
 [x] Serve FTb photos (Requires auth)  
 [x] Serve static folder requests  
 [x] Handle either folder or file requests  
+[x] Handle markdown (reject NOT `.md`) files  
+[x] .env files  
+[x] `sqlite` access using `diesel`  
+[x] serve static `css`  
+
 ~~[ ] Download static folder  ****~~  
 ~~[ ] System information in index page~~  
-[x] Handle markdown (and NOT .md) files  
-[ ] .env files  
-[] `sqlite` access using `diesel`  

@@ -1,9 +1,11 @@
 use crate::utils::{
     markdown,
     responders::{HbpContent, HbpResponse},
+    template,
 };
 use anyhow::{Error, Result};
 use httpstatus::StatusCode;
+use mustache::MapBuilder;
 use std::fs;
 use std::path::Path;
 
@@ -16,7 +18,15 @@ pub fn markdown_file(file_name: &str) -> HbpResponse {
     }
 
     match read_markdown(file_name) {
-        Ok(content) => HbpResponse::ok(HbpContent::Html(markdown::markdown_to_html(&content))),
+        Ok(content) => {
+            let html_markdown = markdown::markdown_to_html(&content);
+            let template_data = MapBuilder::new()
+                .insert_str("raw_content", &html_markdown)
+                .build();
+            let html = template::render_from_template("index.html", &template_data).unwrap();
+
+            HbpResponse::ok(HbpContent::Html(html))
+        }
         Err(e) => {
             error!("{e}");
 

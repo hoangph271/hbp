@@ -1,4 +1,3 @@
-
 pub enum EnvKey {
     AppName,
     DatabaseUrl,

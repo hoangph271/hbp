@@ -1,13 +1,13 @@
 use httpstatus::StatusCode;
 use rocket::http::{ContentType, Status};
 use rocket::response::{Responder, Response, Result};
-use rocket::tokio::fs::{File};
+// use rocket::tokio::fs::{File};
 use std::io::{Cursor};
 
 pub enum HbpContent {
     Plain(String),
     Html(String),
-    File(Box<ContentType>, File),
+    // File(Box<ContentType>, File),
 }
 
 pub struct HbpResponse {
@@ -51,9 +51,9 @@ impl<'r> Responder<'r, 'r> for HbpResponse {
                     .header(ContentType::HTML)
                     .sized_body(html.len(), Cursor::new(html));
             }
-            HbpContent::File(mime, file) => {
-                response_builder.header(*mime).streamed_body(file);
-            }
+            // HbpContent::File(mime, file) => {
+            //     response_builder.header(*mime).streamed_body(file);
+            // }
         }
 
         Ok(response_builder.finalize())

@@ -44,8 +44,10 @@ fn try_db() {
     use diesel::prelude::*;
 
     let connection = establish_connection();
+
+    data::lib::create_post(&connection, "name", "age");
+
     let posts = tbl_posts
-        .filter(published.eq(true))
         .limit(5)
         .load::<Post>(&connection)
         .expect("Error loading posts");

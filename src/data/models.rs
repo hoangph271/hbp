@@ -1,8 +1,6 @@
-// pub trait IdedEntity {
-//     fn get_id (&self) -> String;
-// }
+use crate::data::schema::tbl_posts;
 
-#[derive(Queryable)]
+#[derive(Queryable, Debug)]
 pub struct Post {
     pub id: i32,
     pub title: String,
@@ -10,8 +8,9 @@ pub struct Post {
     pub published: bool,
 }
 
-// impl IdedEntity for Post {
-//     fn get_id(&self) -> String {
-//         self.id.clone()
-//     }
-// }
+#[derive(Insertable)]
+#[table_name="tbl_posts"]
+pub struct NewPost<'a> {
+    pub title: &'a str,
+    pub body: &'a str,
+}

@@ -32,5 +32,8 @@ fn launch() -> rocket::Rocket<rocket::Build> {
         .mount("/", routes![routes::index::index, routes::index::readme_md])
         .mount("/markdown", routes![routes::markdown::markdown_file])
         .mount("/static", routes![routes::static_files::serve])
-        .mount("/posts", routes![routes::posts::index])
+        .mount(
+            "/posts",
+            routes![routes::posts::index, routes::posts::delete_one],
+        )
 }

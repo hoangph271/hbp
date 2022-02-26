@@ -16,6 +16,12 @@ pub struct HbpResponse {
 }
 
 impl HbpResponse {
+    pub fn text(text: &str, status_code: StatusCode) -> HbpResponse {
+        HbpResponse {
+            status_code,
+            content: HbpContent::Plain(text.to_owned()),
+        }
+    }
     pub fn ok(content: HbpContent) -> HbpResponse {
         HbpResponse {
             status_code: StatusCode::Ok,
@@ -23,9 +29,8 @@ impl HbpResponse {
         }
     }
     pub fn status(status_code: StatusCode) -> HbpResponse {
-        HbpResponse::status_text(status_code.clone(), status_code.reason_phrase())
-    }
-    pub fn status_text(status_code: StatusCode, content: &str) -> HbpResponse {
+        let content = format!("{} | {}", status_code.as_u16(), status_code.reason_phrase());
+
         HbpResponse {
             status_code,
             content: HbpContent::Plain(content.to_owned()),

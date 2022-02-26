@@ -9,6 +9,7 @@
 [x] `sqlite` access using `diesel`  
 [x] serve static `css`  
 [ ] `diesel` connection pool  
+[ ] `posts` C.`R`.U.`D`
 
 ~~[ ] Download static folder  ****~~  
 ~~[ ] System information in index page~~  

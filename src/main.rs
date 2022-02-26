@@ -36,6 +36,7 @@ fn launch() -> rocket::Rocket<rocket::Build> {
             "/posts",
             routes![
                 routes::posts::index,
+                routes::posts::find_one,
                 routes::posts::delete_one,
                 routes::posts::create,
                 routes::posts::update

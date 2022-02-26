@@ -34,6 +34,6 @@ fn launch() -> rocket::Rocket<rocket::Build> {
         .mount("/static", routes![routes::static_files::serve])
         .mount(
             "/posts",
-            routes![routes::posts::index, routes::posts::delete_one],
+            routes![routes::posts::index, routes::posts::delete_one, routes::posts::create],
         )
 }

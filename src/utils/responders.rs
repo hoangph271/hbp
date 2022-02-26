@@ -1,12 +1,12 @@
 use httpstatus::StatusCode;
 use rocket::http::{ContentType, Status};
 use rocket::response::{Responder, Response, Result};
-// use rocket::tokio::fs::{File};
-use std::io::{Cursor};
+use std::io::Cursor;
 
 pub enum HbpContent {
     Plain(String),
     Html(String),
+    Json(String),
     // File(Box<ContentType>, File),
 }
 
@@ -16,6 +16,12 @@ pub struct HbpResponse {
 }
 
 impl HbpResponse {
+    pub fn text(text: &str, status_code: StatusCode) -> HbpResponse {
+        HbpResponse {
+            status_code,
+            content: HbpContent::Plain(text.to_owned()),
+        }
+    }
     pub fn ok(content: HbpContent) -> HbpResponse {
         HbpResponse {
             status_code: StatusCode::Ok,
@@ -23,13 +29,28 @@ impl HbpResponse {
         }
     }
     pub fn status(status_code: StatusCode) -> HbpResponse {
-        HbpResponse::status_text(status_code.clone(), status_code.reason_phrase())
-    }
-    pub fn status_text(status_code: StatusCode, content: &str) -> HbpResponse {
+        let content = format!("{} | {}", status_code.as_u16(), status_code.reason_phrase());
+
         HbpResponse {
             status_code,
             content: HbpContent::Plain(content.to_owned()),
         }
+    }
+    pub fn json<T: serde::Serialize>(content: T, status_code: Option<StatusCode>) -> HbpResponse {
+        let json = serde_json::to_string(&content).expect("Stringify JSON failed");
+
+        let status_code = match status_code {
+            Some(status_code) => status_code,
+            None => httpstatus::StatusCode::Ok,
+        };
+
+        HbpResponse {
+            status_code,
+            content: HbpContent::Json(json),
+        }
+    }
+    pub fn internal_server_error() -> HbpResponse {
+        HbpResponse::status(StatusCode::InternalServerError)
     }
 }
 
@@ -51,9 +72,11 @@ impl<'r> Responder<'r, 'r> for HbpResponse {
                     .header(ContentType::HTML)
                     .sized_body(html.len(), Cursor::new(html));
             }
-            // HbpContent::File(mime, file) => {
-            //     response_builder.header(*mime).streamed_body(file);
-            // }
+            HbpContent::Json(json) => {
+                response_builder
+                    .header(ContentType::JSON)
+                    .sized_body(json.len(), Cursor::new(json));
+            }
         }
 
         Ok(response_builder.finalize())

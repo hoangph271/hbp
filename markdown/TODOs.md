@@ -8,6 +8,8 @@
 [x] .env files  
 [x] `sqlite` access using `diesel`  
 [x] serve static `css`  
+[ ] `diesel` connection pool  
+[x] `posts` `C`.`R`.`U`.`D`
 
 ~~[ ] Download static folder  ****~~  
 ~~[ ] System information in index page~~  

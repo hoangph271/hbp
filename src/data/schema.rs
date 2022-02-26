@@ -1,6 +1,6 @@
 table! {
     tbl_posts (id) {
-        id -> Integer,
+        id -> Text,
         title -> Text,
         body -> Text,
         published -> Bool,

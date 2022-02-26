@@ -14,7 +14,7 @@ pub fn markdown_file(file_name: &str) -> HbpResponse {
     let is_markdown = file_name.to_lowercase().ends_with(".md");
 
     if !is_markdown {
-        return HbpResponse::status_text(StatusCode::BadRequest, "NOT a .md file");
+        return HbpResponse::text("NOT a .md file", StatusCode::BadRequest);
     }
 
     match read_markdown(file_name) {

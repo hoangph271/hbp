@@ -13,6 +13,13 @@ pub struct NewPost<'a> {
     pub title: &'a str,
     pub body: &'a str,
 }
+#[derive(serde::Deserialize)]
+pub struct UpdatedPost<'a> {
+    pub id: &'a str,
+    pub title: &'a str,
+    pub body: &'a str,
+    pub published: bool,
+}
 #[derive(Insertable)]
 #[table_name = "tbl_posts"]
 pub struct InsertableNewPost {

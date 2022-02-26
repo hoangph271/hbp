@@ -49,6 +49,9 @@ impl HbpResponse {
             content: HbpContent::Json(json),
         }
     }
+    pub fn internal_server_error() -> HbpResponse {
+        HbpResponse::status(StatusCode::InternalServerError)
+    }
 }
 
 impl<'r> Responder<'r, 'r> for HbpResponse {

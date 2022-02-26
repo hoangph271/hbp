@@ -1,0 +1,25 @@
+name: Deploy latest
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+
+env:
+  DAY_OF_WEEK: ${{ secrets.JWT_KEY }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+        - name: deploy using ssh
+          uses: appleboy/ssh-action@master
+          with:
+            host: ${{ secrets.HOST }}
+            username: ${{ secrets.USERNAME }}
+            KEY: ${{ secrets.KEY }}
+            port: ${{ secrets.PORT }}
+            script: cd /home/algo/hbp && git pull && pm2 delete hbp -s && pm2 start "/root/.cargo/bin/cargo run" --name "hbp"

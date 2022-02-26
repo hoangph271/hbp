@@ -1,12 +1,12 @@
 use httpstatus::StatusCode;
 use rocket::http::{ContentType, Status};
 use rocket::response::{Responder, Response, Result};
-// use rocket::tokio::fs::{File};
-use std::io::{Cursor};
+use std::io::Cursor;
 
 pub enum HbpContent {
     Plain(String),
     Html(String),
+    Json(String),
     // File(Box<ContentType>, File),
 }
 
@@ -31,6 +31,19 @@ impl HbpResponse {
             content: HbpContent::Plain(content.to_owned()),
         }
     }
+    pub fn json<T: serde::Serialize>(content: T, status_code: Option<StatusCode>) -> HbpResponse {
+        let json = serde_json::to_string(&content).expect("Stringify JSON failed");
+
+        let status_code = match status_code {
+            Some(status_code) => status_code,
+            None => httpstatus::StatusCode::Ok,
+        };
+
+        HbpResponse {
+            status_code,
+            content: HbpContent::Json(json),
+        }
+    }
 }
 
 impl<'r> Responder<'r, 'r> for HbpResponse {
@@ -51,9 +64,11 @@ impl<'r> Responder<'r, 'r> for HbpResponse {
                     .header(ContentType::HTML)
                     .sized_body(html.len(), Cursor::new(html));
             }
-            // HbpContent::File(mime, file) => {
-            //     response_builder.header(*mime).streamed_body(file);
-            // }
+            HbpContent::Json(json) => {
+                response_builder
+                    .header(ContentType::JSON)
+                    .sized_body(json.len(), Cursor::new(json));
+            }
         }
 
         Ok(response_builder.finalize())

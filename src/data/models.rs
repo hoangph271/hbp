@@ -1,6 +1,6 @@
 use crate::data::schema::tbl_posts;
 
-#[derive(Queryable, Debug)]
+#[derive(Queryable, Debug, serde::Serialize)]
 pub struct Post {
     pub id: i32,
     pub title: String,

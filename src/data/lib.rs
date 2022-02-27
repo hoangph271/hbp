@@ -1,5 +1,5 @@
 pub mod post_orm {
-    use crate::data::models::*;
+    use crate::data::models::posts_model::*;
     use crate::data::schema::tbl_posts;
     use crate::data::schema::tbl_posts::dsl::*;
     use diesel::prelude::*;

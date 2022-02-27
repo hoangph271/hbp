@@ -1,5 +1,5 @@
 use crate::data::sqlite::establish_connection;
-use crate::data::{lib, models};
+use crate::data::{lib, models::posts_model};
 use crate::utils::responders::HbpResponse;
 use httpstatus::StatusCode;
 use rocket::serde::json::Json;
@@ -40,7 +40,7 @@ pub fn delete_one(post_id: &str) -> HbpResponse {
 }
 
 #[post("/", data = "<new_post>")]
-pub fn create(new_post: Json<models::NewPost>) -> HbpResponse {
+pub fn create(new_post: Json<posts_model::NewPost>) -> HbpResponse {
     let conn = establish_connection();
 
     match lib::post_orm::create_post(&conn, new_post.into_inner()) {
@@ -53,7 +53,7 @@ pub fn create(new_post: Json<models::NewPost>) -> HbpResponse {
 }
 
 #[put("/", data = "<updated_post>")]
-pub fn update(updated_post: Json<models::UpdatedPost>) -> HbpResponse {
+pub fn update(updated_post: Json<posts_model::UpdatedPost>) -> HbpResponse {
     use lib::post_orm;
     use lib::post_orm::OrmError;
     let conn = establish_connection();

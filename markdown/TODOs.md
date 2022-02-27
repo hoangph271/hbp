@@ -10,7 +10,7 @@
 [x] serve static `css`  
 [ ] `diesel` connection pool  
 [x] `posts` `C`.`R`.`U`.`D`  
-[ ] use `.env` for JWT secret  
+[x] use `.env` for JWT secret  
 
 ~~[ ] Download static folder  ****~~  
 ~~[ ] System information in index page~~  

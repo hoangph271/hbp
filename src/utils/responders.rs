@@ -3,6 +3,7 @@ use rocket::http::{ContentType, Header, Status};
 use rocket::response::{Responder, Response, Result};
 use std::io::Cursor;
 
+#[allow(dead_code)]
 pub enum HbpContent {
     Plain(String),
     Html(String),
@@ -62,6 +63,7 @@ impl HbpResponse {
     pub fn internal_server_error() -> HbpResponse {
         HbpResponse::status(StatusCode::InternalServerError)
     }
+    #[allow(dead_code)]
     pub fn redirect(uri: rocket::http::uri::Uri) -> HbpResponse {
         let location = match uri.absolute() {
             Some(uri) => uri.path().as_str().to_owned(),

@@ -1,5 +1,5 @@
 use httpstatus::StatusCode;
-use rocket::http::{ContentType, Status};
+use rocket::http::{ContentType, Header, Status};
 use rocket::response::{Responder, Response, Result};
 use std::io::Cursor;
 
@@ -7,7 +7,7 @@ pub enum HbpContent {
     Plain(String),
     Html(String),
     Json(String),
-    // File(Box<ContentType>, File),
+    Redirect(String),
 }
 
 pub struct HbpResponse {
@@ -16,16 +16,26 @@ pub struct HbpResponse {
 }
 
 impl HbpResponse {
+    #[allow(dead_code)]
+    pub fn empty() -> HbpResponse {
+        HbpResponse {
+            status_code: StatusCode::Ok,
+            content: HbpContent::Plain(String::new()),
+        }
+    }
     pub fn text(text: &str, status_code: StatusCode) -> HbpResponse {
         HbpResponse {
             status_code,
             content: HbpContent::Plain(text.to_owned()),
         }
     }
-    pub fn ok(content: HbpContent) -> HbpResponse {
+    pub fn ok(content: Option<HbpContent>) -> HbpResponse {
         HbpResponse {
             status_code: StatusCode::Ok,
-            content,
+            content: match content {
+                Some(content) => content,
+                None => HbpContent::Plain(String::new()),
+            },
         }
     }
     pub fn status(status_code: StatusCode) -> HbpResponse {
@@ -52,6 +62,17 @@ impl HbpResponse {
     pub fn internal_server_error() -> HbpResponse {
         HbpResponse::status(StatusCode::InternalServerError)
     }
+    pub fn redirect(uri: rocket::http::uri::Uri) -> HbpResponse {
+        let location = match uri.absolute() {
+            Some(uri) => uri.path().as_str().to_owned(),
+            None => uri.origin().unwrap().path().as_str().to_owned(),
+        };
+
+        HbpResponse {
+            status_code: StatusCode::MovedPermanently,
+            content: HbpContent::Redirect(location),
+        }
+    }
 }
 
 impl<'r> Responder<'r, 'r> for HbpResponse {
@@ -76,6 +97,12 @@ impl<'r> Responder<'r, 'r> for HbpResponse {
                 response_builder
                     .header(ContentType::JSON)
                     .sized_body(json.len(), Cursor::new(json));
+            }
+            HbpContent::Redirect(path) => {
+                response_builder
+                    .header(ContentType::HTML)
+                    .status(Status::MovedPermanently)
+                    .header(Header::new("Location", path));
             }
         }
 

@@ -25,7 +25,7 @@ pub fn markdown_file(file_name: &str) -> HbpResponse {
                 .build();
             let html = template::render_from_template("index.html", &template_data).unwrap();
 
-            HbpResponse::ok(HbpContent::Html(html))
+            HbpResponse::ok(Some(HbpContent::Html(html)))
         }
         Err(e) => {
             error!("{e}");

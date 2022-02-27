@@ -40,4 +40,8 @@ fn launch() -> rocket::Rocket<rocket::Build> {
                 routes::posts::update
             ],
         )
+        .mount(
+            "/users",
+            routes![routes::users::index, routes::users::login],
+        )
 }

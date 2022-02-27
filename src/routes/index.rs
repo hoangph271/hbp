@@ -24,7 +24,7 @@ pub fn index() -> HbpResponse {
         .build();
 
     match template::render_from_template("index.html", &data) {
-        Ok(html) => HbpResponse::ok(HbpContent::Html(html)),
+        Ok(html) => HbpResponse::ok(Some(HbpContent::Html(html))),
         Err(e) => {
             error!("{e}");
             HbpResponse::status(StatusCode::InternalServerError)

@@ -1,4 +1,4 @@
-use crate::data::schema::tbl_users;
+// use crate::data::schema::tbl_users;
 
 #[derive(Queryable, Debug, serde::Serialize)]
 pub struct User {

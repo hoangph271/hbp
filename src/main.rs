@@ -11,13 +11,11 @@ extern crate serde_derive;
 mod data;
 mod routes;
 mod utils;
-
-use dotenv::dotenv;
 // #endregion
 
 #[launch]
 fn rocket() -> _ {
-    dotenv().ok();
+    dotenv::dotenv().ok();
 
     let app_name = utils::env::from_env(utils::env::EnvKey::AppName);
     println!("{app_name} is starting, my dude...! 🍿🍿🍿");

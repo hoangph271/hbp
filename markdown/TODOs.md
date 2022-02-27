@@ -11,6 +11,6 @@
 [ ] `diesel` connection pool  
 [x] `posts` `C`.`R`.`U`.`D`  
 [x] use `.env` for JWT secret  
-
+[ ] use `tbl_users` for login  
 ~~[ ] Download static folder  ****~~  
 ~~[ ] System information in index page~~  

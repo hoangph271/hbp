@@ -44,7 +44,7 @@ impl HbpResponse {
 
         HbpResponse {
             status_code,
-            content: HbpContent::Plain(content.to_owned()),
+            content: HbpContent::Plain(content),
         }
     }
     pub fn json<T: serde::Serialize>(content: T, status_code: Option<StatusCode>) -> HbpResponse {

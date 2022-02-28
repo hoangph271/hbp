@@ -1,4 +1,5 @@
 use crate::data::schema::tbl_posts;
+use nanoid::nanoid;
 
 #[derive(Queryable, Debug, serde::Serialize)]
 pub struct Post {
@@ -28,7 +29,6 @@ pub struct InsertableNewPost {
     pub body: String,
 }
 
-use nanoid::nanoid;
 impl<'a> From<NewPost<'a>> for InsertableNewPost {
     fn from(new_post: NewPost) -> InsertableNewPost {
         let id = nanoid!();

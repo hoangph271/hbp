@@ -26,6 +26,13 @@ fn rocket() -> _ {
 fn launch() -> rocket::Rocket<rocket::Build> {
     utils::setup_logger::setup_logger();
 
+    // let conn = data::sqlite::establish_connection();
+    // data::lib::user_orm::create_user(&conn, data::models::users_model::NewUser {
+    //     username: "username",
+    //     hashed_password: "hashed_password",
+    //     title: Some("tilte")
+    // });
+
     rocket::build()
         .mount("/", routes![routes::index::index, routes::index::readme_md])
         .mount("/markdown", routes![routes::markdown::markdown_file])
@@ -42,6 +49,10 @@ fn launch() -> rocket::Rocket<rocket::Build> {
         )
         .mount(
             "/users",
-            routes![routes::users::index, routes::users::login],
+            routes![
+                routes::users::index,
+                routes::users::login,
+                routes::users::post_login
+            ],
         )
 }

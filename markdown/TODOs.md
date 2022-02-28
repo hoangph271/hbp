@@ -12,5 +12,6 @@
 [x] `posts` `C`.`R`.`U`.`D`  
 [x] use `.env` for JWT secret  
 [ ] use `tbl_users` for login  
+[ ] `tbl_users` `R`  
 ~~[ ] Download static folder  ****~~  
 ~~[ ] System information in index page~~  

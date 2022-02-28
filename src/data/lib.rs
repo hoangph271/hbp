@@ -1,16 +1,19 @@
+use diesel::result::Error;
+
+#[derive(Debug)]
+pub enum OrmError {
+    NotFound,
+    DieselError(Error),
+}
+
 pub mod post_orm {
+    use crate::data::lib::OrmError;
     use crate::data::models::posts_model::*;
     use crate::data::schema::tbl_posts;
     use crate::data::schema::tbl_posts::dsl::*;
     use diesel::prelude::*;
     use diesel::result::Error;
     use diesel::sqlite::SqliteConnection;
-
-    #[derive(Debug)]
-    pub enum OrmError {
-        NotFound,
-        DieselError(Error),
-    }
 
     pub fn get_one(conn: &SqliteConnection, post_id: &str) -> Result<Post, OrmError> {
         match tbl_posts::table
@@ -66,4 +69,34 @@ pub mod post_orm {
             Err(e) => Err(OrmError::DieselError(e)),
         }
     }
+}
+
+pub mod user_orm {
+    use crate::data::lib::OrmError;
+    use crate::data::models::users_model::*;
+    use crate::data::schema::tbl_users;
+    use diesel::prelude::*;
+    use diesel::result::Error;
+    use diesel::sqlite::SqliteConnection;
+
+    pub fn find_one_by_username(conn: &SqliteConnection, username: &str) -> Result<User, OrmError> {
+        match tbl_users::table
+            .filter(tbl_users::username.eq(username))
+            .first(conn)
+        {
+            Ok(post) => Ok(post),
+            Err(e) => Err(OrmError::DieselError(e)),
+        }
+    }
+
+    // pub fn create_user(conn: &SqliteConnection, new_user: NewUser) -> Result<User, Error> {
+    //     diesel::insert_into(tbl_users::table)
+    //         .values(InsertableNewUser::from(new_user))
+    //         .execute(conn)
+    //         .expect("insert new_user failed");
+
+    //     // FIXME: This is a shame, I know
+    //     // * It's SQLite, and I'm an idiot, I don't know how to return the just inserted record
+    //     tbl_users::table.order(tbl_users::id.desc()).first(conn)
+    // }
 }

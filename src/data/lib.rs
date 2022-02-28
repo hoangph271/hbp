@@ -89,14 +89,15 @@ pub mod user_orm {
         }
     }
 
-    // pub fn create_user(conn: &SqliteConnection, new_user: NewUser) -> Result<User, Error> {
-    //     diesel::insert_into(tbl_users::table)
-    //         .values(InsertableNewUser::from(new_user))
-    //         .execute(conn)
-    //         .expect("insert new_user failed");
+    #[allow(dead_code)]
+    pub fn create_user(conn: &SqliteConnection, new_user: NewUser) -> Result<User, Error> {
+        diesel::insert_into(tbl_users::table)
+            .values(InsertableNewUser::from(new_user))
+            .execute(conn)
+            .expect("insert new_user failed");
 
-    //     // FIXME: This is a shame, I know
-    //     // * It's SQLite, and I'm an idiot, I don't know how to return the just inserted record
-    //     tbl_users::table.order(tbl_users::id.desc()).first(conn)
-    // }
+        // FIXME: This is a shame, I know
+        // * It's SQLite, and I'm an idiot, I don't know how to return the just inserted record
+        tbl_users::table.order(tbl_users::id.desc()).first(conn)
+    }
 }

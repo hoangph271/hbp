@@ -14,10 +14,10 @@ pub fn index() -> HbpResponse {
 }
 #[get("/<post_id>")]
 pub fn find_one(post_id: &str) -> HbpResponse {
-    use lib::post_orm::OrmError;
+    use lib::{OrmError, post_orm};
     let conn = establish_connection();
 
-    match lib::post_orm::get_one(&conn, post_id) {
+    match post_orm::get_one(&conn, post_id) {
         Ok(post) => HbpResponse::json(post, None),
         Err(e) => match e {
             OrmError::NotFound => HbpResponse::status(StatusCode::NotFound),
@@ -54,8 +54,7 @@ pub fn create(new_post: Json<posts_model::NewPost>) -> HbpResponse {
 
 #[put("/", data = "<updated_post>")]
 pub fn update(updated_post: Json<posts_model::UpdatedPost>) -> HbpResponse {
-    use lib::post_orm;
-    use lib::post_orm::OrmError;
+    use lib::{post_orm, OrmError};
     let conn = establish_connection();
 
     match post_orm::update_one(&conn, updated_post.into_inner()) {

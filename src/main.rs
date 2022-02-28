@@ -42,6 +42,10 @@ fn launch() -> rocket::Rocket<rocket::Build> {
         )
         .mount(
             "/users",
-            routes![routes::users::index, routes::users::login],
+            routes![
+                routes::users::index,
+                routes::users::login,
+                routes::users::post_login
+            ],
         )
 }

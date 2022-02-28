@@ -1,34 +1,43 @@
 use crate::utils::types::HbpError;
-use hmac::{Hmac, Mac};
-use jwt::VerifyWithKey;
-use rocket::serde::Deserialize;
-use sha2::Sha256;
+use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use rocket::serde::{Deserialize, Serialize};
 
 use crate::utils::{constants, status_from};
 use httpstatus::StatusCode;
 use rocket::request::{FromRequest, Outcome, Request};
 
-fn jwt_secret() -> Hmac<Sha256> {
+fn jwt_secret() -> String {
     use crate::utils::env::{from_env, EnvKey};
     let key = from_env(EnvKey::JwtSecret);
 
-    Hmac::new_from_slice(key.as_bytes()).expect("Invalid JWT_KEY")
+    key.to_owned()
 }
 
 pub fn verify_jwt(token_str: &str) -> Result<JwtPayload, HbpError> {
-    token_str.verify_with_key(&jwt_secret()).map_err(|e| {
-        error!("{e}");
+    let jwt_payload = decode::<JwtPayload>(
+        token_str,
+        &DecodingKey::from_secret(jwt_secret().as_bytes()),
+        &Validation::default(),
+    )
+    .unwrap(); // TODO: Handle this...?
 
-        HbpError::from_message(&*format!("verify_with_key() failed with {token_str}"))
-    })
+    Ok(jwt_payload.claims)
+}
+pub fn sign_jwt(payload: JwtPayload) -> String {
+    encode(
+        &Header::default(),
+        &payload,
+        &EncodingKey::from_secret(jwt_secret().as_bytes()),
+    )
+    .unwrap()
 }
 
 #[allow(dead_code)]
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct JwtPayload {
-    iat: usize,
-    sub: String,
-    name: String,
+    pub exp: i64,
+    pub sub: String,
+    pub role: Vec<String>,
 }
 
 #[rocket::async_trait]

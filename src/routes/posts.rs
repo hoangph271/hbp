@@ -8,7 +8,7 @@ use rocket::serde::json::Json;
 pub fn index() -> HbpResponse {
     let conn = establish_connection();
 
-    let posts = lib::post_orm::get_posts(&conn);
+    let posts = lib::post_orm::get_posts(&conn.get().unwrap());
 
     HbpResponse::json(posts, None)
 }

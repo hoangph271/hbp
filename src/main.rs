@@ -1,6 +1,10 @@
+#![feature(proc_macro_hygiene, decl_macro)]
+
 // #region imports
 #[macro_use]
 extern crate rocket;
+#[macro_use]
+extern crate rocket_contrib;
 #[macro_use]
 extern crate diesel;
 #[macro_use]
@@ -12,6 +16,11 @@ mod data;
 mod routes;
 mod utils;
 // #endregion
+
+use rocket_contrib::databases::diesel;
+
+#[database("DATABASE_URL")]
+struct DbConn(diesel::SqliteConnection);
 
 #[launch]
 fn rocket() -> _ {
@@ -27,6 +36,7 @@ fn launch() -> rocket::Rocket<rocket::Build> {
     utils::setup_logger::setup_logger();
 
     rocket::build()
+        .attach(DbConn::fairing())
         .mount("/", routes![routes::index::index, routes::index::readme_md])
         .mount("/markdown", routes![routes::markdown::markdown_file])
         .mount("/static", routes![routes::static_files::serve])

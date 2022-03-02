@@ -1,0 +1,2 @@
+[global.databases]
+sqlite_db = { url = "tmp/db.sqlite3" }

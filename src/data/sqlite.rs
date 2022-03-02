@@ -1,10 +1,4 @@
-use crate::utils;
-use diesel::prelude::*;
-use diesel::sqlite::SqliteConnection;
+use rocket_sync_db_pools::{diesel, database};
 
-pub fn establish_connection() -> SqliteConnection {
-    let database_url = utils::env::from_env(utils::env::EnvKey::DatabaseUrl);
-    println!("Loading SQLite DB: {database_url}");
-
-    SqliteConnection::establish(database_url).expect(&*format!("{database_url} can NOT be opened"))
-}
+#[database("sqlite_db")]
+pub struct DbConn(diesel::SqliteConnection);

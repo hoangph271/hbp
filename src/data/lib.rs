@@ -13,7 +13,6 @@ pub mod post_orm {
     use crate::data::schema::tbl_posts::dsl::*;
     use diesel::prelude::*;
     use diesel::result::Error;
-    use diesel::sqlite::SqliteConnection;
 
     pub fn get_one(conn: &SqliteConnection, post_id: &str) -> Result<Post, OrmError> {
         match tbl_posts::table
@@ -50,18 +49,19 @@ pub mod post_orm {
         conn: &SqliteConnection,
         updated_post: UpdatedPost,
     ) -> Result<Post, OrmError> {
-        let update_result = diesel::update(tbl_posts.filter(tbl_posts::id.eq(updated_post.id)))
-            .set((
-                tbl_posts::title.eq(updated_post.title),
-                tbl_posts::body.eq(updated_post.body),
-                tbl_posts::published.eq(updated_post.published),
-            ))
-            .execute(conn);
+        let update_result =
+            diesel::update(tbl_posts.filter(tbl_posts::id.eq(updated_post.id.clone())))
+                .set((
+                    tbl_posts::title.eq(updated_post.title),
+                    tbl_posts::body.eq(updated_post.body),
+                    tbl_posts::published.eq(updated_post.published),
+                ))
+                .execute(conn);
 
         match update_result {
             Ok(val) => {
                 if val == 1 {
-                    get_one(conn, updated_post.id)
+                    get_one(conn, &updated_post.id)
                 } else {
                     Err(OrmError::NotFound)
                 }
@@ -77,7 +77,7 @@ pub mod user_orm {
     use crate::data::schema::tbl_users;
     use diesel::prelude::*;
     use diesel::result::Error;
-    use diesel::sqlite::SqliteConnection;
+    use diesel::SqliteConnection;
 
     pub fn find_one_by_username(conn: &SqliteConnection, username: &str) -> Result<User, OrmError> {
         match tbl_users::table

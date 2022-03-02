@@ -27,6 +27,7 @@ fn launch() -> rocket::Rocket<rocket::Build> {
     utils::setup_logger::setup_logger();
 
     rocket::build()
+        .attach(data::sqlite::DbConn::fairing())
         .mount("/", routes![routes::index::index, routes::index::readme_md])
         .mount("/markdown", routes![routes::markdown::markdown_file])
         .mount("/static", routes![routes::static_files::serve])

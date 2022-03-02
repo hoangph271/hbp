@@ -10,15 +10,15 @@ pub struct Post {
 }
 
 #[derive(serde::Deserialize)]
-pub struct NewPost<'a> {
-    pub title: &'a str,
-    pub body: &'a str,
+pub struct NewPost {
+    pub title: String,
+    pub body: String,
 }
 #[derive(serde::Deserialize)]
-pub struct UpdatedPost<'a> {
-    pub id: &'a str,
-    pub title: &'a str,
-    pub body: &'a str,
+pub struct UpdatedPost {
+    pub id: String,
+    pub title: String,
+    pub body: String,
     pub published: bool,
 }
 #[derive(Insertable)]
@@ -29,14 +29,14 @@ pub struct InsertableNewPost {
     pub body: String,
 }
 
-impl<'a> From<NewPost<'a>> for InsertableNewPost {
+impl From<NewPost> for InsertableNewPost {
     fn from(new_post: NewPost) -> InsertableNewPost {
         let id = nanoid!();
 
         InsertableNewPost {
             id,
-            title: new_post.title.to_owned(),
-            body: new_post.body.to_owned(),
+            title: new_post.title,
+            body: new_post.body,
         }
     }
 }

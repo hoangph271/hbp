@@ -13,5 +13,9 @@
 - [x] use `.env` for JWT secret  
 - [x] use `tbl_users` for login  
 - [x] `tbl_users` `C`.`R`  
+- [ ] `jwt` for every routes contained in `markdown/users/<id>/`
+- [ ] `/login` form
+- [ ] `<form>` login handler
+- [ ] 
 - [ ] ~~Download static folder  ****~~  
 - [ ] ~~System information in index page~~  

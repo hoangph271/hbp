@@ -7,7 +7,6 @@ pub enum OrmError {
 }
 
 pub mod post_orm {
-    use crate::data::sqlite::SqlitePooledConnection;
     use crate::data::lib::OrmError;
     use crate::data::models::posts_model::*;
     use crate::data::schema::tbl_posts;
@@ -15,7 +14,7 @@ pub mod post_orm {
     use diesel::prelude::*;
     use diesel::result::Error;
 
-    pub fn get_one(conn: &SqlitePooledConnection, post_id: &str) -> Result<Post, OrmError> {
+    pub fn get_one(conn: &SqliteConnection, post_id: &str) -> Result<Post, OrmError> {
         match tbl_posts::table
             .filter(tbl_posts::id.eq(post_id))
             .first(conn)
@@ -25,17 +24,17 @@ pub mod post_orm {
         }
     }
 
-    pub fn get_posts(conn: &SqlitePooledConnection) -> Vec<Post> {
+    pub fn get_posts(conn: &SqliteConnection) -> Vec<Post> {
         tbl_posts.load(conn).expect("Error loading posts")
     }
 
-    pub fn delete_one(conn: &SqlitePooledConnection, post_id: &str) -> usize {
+    pub fn delete_one(conn: &SqliteConnection, post_id: &str) -> usize {
         diesel::delete(tbl_posts.filter(id.eq(post_id)))
             .execute(conn)
             .expect(&*format!("Error deleting post {}", post_id))
     }
 
-    pub fn create_post(conn: &SqlitePooledConnection, new_post: NewPost) -> Result<Post, Error> {
+    pub fn create_post(conn: &SqliteConnection, new_post: NewPost) -> Result<Post, Error> {
         diesel::insert_into(tbl_posts::table)
             .values(InsertableNewPost::from(new_post))
             .execute(conn)
@@ -47,21 +46,22 @@ pub mod post_orm {
     }
 
     pub fn update_one(
-        conn: &SqlitePooledConnection,
+        conn: &SqliteConnection,
         updated_post: UpdatedPost,
     ) -> Result<Post, OrmError> {
-        let update_result = diesel::update(tbl_posts.filter(tbl_posts::id.eq(updated_post.id)))
-            .set((
-                tbl_posts::title.eq(updated_post.title),
-                tbl_posts::body.eq(updated_post.body),
-                tbl_posts::published.eq(updated_post.published),
-            ))
-            .execute(conn);
+        let update_result =
+            diesel::update(tbl_posts.filter(tbl_posts::id.eq(updated_post.id.clone())))
+                .set((
+                    tbl_posts::title.eq(updated_post.title),
+                    tbl_posts::body.eq(updated_post.body),
+                    tbl_posts::published.eq(updated_post.published),
+                ))
+                .execute(conn);
 
         match update_result {
             Ok(val) => {
                 if val == 1 {
-                    get_one(conn, updated_post.id)
+                    get_one(conn, &updated_post.id)
                 } else {
                     Err(OrmError::NotFound)
                 }
@@ -72,14 +72,14 @@ pub mod post_orm {
 }
 
 pub mod user_orm {
-    use crate::data::sqlite::SqlitePooledConnection;
     use crate::data::lib::OrmError;
     use crate::data::models::users_model::*;
     use crate::data::schema::tbl_users;
     use diesel::prelude::*;
     use diesel::result::Error;
+    use diesel::SqliteConnection;
 
-    pub fn find_one_by_username(conn: &SqlitePooledConnection, username: &str) -> Result<User, OrmError> {
+    pub fn find_one_by_username(conn: &SqliteConnection, username: &str) -> Result<User, OrmError> {
         match tbl_users::table
             .filter(tbl_users::username.eq(username))
             .first(conn)
@@ -90,7 +90,7 @@ pub mod user_orm {
     }
 
     #[allow(dead_code)]
-    pub fn create_user(conn: &SqlitePooledConnection, new_user: NewUser) -> Result<User, Error> {
+    pub fn create_user(conn: &SqliteConnection, new_user: NewUser) -> Result<User, Error> {
         diesel::insert_into(tbl_users::table)
             .values(InsertableNewUser::from(new_user))
             .execute(conn)

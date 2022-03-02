@@ -8,7 +8,7 @@
 - [x] .env files  
 - [x] `sqlite` access using `diesel`  
 - [x] serve static `css`  
-- [ ] `diesel` connection pool  
+- [x] `diesel` connection pool  
 - [x] `posts` `C`.`R`.`U`.`D`  
 - [x] use `.env` for JWT secret  
 - [x] use `tbl_users` for login  

@@ -3,3 +3,4 @@ target
 tmp/*.sqlite3
 tmp/*.sqlite3-*
 .env
+markdown/users/*

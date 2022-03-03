@@ -1,4 +1,7 @@
+use anyhow::{Error, Result};
 use pulldown_cmark::{html, Options, Parser};
+use std::fs;
+use std::path::Path;
 
 pub fn markdown_to_html(markdown: &str) -> String {
     let mut options = Options::empty();
@@ -14,4 +17,11 @@ pub fn markdown_to_html(markdown: &str) -> String {
     html::push_html(&mut html, parser);
 
     html
+}
+
+pub fn read_markdown(file_path: &Path) -> Result<String> {
+    match fs::read_to_string(file_path) {
+        Ok(content) => Ok(content),
+        Err(e) => Err(Error::new(e)),
+    }
 }

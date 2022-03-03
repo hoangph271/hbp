@@ -1,29 +1,39 @@
 use crate::utils::{
+    jwt::JwtPayload,
     markdown,
     responders::{HbpContent, HbpResponse},
     template,
 };
-use anyhow::{Error, Result};
 use httpstatus::StatusCode;
 use mustache::MapBuilder;
-use std::fs;
-use std::path::Path;
+use std::path::PathBuf;
 
-#[get("/<file_name>")]
-pub fn markdown_file(file_name: &str) -> HbpResponse {
-    let is_markdown = file_name.to_lowercase().ends_with(".md");
+#[get("/<file_path..>")]
+pub fn markdown_file(file_path: PathBuf) -> HbpResponse {
+    match file_path.file_name() {
+        Some(file_name) => {
+            let is_markdown = file_name.to_string_lossy().to_lowercase().ends_with(".md");
 
-    if !is_markdown {
-        return HbpResponse::text("NOT a .md file", StatusCode::BadRequest);
+            if !is_markdown {
+                // TODO: Maybe handle binary files as well...?
+                return HbpResponse::text("NOT a .md file", StatusCode::BadRequest);
+            }
+        }
+        None => return HbpResponse::text("NOT a .md file", StatusCode::BadRequest),
     }
 
-    match read_markdown(file_name) {
+    if file_path.starts_with("users") {
+        println!("Block tis...!");
+    }
+
+    let file_path = PathBuf::from("markdown").join(file_path);
+    match markdown::read_markdown(&file_path) {
         Ok(content) => {
             let html_markdown = markdown::markdown_to_html(&content);
             let template_data = MapBuilder::new()
                 .insert_str("raw_content", &html_markdown)
                 .build();
-            let html = template::render_from_template("index.html", &template_data).unwrap();
+            let html = template::render_from_template("index.html", &Some(template_data)).unwrap();
 
             HbpResponse::ok(Some(HbpContent::Html(html)))
         }
@@ -35,9 +45,23 @@ pub fn markdown_file(file_name: &str) -> HbpResponse {
     }
 }
 
-fn read_markdown(file_name: &str) -> Result<String> {
-    match fs::read_to_string(Path::new("markdown").join(file_name)) {
-        Ok(content) => Ok(content),
-        Err(e) => Err(Error::new(e)),
+#[get("/users/<username>/<file_path..>")]
+pub fn user_markdown_file(username: &str, file_path: PathBuf, jwt: JwtPayload) -> HbpResponse {
+    if jwt.sub.eq(username) {
+        let file_path = PathBuf::from("markdown")
+            .join("users")
+            .join(username)
+            .join(file_path);
+
+        println!("{}", file_path.to_string_lossy());
+
+        if let Ok(content) = markdown::read_markdown(&file_path) {
+            let html = markdown::markdown_to_html(&content);
+            return HbpResponse::ok(Some(HbpContent::Html(html)));
+        } else {
+            return HbpResponse::internal_server_error();
+        }
     }
+
+    HbpResponse::status(StatusCode::Forbidden)
 }

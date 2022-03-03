@@ -29,7 +29,13 @@ fn launch() -> rocket::Rocket<rocket::Build> {
     rocket::build()
         .attach(data::sqlite::DbConn::fairing())
         .mount("/", routes![routes::index::index, routes::index::readme_md])
-        .mount("/markdown", routes![routes::markdown::markdown_file])
+        .mount(
+            "/markdown",
+            routes![
+                routes::markdown::markdown_file,
+                routes::markdown::user_markdown_file
+            ],
+        )
         .mount("/static", routes![routes::static_files::serve])
         .mount(
             "/posts",

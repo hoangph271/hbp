@@ -14,14 +14,17 @@ fn jwt_secret() -> String {
 }
 
 pub fn verify_jwt(token_str: &str) -> Result<JwtPayload, HbpError> {
-    let jwt_payload = decode::<JwtPayload>(
+    match decode::<JwtPayload>(
         token_str,
         &DecodingKey::from_secret(jwt_secret().as_bytes()),
         &Validation::default(),
-    )
-    .unwrap(); // TODO: Handle this...?
-
-    Ok(jwt_payload.claims)
+    ) {
+        Ok(jwt_payload) => Ok(jwt_payload.claims),
+        Err(e) => {
+            println!("{:?}", e);
+            Err(HbpError::from_message("verify_jwt failed for ${token_str}"))
+        }
+    }
 }
 pub fn sign_jwt(payload: JwtPayload) -> String {
     encode(

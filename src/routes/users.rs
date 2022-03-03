@@ -1,9 +1,9 @@
 use crate::data::{lib::user_orm, sqlite::DbConn};
 use crate::utils::jwt::{sign_jwt, JwtPayload};
 use crate::utils::responders::{HbpContent, HbpResponse};
+use crate::utils::template;
 use httpstatus::StatusCode;
-use rocket::serde::json::Json;
-use serde::Deserialize;
+use rocket::form::Form;
 
 #[get("/")]
 pub fn index(jwt: JwtPayload) -> HbpResponse {
@@ -12,16 +12,18 @@ pub fn index(jwt: JwtPayload) -> HbpResponse {
 
 #[get("/login")]
 pub fn login() -> HbpResponse {
-    HbpResponse::ok(Some(HbpContent::Plain("login".to_owned())))
+    let html = template::render_from_template("users/login.html", &None)
+        .expect("render users/login.html failed");
+    HbpResponse::ok(Some(HbpContent::Html(html)))
 }
 
-#[derive(Deserialize)]
+#[derive(FromForm)]
 pub struct LoginBody {
     username: String,
     password: String,
 }
 #[post("/login", data = "<login_body>")]
-pub async fn post_login(login_body: Json<LoginBody>, conn: DbConn) -> HbpResponse {
+pub async fn post_login(login_body: Form<LoginBody>, conn: DbConn) -> HbpResponse {
     conn.run(move |conn| {
         if let Ok(user) = user_orm::find_one_by_username(conn, &login_body.username) {
             let is_password_matches =

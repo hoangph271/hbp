@@ -23,7 +23,7 @@ pub fn markdown_file(file_name: &str) -> HbpResponse {
             let template_data = MapBuilder::new()
                 .insert_str("raw_content", &html_markdown)
                 .build();
-            let html = template::render_from_template("index.html", &template_data).unwrap();
+            let html = template::render_from_template("index.html", &Some(template_data)).unwrap();
 
             HbpResponse::ok(Some(HbpContent::Html(html)))
         }

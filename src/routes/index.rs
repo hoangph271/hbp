@@ -1,4 +1,7 @@
-use crate::utils::{responders::{HbpResponse, HbpContent}, template};
+use crate::utils::{
+    responders::{HbpContent, HbpResponse},
+    template,
+};
 use httpstatus::StatusCode;
 use mustache::MapBuilder;
 
@@ -23,7 +26,7 @@ pub fn index() -> HbpResponse {
         )
         .build();
 
-    match template::render_from_template("index.html", &data) {
+    match template::render_from_template("index.html", &Some(data)) {
         Ok(html) => HbpResponse::ok(Some(HbpContent::Html(html))),
         Err(e) => {
             error!("{e}");

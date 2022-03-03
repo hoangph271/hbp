@@ -1,5 +1,9 @@
 **Click** [here](README.md) to read the `README.md` file
 # TODOs
+- [ ] `jwt` for every routes contained in `markdown/users/<id>/`
+- [x] `/login` form
+- [x] `<form>` login handler
+- [ ] 
 - [x] Init run  
 - [x] Serve FTb photos (Requires auth)  
 - [x] Serve static folder requests  
@@ -12,10 +16,6 @@
 - [x] `posts` `C`.`R`.`U`.`D`  
 - [x] use `.env` for JWT secret  
 - [x] use `tbl_users` for login  
-- [x] `tbl_users` `C`.`R`  
-- [ ] `jwt` for every routes contained in `markdown/users/<id>/`
-- [ ] `/login` form
-- [ ] `<form>` login handler
-- [ ] 
+- [x] `tbl_users` `C`.`R` 
 - [ ] ~~Download static folder  ****~~  
 - [ ] ~~System information in index page~~  

@@ -1,6 +1,6 @@
 **Click** [here](README.md) to read the `README.md` file
 # TODOs
-- [ ] `jwt` for every routes contained in `markdown/users/<id>/`
+- [x] `jwt` for every routes contained in `markdown/users/<username>/`
 - [x] `/login` form
 - [x] `<form>` login handler
 - [ ] 

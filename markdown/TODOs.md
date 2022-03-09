@@ -3,7 +3,9 @@
 - [x] `jwt` for every routes contained in `markdown/users/<username>/`
 - [x] `/login` form
 - [x] `<form>` login handler
-- [ ] 
+- [ ] `Node.js` `marper` API for rendering `marp`ed `.md`s...!  
+- [ ] If `hbp` think some .md is a `marp`ed `.md` use `marper` to convert it...!
+- [ ] Better `GUI`
 - [x] Init run  
 - [x] Serve FTb photos (Requires auth)  
 - [x] Serve static folder requests  

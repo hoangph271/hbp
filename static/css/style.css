@@ -1,10 +1,92 @@
 @import url('https://fonts.googleapis.com/css2?family=Ubuntu&family=Ubuntu+Mono&display=swap');
 
+:root {
+  --bgr-breath: #EEE8D5;
+  --bgr-bold: #c0b396;
+  --bgr-bold-opacity: rgba(192, 179, 150, 0.35);
+  --icon-size: 3rem;
+  --cream: #F8F5EC;
+  --grunt: #424242;
+  --tan: #a39f75;
+  --grungy: #bf8d22;
+  --yolk: #D0E890;
+  --orange: #BF4634;
+  --equal-shadow-gentle: rgba(0, 0, 0, 0.25) 0px 2px 4px;
+  --equal-shadow-big: rgba(0, 0, 0, 0.25) 0px 3px 6px;
+  --content-mw: 650px;
+  --padding-small: 0.4rem;
+  --radius-gentle: 0.4rem;
+}
+
+/* * Tag restyles */
+/* #region */
 body {
   margin: 0;
   font-family: 'Ubuntu';
+  font-size: 16px;
+  background-color: var(--cream);
 }
+
+a { color: var(--grunt); }
+a:hover { color: var(--grungy); }
+a:active { color: var(--tan); }
+/* #endregion */
 
 code {
   font-family: 'Ubuntu Mono', 'Courier New', Courier, monospace;
+}
+
+/* * nav-bar */
+/* #region */
+.nav-bar {
+  display: flex;
+  padding: var(--padding-small);
+  align-items: center;
+  background-color: var(--bgr-breath);
+  box-shadow: var(--equal-shadow-gentle);
+}
+
+.nav-bar .index-page button {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  background-image: url('/static/svg/sneu.svg');
+  background-size: 85%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: transparent;
+  box-shadow: 1px 1px 1px 1px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  border-radius: 50%;
+  border: none;
+}
+
+.nav-bar .index-page button:hover {
+  box-shadow: 1px 0px 0px 1px rgba(0, 0, 0, 0.35);
+  background-color: var(--bgr-bold);
+}
+
+.nav-bar .other-urls {
+  list-style: none;
+  padding: 0;
+  flex-grow: 1;
+  display: flex;
+  justify-content: space-around;
+  max-width: var(--content-mw);
+  margin: auto;
+}
+/* #endregion */
+
+.hbp-markdown {
+  max-width: var(--content-mw);
+  padding: var(--padding-small);
+  background-color: var(--bgr-bold-opacity);
+  margin: 0.8rem auto;
+  border-radius: var(--radius-gentle);
+  box-shadow: var(--equal-shadow-gentle);
+}
+
+/* ? workarounds for `pulldown-cmark` until it works better */
+.hbp-markdown ul  {
+  padding: 0 1rem;
+  list-style: none;
 }

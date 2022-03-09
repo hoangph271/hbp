@@ -29,11 +29,18 @@ pub fn markdown_file(file_path: PathBuf) -> HbpResponse {
     let file_path = PathBuf::from("markdown").join(file_path);
     match markdown::read_markdown(&file_path) {
         Ok(content) => {
-            let html_markdown = markdown::markdown_to_html(&content);
-            let template_data = MapBuilder::new()
-                .insert_str("raw_content", &html_markdown)
-                .build();
-            let html = template::render_from_template("index.html", &Some(template_data)).unwrap();
+            let markdown_html = markdown::markdown_to_html(&content);
+
+            let html = template::render_from_template_paged(
+                "static/markdown.html",
+                &Some(
+                    MapBuilder::new()
+                        .insert_str("markdown_html", &markdown_html)
+                        .build(),
+                ),
+            )
+            .unwrap();
+            println!("{html}");
 
             HbpResponse::ok(Some(HbpContent::Html(html)))
         }

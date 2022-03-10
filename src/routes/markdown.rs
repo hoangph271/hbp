@@ -31,7 +31,7 @@ pub fn markdown_file(file_path: PathBuf) -> HbpResponse {
         Ok(content) => {
             let markdown_html = markdown::markdown_to_html(&content);
 
-            let html = template::render_from_template_paged(
+            let html = template::render_from_template_by_default_page(
                 "static/markdown.html",
                 &Some(
                     MapBuilder::new()

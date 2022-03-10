@@ -22,7 +22,7 @@ pub fn render_from_template(template_path: &str, data: &Option<Data>) -> Result<
     }
 }
 
-pub fn render_from_template_paged(
+pub fn render_from_template_by_default_page(
     template_path: &str,
     data: &Option<Data>,
 ) -> Result<String, Error> {

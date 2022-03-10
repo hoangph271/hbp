@@ -22,4 +22,4 @@ jobs:
             username: ${{ secrets.USERNAME }}
             KEY: ${{ secrets.KEY }}
             port: ${{ secrets.PORT }}
-            script: cd /home/algo/hbp && git pull && pm2 delete hbp -s && pm2 start "/root/.cargo/bin/cargo run" --name "hbp"
+            script: cd /home/algo/hbp && git pull && pm2 restart hbp

@@ -29,7 +29,7 @@ body {
 
 a { color: var(--grunt); }
 a:hover { color: var(--grungy); }
-a:active { color: var(--tan); }
+a:active, a:focus { color: var(--tan); }
 /* #endregion */
 
 code {
@@ -77,6 +77,7 @@ code {
 /* #endregion */
 
 .hbp-markdown {
+  width: calc(100vw - 2rem);
   max-width: var(--content-mw);
   padding: var(--padding-small);
   background-color: var(--bgr-bold-opacity);

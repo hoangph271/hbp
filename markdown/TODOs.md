@@ -5,6 +5,7 @@
 ## > DONEs
 - [ ] ~~Download static folder  ****~~  
 - [ ] ~~System information in index page~~  
+- [x] Better error page
 - [x] Better `GUI`
 - [x] `jwt` for every routes contained in `markdown/users/<username>/`
 - [x] `/login` form

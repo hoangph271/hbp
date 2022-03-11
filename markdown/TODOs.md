@@ -1,5 +1,6 @@
 ## > TODOs
-- [ ] If `hbp` think some .md is a `marp`ed `.md` use `marper` to convert it...!
+- [ ] If `hbp` think some .md is a `marp`ed `.md` use `marper` to convert it...!  
+- [ ] `AboutMe.md` should me `marp`ed  
 
 ## > DONEs
 - [ ] ~~Download static folder  ****~~  

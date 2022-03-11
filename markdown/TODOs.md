@@ -1,8 +1,9 @@
 ## > TODOs
-- [ ] If `hbp` think some .md is a `marp`ed `.md` use `marper` to convert it...!  
-- [ ] `AboutMe.md` should me `marp`ed  
+ - `css-scroll-snapping` for `marp`ed views
 
 ## > DONEs
+- [x] `AboutMe.md` should me `marp`ed  
+- [x] If `hbp` think some .md is a `marp`ed `.md` use `marper` to convert it...!  
 - [ ] ~~Download static folder  ****~~  
 - [ ] ~~System information in index page~~  
 - [x] `Node.js` `marper` API for rendering `marp`ed `.md`s...!  

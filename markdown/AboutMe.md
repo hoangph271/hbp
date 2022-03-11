@@ -1,5 +1,5 @@
 ---
-marp: true  
+marp: true
 theme: gaia
 ---
 
@@ -19,3 +19,16 @@ async fn rocket() -> _ {
     println!("{app_name} is starting, my dude...! 🍿🍿🍿");
 }
 ```
+
+---
+![blur:5px bg](https://img.freepik.com/free-vector/abstract-texture-background_91008-369.jpg)
+
+## > Marp
+This slide show is powered my `Marpit` - *the open source Markdown slide deck framework*  
+
+You can find the `npm` package (`@marp-team/marp-core`) [here](https://www.npmjs.com/package/@marp-team/marp-core)...!  
+
+It can do cool things, like:
+ - [x] Change the background...?
+ - [x] Blur the background by 5px...!
+ - [x] And link to [my GitHub](https://github.com/hoangph271)...!

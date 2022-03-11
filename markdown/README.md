@@ -7,4 +7,4 @@ It's a site, my home site...!
 Let see if I can render some markdown into HTML...?
 
 Here are some other things:
-- Check out the [TODOs](TODOs.md)
+- [x] Check out the [TODOs](TODOs.md)

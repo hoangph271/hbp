@@ -1,7 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Ubuntu&family=Ubuntu+Mono&display=swap');
 
 :root {
-  --bgr-breath: #EEE8D5;
+  --bgr-icecream: #fff8e1;
+  --bgr-breath: #eee8d5;
   --bgr-bold: #c0b396;
   --bgr-bold-opacity: rgba(192, 179, 150, 0.35);
   --icon-size: 3rem;
@@ -24,7 +25,7 @@ body {
   margin: 0;
   font-family: 'Ubuntu';
   font-size: 16px;
-  background-color: var(--cream);
+  background-color: var(--bgr-icecream);
 }
 
 a { color: var(--grunt); }
@@ -80,10 +81,7 @@ code {
   width: calc(100vw - 2rem);
   max-width: var(--content-mw);
   padding: var(--padding-small);
-  background-color: var(--bgr-bold-opacity);
   margin: 0.8rem auto;
-  border-radius: var(--radius-gentle);
-  box-shadow: var(--equal-shadow-gentle);
 }
 
 /* ? workarounds for `pulldown-cmark` until it works better */

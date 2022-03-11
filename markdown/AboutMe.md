@@ -24,11 +24,11 @@ async fn rocket() -> _ {
 ![blur:5px bg](https://img.freepik.com/free-vector/abstract-texture-background_91008-369.jpg)
 
 ## > Marp
-This slide show is powered my `Marpit` - *the open source Markdown slide deck framework*  
+This slide show is powered by `Marpit` - *the open source Markdown slide deck framework*  
 
-You can find the `npm` package (`@marp-team/marp-core`) [here](https://www.npmjs.com/package/@marp-team/marp-core)...!  
+You can find the `npm` package [here](https://www.npmjs.com/package/@marp-team/marp-core)...!  
 
-It can do cool things, like:
+It can do other cool things, like:
  - [x] Change the background...?
  - [x] Blur the background by 5px...!
  - [x] And link to [my GitHub](https://github.com/hoangph271)...!

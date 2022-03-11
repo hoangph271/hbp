@@ -91,3 +91,15 @@ code {
   padding: 0 1rem;
   list-style: none;
 }
+
+/* ? Custom CSS for MarpIt */
+/* #region */
+.marpit .contains-task-list {
+  list-style: none;
+}
+.marpit .task-list-item .task-list-item-checkbox {
+  width: 1.6rem;
+  height: 1.6rem;
+  margin: 0;
+}
+/* #endregion */

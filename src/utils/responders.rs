@@ -16,6 +16,7 @@ pub struct HbpResponse {
     pub content: HbpContent,
 }
 
+#[allow(dead_code)]
 impl HbpResponse {
     #[allow(dead_code)]
     pub fn empty() -> HbpResponse {
@@ -46,6 +47,12 @@ impl HbpResponse {
             status_code,
             content: HbpContent::Plain(content),
         }
+    }
+    pub fn unauthorized() -> HbpResponse {
+        HbpResponse::status(StatusCode::Unauthorized)
+    }
+    pub fn forbidden() -> HbpResponse {
+        HbpResponse::status(StatusCode::Forbidden)
     }
     pub fn json<T: serde::Serialize>(content: T, status_code: Option<StatusCode>) -> HbpResponse {
         let json = serde_json::to_string(&content).expect("Stringify JSON failed");

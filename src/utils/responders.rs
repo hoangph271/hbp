@@ -12,8 +12,8 @@ pub enum HbpContent {
 }
 
 pub struct HbpResponse {
-    status_code: StatusCode,
-    content: HbpContent,
+    pub status_code: StatusCode,
+    pub content: HbpContent,
 }
 
 impl HbpResponse {

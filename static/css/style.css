@@ -92,6 +92,19 @@ code {
 
 /* ? Custom CSS for MarpIt */
 /* #region */
+.marpit {
+  height: 100vh;
+  scroll-snap-type: x mandatory;
+  display: flex;
+  width: 100vw;
+  overflow-x: auto;
+}
+
+.marpit > svg {
+  width: 100vw;
+  min-width: 100vw;
+  scroll-snap-align: end;
+}
 .marpit .contains-task-list {
   list-style: none;
 }

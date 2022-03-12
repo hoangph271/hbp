@@ -23,7 +23,7 @@
 /* #region */
 body {
   margin: 0;
-  font-family: 'Ubuntu';
+  font-family: 'Courier New', Courier, monospace;
   font-size: 16px;
   background-color: var(--bgr-icecream);
 }
@@ -34,7 +34,7 @@ a:active, a:focus { color: var(--tan); }
 /* #endregion */
 
 code {
-  font-family: 'Ubuntu Mono', 'Courier New', Courier, monospace;
+  font-family: 'Courier New', Courier, monospace;
 }
 
 /* * nav-bar */

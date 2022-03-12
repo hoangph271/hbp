@@ -14,12 +14,12 @@ paginate: true
 - [x] Tasklist support  
 - [x] `AboutMe.md` should me `marp`ed  
 - [x] If `hbp` think some .md is a `marp`ed `.md` use `marper` to convert it...!  
-- [ ] ~~Download static folder  ****~~  
+- [x] `Node.js` `marper` API for rendering `marp`ed `.md`s...!  
 
 ---
 
 - [ ] ~~System information in index page~~  
-- [x] `Node.js` `marper` API for rendering `marp`ed `.md`s...!  
+- [ ] ~~Download static folder  ****~~  
 - [x] Better error page
 - [x] Better `GUI`
 - [x] `jwt` for every routes contained in `markdown/users/<username>/`

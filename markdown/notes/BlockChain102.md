@@ -17,7 +17,7 @@
 > Token được tạo ra ở trong blockchain, phương pháp tạo thì tùy từng contract/chain - có thể là mining theo PoW, hoặc staking theo PoS,...!
 
 `Ví`
-> Là công cụ phần mềm hoặc phần cứng đóng vai trò giúp lưu trữ private/public key, hỗ trợ sign các transaction & quản lý tài khoản; từ phí người dùng thì ví này có chức năg khá giống với chức năng cơ bản nhất của các apps ngân hàng hiện tại
+> Là công cụ phần mềm hoặc phần cứng đóng vai trò giúp lưu trữ private/public key, hỗ trợ sign các transaction & quản lý tài khoản; từ phía người dùng thì ví này có chức năgg khá giống với chức năng cơ bản nhất của các apps ngân hàng hiện tại
 
 `Ví lạnh`
 > Loại ví này là phần cứng, không kết nối với Internet, có mã bảo mật, tác dụng chính của ví lạnh là để cất trữ tài khoản một cách an toàn hơn

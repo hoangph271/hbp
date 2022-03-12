@@ -23,7 +23,6 @@
 /* #region */
 body {
   margin: 0;
-  font-family: 'Courier New', Courier, monospace;
   font-size: 16px;
   background-color: var(--bgr-icecream);
 }

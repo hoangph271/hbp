@@ -5,21 +5,20 @@ paginate: true
 ---
 
 ## > TODOs
- - [ ] `css-scroll-snapping` for `marp`ed views
-  (Tutorial [here](https://css-tricks.com/practical-css-scroll-snapping/))
  - [ ] Notes for `#Ká`  
----
 
 ## > DONEs
+- [x] `css-scroll-snapping` for `marp`ed views
+  (Tutorial [here](https://css-tricks.com/practical-css-scroll-snapping/))
 - [x] Tasklist support  
 - [x] `AboutMe.md` should me `marp`ed  
 - [x] If `hbp` think some .md is a `marp`ed `.md` use `marper` to convert it...!  
-- [x] `Node.js` `marper` API for rendering `marp`ed `.md`s...!  
 
 ---
 
 - [ ] ~~System information in index page~~  
 - [ ] ~~Download static folder  ****~~  
+- [x] `Node.js` `marper` API for rendering `marp`ed `.md`s...!  
 - [x] Better error page
 - [x] Better `GUI`
 - [x] `jwt` for every routes contained in `markdown/users/<username>/`
@@ -27,10 +26,10 @@ paginate: true
 - [x] `<form>` login handler
 - [x] Init run  
 - [x] Serve FTb photos (Requires auth)  
-- [x] Serve static folder requests  
 
 ---
 
+- [x] Serve static folder requests  
 - [x] Handle either folder or file requests  
 - [x] Handle markdown (reject NOT `.md`) files  
 - [x] .env files  
@@ -40,4 +39,7 @@ paginate: true
 - [x] `posts` `C`.`R`.`U`.`D`  
 - [x] use `.env` for JWT secret  
 - [x] use `tbl_users` for login  
+
+---
+
 - [x] `tbl_users` `C`.`R`  

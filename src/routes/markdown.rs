@@ -3,15 +3,62 @@ use crate::utils::{
     markdown, marper,
     responders::{HbpContent, HbpResponse},
     template,
+    types::HbpResult,
 };
 use httpstatus::StatusCode;
-use mustache::MapBuilder;
 use std::path::{Path, PathBuf};
 
 fn is_markdown(file_path: &Path) -> bool {
     match file_path.file_name() {
         None => false,
         Some(file_name) => file_name.to_string_lossy().to_lowercase().ends_with(".md"),
+    }
+}
+
+async fn render_marp(
+    markdown: &str,
+    extra_data: Option<template::TemplateData>,
+) -> HbpResult<String> {
+    let marp_content = marper::marp_from_markdown(markdown.to_owned()).await;
+
+    let raw_content = [
+        marp_content.html,
+        format!(
+            "<style>
+            {css}
+            .nav-bar {{
+                display: none;
+            }}
+        </style>",
+            css = marp_content.css
+        ),
+    ]
+    .join("\n");
+
+    let mut data = vec![("raw_content".to_owned(), raw_content)];
+
+    if let Some(extra_data) = extra_data {
+        data.extend(extra_data);
+    }
+
+    template::render_from_template("index.html", &Some(template::data_from(data)))
+}
+async fn render_markdown(
+    markdown: &str,
+    extra_data: Option<template::TemplateData>,
+) -> HbpResult<String> {
+    if marper::is_marp(markdown) {
+        render_marp(markdown, extra_data).await
+    } else {
+        let markdown_html = markdown::markdown_to_html(markdown);
+
+        template::render_from_template_by_default_page(
+            "static/markdown.html",
+            &Some(template::data_from(vec![(
+                "markdown_html".to_owned(),
+                markdown_html,
+            )])),
+        )
     }
 }
 
@@ -22,47 +69,21 @@ pub async fn markdown_file(file_path: PathBuf) -> HbpResponse {
         return HbpResponse::text("NOT a .md file", StatusCode::BadRequest);
     }
 
-    if file_path.starts_with("users") {
-        // TODO: Maybe allow users with matched JWT...?
-        println!("Block tis...!");
-        return HbpResponse::forbidden();
-    }
-
     let file_path = PathBuf::from("markdown").join(file_path);
     match markdown::read_markdown(&file_path) {
         Ok(content) => {
-            let html = if marper::is_marp(&content) {
-                let marp_content = marper::marp_from_markdown(content.to_owned()).await;
-
-                let raw_content = [
-                    marp_content.html,
-                    format!("<style>{}</style>", marp_content.css),
-                ]
-                .join("\n");
-
-                template::render_from_template(
-                    "index.html",
-                    &Some(
-                        MapBuilder::new()
-                            .insert_str("raw_content", raw_content)
-                            .build(),
-                    ),
-                )
-                .unwrap()
-            } else {
-                let markdown_html = markdown::markdown_to_html(&content);
-                template::render_from_template_by_default_page(
-                    "static/markdown.html",
-                    &Some(
-                        MapBuilder::new()
-                            .insert_str("markdown_html", &markdown_html)
-                            .build(),
-                    ),
-                )
-                .unwrap()
-            };
-
-            HbpResponse::ok(Some(HbpContent::Html(html)))
+            match render_markdown(
+                &content,
+                Some(vec![(
+                    "title".to_owned(),
+                    file_path.to_string_lossy().into_owned(),
+                )]),
+            )
+            .await
+            {
+                Ok(html) => HbpResponse::ok(Some(HbpContent::Html(html))),
+                Err(_) => HbpResponse::internal_server_error(),
+            }
         }
         Err(e) => {
             error!("{e}");
@@ -73,16 +94,34 @@ pub async fn markdown_file(file_path: PathBuf) -> HbpResponse {
 }
 
 #[get("/users/<username>/<file_path..>")]
-pub fn user_markdown_file(username: &str, file_path: PathBuf, jwt: JwtPayload) -> HbpResponse {
-    if jwt.sub.eq(username) {
+pub async fn user_markdown_file(
+    username: &str,
+    file_path: PathBuf,
+    jwt: JwtPayload,
+) -> HbpResponse {
+    let sub = JwtPayload::sub_from(jwt);
+
+    if sub.eq(username) {
         let file_path = PathBuf::from("markdown")
             .join("users")
             .join(username)
             .join(file_path);
 
         if let Ok(content) = markdown::read_markdown(&file_path) {
-            let html = markdown::markdown_to_html(&content);
-            return HbpResponse::ok(Some(HbpContent::Html(html)));
+            return match render_markdown(
+                &content,
+                file_path.file_name().map(|file_name| {
+                    vec![("title".to_owned(), file_name.to_string_lossy().into_owned())]
+                }),
+            )
+            .await
+            {
+                Ok(html) => HbpResponse::ok(Some(HbpContent::Html(html))),
+                Err(e) => {
+                    error!("{}", e);
+                    HbpResponse::internal_server_error()
+                }
+            };
         } else {
             return HbpResponse::internal_server_error();
         }

@@ -1,5 +1,5 @@
 use crate::data::{lib::user_orm, sqlite::DbConn};
-use crate::utils::jwt::{sign_jwt, JwtPayload};
+use crate::utils::jwt::{sign_jwt, JwtPayload, UserPayload};
 use crate::utils::responders::{HbpContent, HbpResponse};
 use crate::utils::template;
 use httpstatus::StatusCode;
@@ -40,11 +40,11 @@ pub async fn post_login(login_body: Form<LoginBody>, conn: DbConn) -> HbpRespons
                     .unwrap()
                     .timestamp();
 
-                let jwt = sign_jwt(JwtPayload {
+                let jwt = sign_jwt(JwtPayload::User(UserPayload {
                     sub: user.username,
                     role: Vec::new(),
                     exp,
-                });
+                }));
 
                 return HbpResponse::json(JwtRes { jwt }, None);
             }

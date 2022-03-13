@@ -14,17 +14,30 @@ fn jwt_secret() -> String {
 }
 
 pub fn verify_jwt(token_str: &str) -> Result<JwtPayload, HbpError> {
-    match decode::<JwtPayload>(
-        token_str,
-        &DecodingKey::from_secret(jwt_secret().as_bytes()),
-        &Validation::default(),
-    ) {
-        Ok(jwt_payload) => Ok(jwt_payload.claims),
+    let key = &DecodingKey::from_secret(jwt_secret().as_bytes());
+    let validation = &Validation::default();
+
+    match decode::<UserPayload>(token_str, key, validation) {
+        Ok(result) => {
+            return Ok(JwtPayload::User(result.claims));
+        }
         Err(e) => {
-            println!("{:?}", e);
-            Err(HbpError::from_message("verify_jwt failed for ${token_str}"))
+            error!("{e}");
         }
     }
+
+    match decode::<UserResoucePayload>(token_str, key, validation) {
+        Ok(result) => {
+            return Ok(JwtPayload::UserResouce(result.claims));
+        }
+        Err(e) => {
+            error!("{e}");
+        }
+    }
+
+    Err(HbpError::from_message(&format!(
+        "verify_jwt failed for {token_str}"
+    )))
 }
 pub fn sign_jwt(payload: JwtPayload) -> String {
     encode(
@@ -35,12 +48,23 @@ pub fn sign_jwt(payload: JwtPayload) -> String {
     .unwrap()
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Deserialize, Serialize)]
-pub struct JwtPayload {
+pub struct UserPayload {
     pub exp: i64,
     pub sub: String,
     pub role: Vec<String>,
+}
+#[derive(Debug, Deserialize, Serialize)]
+pub struct UserResoucePayload {
+    pub exp: i64,
+    pub sub: String,
+    pub path: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub enum JwtPayload {
+    User(UserPayload),
+    UserResouce(UserResoucePayload),
 }
 
 #[rocket::async_trait]
@@ -48,9 +72,20 @@ impl<'r> FromRequest<'r> for JwtPayload {
     type Error = HbpError;
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        if let Some(jwt_header) = req.headers().get_one(constants::headers::AUTHORIZATION) {
-            let jwt_str = &jwt_header.trim()["Bearer ".len()..];
+        let jwt_str = req
+            .headers()
+            .get_one(constants::headers::AUTHORIZATION)
+            .map(|jwt_str| &jwt_str.trim()["Bearer ".len()..])
+            .or_else(|| {
+                if let Some(val) = req.query_value::<&str>("jwt") {
+                    val.ok()
+                } else {
+                    None
+                }
+            });
 
+
+        if let Some(jwt_str) = jwt_str {
             return match verify_jwt(jwt_str) {
                 Ok(claims) => Outcome::Success(claims),
                 Err(e) => {
@@ -65,5 +100,14 @@ impl<'r> FromRequest<'r> for JwtPayload {
             constants::headers::AUTHORIZATION
         ));
         Outcome::Failure((status_from(StatusCode::Unauthorized), error))
+    }
+}
+
+impl JwtPayload {
+    pub fn sub_from(jwt_payload: JwtPayload) -> String {
+        match jwt_payload {
+            JwtPayload::User(jwt) => jwt.sub,
+            JwtPayload::UserResouce(jwt) => jwt.sub,
+        }
     }
 }

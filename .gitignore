@@ -4,3 +4,4 @@ tmp/*.sqlite3
 tmp/*.sqlite3-*
 .env
 markdown/users/*
+static/images/users/*

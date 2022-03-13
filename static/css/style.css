@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Ubuntu&family=Ubuntu+Mono&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
 
 :root {
   --bgr-icecream: #fff8e1;
@@ -113,5 +114,8 @@ code {
   width: 1.6rem;
   height: 1.6rem;
   margin: 0;
+}
+div.marpit > svg > foreignObject > section {
+  font-family: 'Roboto', sans-serif !important;
 }
 /* #endregion */

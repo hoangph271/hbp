@@ -96,10 +96,8 @@ code {
 /* #region */
 .marpit {
   height: 100vh;
-  scroll-snap-type: x mandatory;
-  display: flex;
-  width: 100vw;
-  overflow-x: auto;
+  scroll-snap-type: y mandatory;
+  overflow: auto;
 }
 
 .marpit > svg {

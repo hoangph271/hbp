@@ -60,3 +60,15 @@ pub fn render_from_template_by_default_page(
         }
     }
 }
+
+pub fn data_from (fields: Vec<(String, String)>) -> mustache::Data {
+    let mut builder = MapBuilder::new();
+
+    for (key, value) in fields {
+        builder = builder.insert_str(key, value);
+    }
+
+    builder.build()
+}
+
+pub type TemplateData = Vec<(String, String)>;

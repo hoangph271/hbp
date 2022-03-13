@@ -99,11 +99,11 @@ code {
   scroll-snap-type: y mandatory;
   overflow: auto;
 }
-
 .marpit > svg {
-  width: 100vw;
-  min-width: 100vw;
   scroll-snap-align: end;
+  max-height: 100vh;
+  display: block;
+  margin: auto;
 }
 .marpit .contains-task-list {
   list-style: none;

@@ -17,6 +17,7 @@
   --content-mw: 650px;
   --padding-small: 0.4rem;
   --radius-gentle: 0.4rem;
+  --monospace: 'Ubuntu Mono',  'Courier New', Courier, monospace;
 }
 
 /* * Tag restyles */
@@ -44,6 +45,7 @@ code {
   align-items: center;
   background-color: var(--bgr-breath);
   box-shadow: var(--equal-shadow-gentle);
+  font-family: var(--monospace);
 }
 
 .nav-bar .index-page button {

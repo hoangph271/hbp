@@ -5,7 +5,6 @@ paginate: true
 ---
 
 ## > TODOs
- - [ ] Notes for `#Ká`  
 
 ## > DONEs
 - [x] `css-scroll-snapping` for `marp`ed views
@@ -15,7 +14,7 @@ paginate: true
 - [x] If `hbp` think some .md is a `marp`ed `.md` use `marper` to convert it...!  
 
 ---
-
+- [ ] ~~Notes for `#Ká`~~  
 - [ ] ~~System information in index page~~  
 - [ ] ~~Download static folder  ****~~  
 - [x] `Node.js` `marper` API for rendering `marp`ed `.md`s...!  

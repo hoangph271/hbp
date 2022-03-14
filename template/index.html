@@ -8,6 +8,13 @@
   <title>{{ title }}</title>
   <link rel="icon" href="/static/svg/sneu.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/css/style.css">
+  {{#ogp_metadata}}
+    <meta property="og:title" content="{{ og_title }}" />
+    <meta property="og:type" content="{{ og_type }}" />
+    <meta property="og:url" content="{{ og_url }}" />
+    <meta property="og:image" content="{{ og_image }}" />
+    <meta property="og:image:secure" content="{{ og_image }}" />
+  {{/ogp_metadata}}
 </head>
 
 <body>

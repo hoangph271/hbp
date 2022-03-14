@@ -1,5 +1,6 @@
 use crate::utils::types::{HbpError, HbpResult};
 use mustache::{Data, MapBuilder, Template};
+use std::collections::hash_map::HashMap;
 use std::path::{Path, PathBuf};
 
 pub fn compile_template(path: PathBuf) -> Template {
@@ -61,14 +62,30 @@ pub fn render_from_template_by_default_page(
     }
 }
 
-pub fn data_from (fields: Vec<(String, String)>) -> mustache::Data {
+pub fn data_from(fields: TemplateData) -> Data {
     let mut builder = MapBuilder::new();
 
+    fn insert_map(mut builder: MapBuilder, values: &HashMap<String, Data>) -> MapBuilder {
+        for (key, value) in values {
+            builder = match value {
+                Data::String(value) => builder.insert_str(key, value),
+                Data::Map(values) => insert_map(builder, values),
+                _ => builder,
+            }
+        }
+
+        builder
+    }
+
     for (key, value) in fields {
-        builder = builder.insert_str(key, value);
+        builder = match value {
+            Data::String(value) => builder.insert_str(key, value),
+            Data::Map(values) => builder.insert_map(key, |builder| insert_map(builder, &values)),
+            _ => builder,
+        }
     }
 
     builder.build()
 }
 
-pub type TemplateData = Vec<(String, String)>;
+pub type TemplateData = Vec<(String, Data)>;

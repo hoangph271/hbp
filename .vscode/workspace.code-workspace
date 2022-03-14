@@ -1,0 +1,13 @@
+{
+  "folders": [
+    {
+      "path": "..",
+      "name": "hbp"
+    },
+    {
+      "path": "../markdown/users/hbp",
+      "name": "notes"
+    }
+  ],
+  "settings": {}
+}

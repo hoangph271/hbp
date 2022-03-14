@@ -22,3 +22,5 @@ impl HbpError {
         }
     }
 }
+
+pub type HbpResult<T> = Result<T, HbpError>;

@@ -12,6 +12,7 @@ paginate: true
 - [x] Tasklist support  
 - [x] `AboutMe.md` should me `marp`ed  
 - [x] If `hbp` think some .md is a `marp`ed `.md` use `marper` to convert it...!  
+- [x] Notes for `#Ká`  
 
 ---
 - [ ] ~~Notes for `#Ká`~~  
@@ -42,3 +43,9 @@ paginate: true
 ---
 
 - [x] `tbl_users` `C`.`R`  
+- [x] `css-scroll-snapping` for `marp`ed views
+  (Tutorial [here](https://css-tricks.com/practical-css-scroll-snapping/))
+- [x] Tasklist support  
+- [x] `AboutMe.md` should me `marp`ed  
+- [x] If `hbp` think some .md is a `marp`ed `.md` use `marper` to convert it...!  
+- [x] Notes for `#Ká`  

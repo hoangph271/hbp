@@ -6,12 +6,71 @@ use crate::utils::{
     types::HbpResult,
 };
 use httpstatus::StatusCode;
+use mustache::{Data, MapBuilder};
+use serde::Deserialize;
+use std::fs::File;
+use std::io::Read;
 use std::path::{Path, PathBuf};
 
 fn is_markdown(file_path: &Path) -> bool {
     match file_path.file_name() {
         None => false,
         Some(file_name) => file_name.to_string_lossy().to_lowercase().ends_with(".md"),
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
+struct MarkdownOgpMetadata {
+    og_title: String,
+    og_type: String,
+    og_url: String,
+    og_image: String,
+}
+impl MarkdownOgpMetadata {
+    fn of_markdown(markdown_path: &Path) -> Option<MarkdownOgpMetadata> {
+        let json_file_name = match markdown_path.file_name() {
+            Some(file_name) => {
+                let mut file_name = file_name.to_string_lossy().into_owned();
+                file_name.push_str(".json");
+
+                file_name
+            }
+            None => return None,
+        };
+
+        let mut json_path = markdown_path.to_owned();
+        json_path.set_file_name(json_file_name);
+
+        if json_path.exists() {
+            if let Ok(mut file) = File::open(json_path) {
+                let mut json = String::new();
+
+                if file.read_to_string(&mut json).is_err() {
+                    return None;
+                }
+
+                if let Ok(json) = serde_json::from_str::<MarkdownOgpMetadata>(&json) {
+                    return Some(json);
+                }
+
+                debug!(
+                    "is_err: {:?}",
+                    serde_json::from_str::<MarkdownOgpMetadata>(&json)
+                );
+            }
+        }
+
+        None
+    }
+
+    fn to_data(&self) -> Data {
+        MapBuilder::new()
+            .insert_str("og_title", self.og_title.clone())
+            .insert_str("og_type", self.og_type.clone())
+            .insert_str("og_url", self.og_url.clone())
+            .insert_str("og_image", self.og_image.clone())
+            .build()
     }
 }
 
@@ -35,7 +94,7 @@ async fn render_marp(
     ]
     .join("\n");
 
-    let mut data = vec![("raw_content".to_owned(), raw_content)];
+    let mut data = vec![("raw_content".to_owned(), Data::String(raw_content))];
 
     if let Some(extra_data) = extra_data {
         data.extend(extra_data);
@@ -56,7 +115,7 @@ async fn render_markdown(
             "static/markdown.html",
             &Some(template::data_from(vec![(
                 "markdown_html".to_owned(),
-                markdown_html,
+                Data::String(markdown_html),
             )])),
         )
     }
@@ -76,7 +135,7 @@ pub async fn markdown_file(file_path: PathBuf) -> HbpResponse {
                 &content,
                 Some(vec![(
                     "title".to_owned(),
-                    file_path.to_string_lossy().into_owned(),
+                    Data::String(file_path.to_string_lossy().into_owned()),
                 )]),
             )
             .await
@@ -102,29 +161,42 @@ pub async fn user_markdown_file(
     let sub = JwtPayload::sub_from(jwt);
 
     if sub.eq(username) {
-        let file_path = PathBuf::from("markdown")
+        let markdown_path = PathBuf::from("markdown")
             .join("users")
             .join(username)
             .join(file_path);
 
-        if let Ok(content) = markdown::read_markdown(&file_path) {
-            return match render_markdown(
-                &content,
-                file_path.file_name().map(|file_name| {
-                    vec![("title".to_owned(), file_name.to_string_lossy().into_owned())]
-                }),
-            )
-            .await
-            {
+        let title = match markdown_path.file_name() {
+            Some(file_name) => file_name.to_string_lossy().into_owned(),
+            None => markdown_path.to_string_lossy().into_owned(),
+        };
+
+        let ogp_metadata = MarkdownOgpMetadata::of_markdown(&markdown_path);
+
+        let extra_data = vec![
+            ("title".to_owned(), Data::String(title)),
+            (
+                "ogp_metadata".to_owned(),
+                match ogp_metadata {
+                    Some(ogp_metadata) => ogp_metadata.to_data(),
+                    None => Data::Null,
+                },
+            ),
+        ];
+
+        if let Ok(content) = markdown::read_markdown(&markdown_path) {
+            let render_result = render_markdown(&content, Some(extra_data)).await;
+
+            return match render_result {
                 Ok(html) => HbpResponse::ok(Some(HbpContent::Html(html))),
                 Err(e) => {
                     error!("{}", e);
                     HbpResponse::internal_server_error()
                 }
             };
-        } else {
-            return HbpResponse::internal_server_error();
         }
+
+        return HbpResponse::internal_server_error();
     }
 
     HbpResponse::status(StatusCode::Forbidden)

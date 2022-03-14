@@ -7,14 +7,9 @@ paginate: true
 ## > TODOs
 
 ## > DONEs
-- [x] `css-scroll-snapping` for `marp`ed views
-  (Tutorial [here](https://css-tricks.com/practical-css-scroll-snapping/))
-- [x] Tasklist support  
-- [x] `AboutMe.md` should me `marp`ed  
-- [x] If `hbp` think some .md is a `marp`ed `.md` use `marper` to convert it...!  
-- [x] Notes for `#Ká`  
 
 ---
+
 - [ ] ~~System information in index page~~  
 - [ ] ~~Download static folder  ****~~  
 - [x] `Node.js` `marper` API for rendering `marp`ed `.md`s...!  
@@ -42,3 +37,9 @@ paginate: true
 ---
 
 - [x] `tbl_users` `C`.`R`  
+- [x] `css-scroll-snapping` for `marp`ed views
+  (Tutorial [here](https://css-tricks.com/practical-css-scroll-snapping/))
+- [x] Tasklist support  
+- [x] `AboutMe.md` should me `marp`ed  
+- [x] If `hbp` think some .md is a `marp`ed `.md` use `marper` to convert it...!  
+- [x] Notes for `#Ká`  

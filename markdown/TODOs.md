@@ -9,7 +9,6 @@ paginate: true
 ## > DONEs
 
 ---
-- [ ] ~~Notes for `#Ká`~~  
 - [ ] ~~System information in index page~~  
 - [ ] ~~Download static folder  ****~~  
 - [x] `Node.js` `marper` API for rendering `marp`ed `.md`s...!  

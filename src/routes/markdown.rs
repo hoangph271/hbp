@@ -160,44 +160,51 @@ pub async fn user_markdown_file(
 ) -> HbpResponse {
     let sub = JwtPayload::sub_from(jwt);
 
-    if sub.eq(username) {
-        let markdown_path = PathBuf::from("markdown")
-            .join("users")
-            .join(username)
-            .join(file_path);
-
-        let title = match markdown_path.file_name() {
-            Some(file_name) => file_name.to_string_lossy().into_owned(),
-            None => markdown_path.to_string_lossy().into_owned(),
-        };
-
-        let ogp_metadata = MarkdownOgpMetadata::of_markdown(&markdown_path);
-
-        let extra_data = vec![
-            ("title".to_owned(), Data::String(title)),
-            (
-                "ogp_metadata".to_owned(),
-                match ogp_metadata {
-                    Some(ogp_metadata) => ogp_metadata.to_data(),
-                    None => Data::Null,
-                },
-            ),
-        ];
-
-        if let Ok(content) = markdown::read_markdown(&markdown_path) {
-            let render_result = render_markdown(&content, Some(extra_data)).await;
-
-            return match render_result {
-                Ok(html) => HbpResponse::ok(Some(HbpContent::Html(html))),
-                Err(e) => {
-                    error!("{}", e);
-                    HbpResponse::internal_server_error()
-                }
-            };
-        }
-
-        return HbpResponse::internal_server_error();
+    if !sub.eq(username) {
+        return HbpResponse::status(StatusCode::Forbidden);
     }
 
-    HbpResponse::status(StatusCode::Forbidden)
+    let markdown_path = PathBuf::from("markdown")
+        .join("users")
+        .join(username)
+        .join(file_path);
+
+    let title = match markdown_path.file_name() {
+        Some(file_name) => file_name.to_string_lossy().into_owned(),
+        None => markdown_path.to_string_lossy().into_owned(),
+    };
+
+    let ogp_metadata = MarkdownOgpMetadata::of_markdown(&markdown_path);
+
+    let extra_data = vec![
+        ("title".to_owned(), Data::String(title)),
+        (
+            "ogp_metadata".to_owned(),
+            match ogp_metadata {
+                Some(ogp_metadata) => ogp_metadata.to_data(),
+                None => Data::Null,
+            },
+        ),
+    ];
+
+    if !markdown_path.exists() {
+        return HbpResponse::not_found()
+    }
+
+    if !is_markdown(&markdown_path) {
+        // TODO: Maybe handle binary files as well...?
+        return HbpResponse::text("NOT a .md file", StatusCode::BadRequest);
+    }
+
+    if let Ok(content) = markdown::read_markdown(&markdown_path) {
+        return match render_markdown(&content, Some(extra_data)).await {
+            Ok(html) => HbpResponse::ok(Some(HbpContent::Html(html))),
+            Err(e) => {
+                error!("{}", e);
+                HbpResponse::internal_server_error()
+            }
+        };
+    }
+
+    HbpResponse::internal_server_error()
 }

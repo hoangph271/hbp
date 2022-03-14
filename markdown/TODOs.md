@@ -5,6 +5,8 @@ paginate: true
 ---
 
 ## > TODOs
+- [ ] Raw content response
+- [ ] Binary files in markdown/users
 
 ## > DONEs
 - [x] `css-scroll-snapping` for `marp`ed views

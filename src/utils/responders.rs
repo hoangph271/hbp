@@ -70,6 +70,9 @@ impl HbpResponse {
     pub fn internal_server_error() -> HbpResponse {
         HbpResponse::status(StatusCode::InternalServerError)
     }
+    pub fn not_found() -> HbpResponse {
+        HbpResponse::status(StatusCode::NotFound)
+    }
     #[allow(dead_code)]
     pub fn redirect(uri: rocket::http::uri::Uri) -> HbpResponse {
         let location = match uri.absolute() {
@@ -113,6 +116,7 @@ impl<'r> Responder<'r, 'r> for HbpResponse {
                     .status(Status::MovedPermanently)
                     .header(Header::new("Location", path));
             }
+            // TODO: Raw content...!
         }
 
         Ok(response_builder.finalize())

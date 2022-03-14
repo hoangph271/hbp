@@ -58,7 +58,6 @@ pub struct UserPayload {
 pub struct UserResoucePayload {
     pub exp: i64,
     pub sub: String,
-    pub path: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

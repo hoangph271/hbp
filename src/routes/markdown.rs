@@ -124,8 +124,7 @@ async fn render_markdown(
 #[get("/<file_path..>")]
 pub async fn markdown_file(file_path: PathBuf) -> HbpResponse {
     if !is_markdown(&file_path) {
-        // TODO: Maybe handle binary files as well...?
-        return HbpResponse::text("NOT a .md file", StatusCode::BadRequest);
+        return HbpResponse::file(file_path);
     }
 
     let file_path = PathBuf::from("markdown").join(file_path);
@@ -167,7 +166,7 @@ pub async fn user_markdown_file(
     let markdown_path = PathBuf::from("markdown")
         .join("users")
         .join(username)
-        .join(file_path);
+        .join(file_path.clone());
 
     let title = match markdown_path.file_name() {
         Some(file_name) => file_name.to_string_lossy().into_owned(),
@@ -188,12 +187,11 @@ pub async fn user_markdown_file(
     ];
 
     if !markdown_path.exists() {
-        return HbpResponse::not_found()
+        return HbpResponse::not_found();
     }
 
     if !is_markdown(&markdown_path) {
-        // TODO: Maybe handle binary files as well...?
-        return HbpResponse::text("NOT a .md file", StatusCode::BadRequest);
+        return HbpResponse::file(file_path);
     }
 
     if let Ok(content) = markdown::read_markdown(&markdown_path) {

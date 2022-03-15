@@ -3,6 +3,7 @@ use rocket::fs::NamedFile;
 use rocket::http::{ContentType, Header, Status};
 use rocket::response::{Responder, Response, Result};
 use std::io::Cursor;
+use std::path::PathBuf;
 
 #[allow(dead_code)]
 pub enum HbpContent {
@@ -10,7 +11,7 @@ pub enum HbpContent {
     Html(String),
     Json(String),
     Redirect(String),
-    File(Box<std::path::Path>),
+    File(Box<PathBuf>),
 }
 
 pub struct HbpResponse {
@@ -87,6 +88,9 @@ impl HbpResponse {
             content: HbpContent::Redirect(location),
         }
     }
+    pub fn file(path: PathBuf) -> HbpResponse {
+        HbpResponse::ok(Some(HbpContent::File(Box::new(path))))
+    }
 }
 
 impl<'r> Responder<'r, 'r> for HbpResponse {
@@ -120,7 +124,8 @@ impl<'r> Responder<'r, 'r> for HbpResponse {
                     .header(Header::new("Location", path));
             }
             HbpContent::File(file_path) => {
-                return futures::executor::block_on(NamedFile::open(&file_path)).respond_to(request)
+                return futures::executor::block_on(NamedFile::open(&*file_path))
+                    .respond_to(request)
             }
         }
 

@@ -1143,6 +1143,7 @@ name = "hbp"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "bcrypt",
  "bonsaidb",
  "chrono",
@@ -1150,6 +1151,7 @@ dependencies = [
  "dotenv",
  "dotenv_codegen",
  "fern",
+ "futures",
  "httpstatus",
  "jsonwebtoken",
  "log 0.4.14",

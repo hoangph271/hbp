@@ -1,4 +1,6 @@
+use async_trait::async_trait;
 use httpstatus::StatusCode;
+use rocket::fs::NamedFile;
 use rocket::http::{ContentType, Header, Status};
 use rocket::response::{Responder, Response, Result};
 use std::io::Cursor;
@@ -9,6 +11,7 @@ pub enum HbpContent {
     Html(String),
     Json(String),
     Redirect(String),
+    File(Box<std::path::Path>),
 }
 
 pub struct HbpResponse {
@@ -87,8 +90,10 @@ impl HbpResponse {
     }
 }
 
+#[async_trait]
 impl<'r> Responder<'r, 'r> for HbpResponse {
-    fn respond_to(self, _: &rocket::Request<'_>) -> Result<'r> {
+    // TODO: Use `async_trait` instead of blocking
+    fn respond_to(self, request: &rocket::Request<'_>) -> Result<'r> {
         let mut response_builder = Response::build();
 
         let status = Status::from_code(self.status_code.as_u16()).unwrap();
@@ -116,7 +121,9 @@ impl<'r> Responder<'r, 'r> for HbpResponse {
                     .status(Status::MovedPermanently)
                     .header(Header::new("Location", path));
             }
-            // TODO: Raw content...!
+            HbpContent::File(file_path) => {
+                return futures::executor::block_on(NamedFile::open(&file_path)).respond_to(request)
+            } // TODO: Raw content...!
         }
 
         Ok(response_builder.finalize())

@@ -7,6 +7,7 @@ paginate: true
 ## > TODOs
 - [ ] Raw content response
 - [ ] Binary files in markdown/users
+- [x] JWT from secret cookies
 
 ## > DONEs
 

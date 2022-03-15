@@ -5,6 +5,10 @@ paginate: true
 ---
 
 ## > TODOs
+- [x] NamedFile response
+- [x] Binary files in markdown/users
+- [x] JWT from secret cookies
+- [ ] ~~Async HbpResponse::respond_to()~~
 
 ## > DONEs
 

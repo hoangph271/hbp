@@ -1,21 +1,12 @@
----
-marp: true
-theme: gaia
-paginate: true
----
-
 ## > TODOs
+
+## > DONEs
+- [ ] ~~Async HbpResponse::respond_to()~~
+- [ ] ~~System information in index page~~  
+- [ ] ~~Download static folder  ****~~  
 - [x] NamedFile response
 - [x] Binary files in markdown/users
 - [x] JWT from secret cookies
-- [ ] ~~Async HbpResponse::respond_to()~~
-
-## > DONEs
-
----
-
-- [ ] ~~System information in index page~~  
-- [ ] ~~Download static folder  ****~~  
 - [x] `Node.js` `marper` API for rendering `marp`ed `.md`s...!  
 - [x] Better error page
 - [x] Better `GUI`
@@ -24,9 +15,6 @@ paginate: true
 - [x] `<form>` login handler
 - [x] Init run  
 - [x] Serve FTb photos (Requires auth)  
-
----
-
 - [x] Serve static folder requests  
 - [x] Handle either folder or file requests  
 - [x] Handle markdown (reject NOT `.md`) files  
@@ -37,9 +25,6 @@ paginate: true
 - [x] `posts` `C`.`R`.`U`.`D`  
 - [x] use `.env` for JWT secret  
 - [x] use `tbl_users` for login  
-
----
-
 - [x] `tbl_users` `C`.`R`  
 - [x] `css-scroll-snapping` for `marp`ed views
   (Tutorial [here](https://css-tricks.com/practical-css-scroll-snapping/))

@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use httpstatus::StatusCode;
 use rocket::fs::NamedFile;
 use rocket::http::{ContentType, Header, Status};
@@ -90,9 +89,8 @@ impl HbpResponse {
     }
 }
 
-#[async_trait]
 impl<'r> Responder<'r, 'r> for HbpResponse {
-    // TODO: Use `async_trait` instead of blocking
+    // ! FIXME: Change `respond_to` into async when async Traits roll out...!
     fn respond_to(self, request: &rocket::Request<'_>) -> Result<'r> {
         let mut response_builder = Response::build();
 
@@ -123,7 +121,7 @@ impl<'r> Responder<'r, 'r> for HbpResponse {
             }
             HbpContent::File(file_path) => {
                 return futures::executor::block_on(NamedFile::open(&file_path)).respond_to(request)
-            } // TODO: Raw content...!
+            }
         }
 
         Ok(response_builder.finalize())

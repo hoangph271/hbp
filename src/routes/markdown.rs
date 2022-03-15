@@ -121,13 +121,14 @@ async fn render_markdown(
     }
 }
 
-#[get("/<file_path..>")]
-pub async fn markdown_file(file_path: PathBuf) -> HbpResponse {
-    if !is_markdown(&file_path) {
+#[get("/<sub_path..>")]
+pub async fn markdown_file(sub_path: PathBuf) -> HbpResponse {
+    let file_path = PathBuf::from("markdown").join(sub_path.clone());
+
+    if !is_markdown(&sub_path) {
         return HbpResponse::file(file_path);
     }
 
-    let file_path = PathBuf::from("markdown").join(file_path);
     match markdown::read_markdown(&file_path) {
         Ok(content) => {
             match render_markdown(
@@ -151,10 +152,10 @@ pub async fn markdown_file(file_path: PathBuf) -> HbpResponse {
     }
 }
 
-#[get("/users/<username>/<file_path..>")]
+#[get("/users/<username>/<sub_path..>")]
 pub async fn user_markdown_file(
     username: &str,
-    file_path: PathBuf,
+    sub_path: PathBuf,
     jwt: JwtPayload,
 ) -> HbpResponse {
     let sub = JwtPayload::sub_from(jwt);
@@ -163,17 +164,17 @@ pub async fn user_markdown_file(
         return HbpResponse::status(StatusCode::Forbidden);
     }
 
-    let markdown_path = PathBuf::from("markdown")
+    let file_path = PathBuf::from("markdown")
         .join("users")
         .join(username)
-        .join(file_path.clone());
+        .join(sub_path.clone());
 
-    let title = match markdown_path.file_name() {
+    let title = match file_path.file_name() {
         Some(file_name) => file_name.to_string_lossy().into_owned(),
-        None => markdown_path.to_string_lossy().into_owned(),
+        None => file_path.to_string_lossy().into_owned(),
     };
 
-    let ogp_metadata = MarkdownOgpMetadata::of_markdown(&markdown_path);
+    let ogp_metadata = MarkdownOgpMetadata::of_markdown(&file_path);
 
     let extra_data = vec![
         ("title".to_owned(), Data::String(title)),
@@ -186,15 +187,16 @@ pub async fn user_markdown_file(
         ),
     ];
 
-    if !markdown_path.exists() {
+    if !file_path.exists() {
         return HbpResponse::not_found();
     }
 
-    if !is_markdown(&markdown_path) {
+    if !is_markdown(&file_path) {
+        println!("{:?}", file_path);
         return HbpResponse::file(file_path);
     }
 
-    if let Ok(content) = markdown::read_markdown(&markdown_path) {
+    if let Ok(content) = markdown::read_markdown(&file_path) {
         return match render_markdown(&content, Some(extra_data)).await {
             Ok(html) => HbpResponse::ok(Some(HbpContent::Html(html))),
             Err(e) => {

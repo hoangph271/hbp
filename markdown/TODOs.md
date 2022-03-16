@@ -1,6 +1,7 @@
 ## > TODOs
 - [ ] Read #Headers from markdown
 - [ ] Use that to set titles, for docs...?
+- [ ] `index()` for `/markdown/users/<username>`
 
 ## > DONEs
 - [ ] ~~Async HbpResponse::respond_to()~~

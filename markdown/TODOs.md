@@ -1,5 +1,6 @@
 ## > TODOs
-- [ ] Read #Headers from markdown
+- [x] Split `marp`/`markdown` code
+- [ ] Read #Headers from markdown (`MarkdownMetadata`)
 - [ ] Use that to set titles, for docs...?
 - [ ] `index()` for `/markdown/users/<username>`
 

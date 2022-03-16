@@ -55,6 +55,7 @@ fn launch() -> rocket::Rocket<rocket::Build> {
                 routes::users::post_login
             ],
         )
+        .mount("/blogs", routes![routes::blogs::index])
         .register("/", catchers![default_catcher])
 }
 

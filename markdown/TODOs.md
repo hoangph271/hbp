@@ -1,5 +1,6 @@
 ## > TODOs
-
+- [ ] List out all blogs
+- [ ] ~~Paging for blogs~~
 ## > DONEs
 - [ ] ~~Async HbpResponse::respond_to()~~
 - [ ] ~~System information in index page~~  

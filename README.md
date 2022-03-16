@@ -7,3 +7,5 @@ Key features:
 - Have one tester after all...!
 - > Nếu t giàu, t sẽ chia cho mỗi người một cái #NFT nhá...! :")
 
+### Old trick:
+Please refer [README.md](/markdown/README.md)

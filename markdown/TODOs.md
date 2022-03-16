@@ -1,4 +1,6 @@
 ## > TODOs
+- [ ] Read #Headers from markdown
+- [ ] Use that to set titles, for docs...?
 
 ## > DONEs
 - [ ] ~~Async HbpResponse::respond_to()~~

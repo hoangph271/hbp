@@ -78,7 +78,6 @@ pub async fn user_markdown_file(
     }
 
     if !markdown::is_markdown(&file_path) {
-        println!("{:?}", file_path);
         return HbpResponse::file(file_path);
     }
 

@@ -1,8 +1,8 @@
 use crate::utils::{
-    jwt::JwtPayload,
+    auth::AuthPayload,
     markdown,
-    types::MarkdownMetadata,
     responders::{HbpContent, HbpResponse},
+    types::MarkdownMetadata,
 };
 use httpstatus::StatusCode;
 use mustache::Data;
@@ -40,10 +40,12 @@ pub async fn markdown_file(sub_path: PathBuf) -> HbpResponse {
 }
 
 #[get("/users/<username>/<sub_path..>")]
-pub async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: JwtPayload) -> HbpResponse {
-    let sub = JwtPayload::sub_from(jwt);
-
-    if !sub.eq(username) {
+pub async fn user_markdown_file(
+    username: &str,
+    sub_path: PathBuf,
+    jwt: AuthPayload,
+) -> HbpResponse {
+    if !jwt.username().eq(username) {
         return HbpResponse::status(StatusCode::Forbidden);
     }
 

@@ -1,12 +1,12 @@
 use crate::data::{lib::user_orm, sqlite::DbConn};
-use crate::utils::jwt::{sign_jwt, JwtPayload, UserPayload};
+use crate::utils::auth::{jwt, AuthPayload, UserPayload};
 use crate::utils::responders::{HbpContent, HbpResponse};
 use crate::utils::template;
 use httpstatus::StatusCode;
 use rocket::form::Form;
 
 #[get("/")]
-pub fn index(jwt: JwtPayload) -> HbpResponse {
+pub fn index(jwt: AuthPayload) -> HbpResponse {
     return HbpResponse::text(&*format!("hello {:?}", jwt), StatusCode::Ok);
 }
 
@@ -40,7 +40,7 @@ pub async fn post_login(login_body: Form<LoginBody>, conn: DbConn) -> HbpRespons
                     .unwrap()
                     .timestamp();
 
-                let jwt = sign_jwt(JwtPayload::User(UserPayload {
+                let jwt = jwt::sign_jwt(AuthPayload::User(UserPayload {
                     sub: user.username,
                     role: Vec::new(),
                     exp,

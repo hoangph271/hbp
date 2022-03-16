@@ -64,25 +64,6 @@ fn default_catcher(
     _req: &rocket::Request,
 ) -> utils::responders::HbpResponse {
     use httpstatus::StatusCode;
-    use mustache::MapBuilder;
-    use utils::responders::{HbpContent, HbpResponse};
-    use utils::template::render_from_template_by_default_page;
 
-    let status_code = StatusCode::from(status.code);
-
-    let error_text = format!("{} | {}", status_code.as_u16(), status_code.reason_phrase());
-    let html = render_from_template_by_default_page(
-        "static/error.html",
-        &Some(
-            MapBuilder::new()
-                .insert_str("error_text", error_text)
-                .build(),
-        ),
-    )
-    .unwrap();
-
-    HbpResponse {
-        status_code,
-        content: HbpContent::Html(html),
-    }
+    utils::responders::HbpResponse::status(StatusCode::from(status.code))
 }

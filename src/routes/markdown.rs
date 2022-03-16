@@ -21,14 +21,14 @@ fn is_markdown(file_path: &Path) -> bool {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
-struct MarkdownOgpMetadata {
+struct MarkdownMetadata {
     og_title: String,
     og_type: String,
     og_url: String,
     og_image: String,
 }
-impl MarkdownOgpMetadata {
-    fn of_markdown(markdown_path: &Path) -> Option<MarkdownOgpMetadata> {
+impl MarkdownMetadata {
+    fn of_markdown(markdown_path: &Path) -> Option<MarkdownMetadata> {
         let json_file_name = match markdown_path.file_name() {
             Some(file_name) => {
                 let mut file_name = file_name.to_string_lossy().into_owned();
@@ -50,13 +50,13 @@ impl MarkdownOgpMetadata {
                     return None;
                 }
 
-                if let Ok(json) = serde_json::from_str::<MarkdownOgpMetadata>(&json) {
+                if let Ok(json) = serde_json::from_str::<MarkdownMetadata>(&json) {
                     return Some(json);
                 }
 
                 debug!(
                     "is_err: {:?}",
-                    serde_json::from_str::<MarkdownOgpMetadata>(&json)
+                    serde_json::from_str::<MarkdownMetadata>(&json)
                 );
             }
         }
@@ -64,7 +64,7 @@ impl MarkdownOgpMetadata {
         None
     }
 
-    fn to_data(&self) -> Data {
+    fn to_mustache_data(&self) -> Data {
         MapBuilder::new()
             .insert_str("og_title", self.og_title.clone())
             .insert_str("og_type", self.og_type.clone())
@@ -174,20 +174,21 @@ pub async fn user_markdown_file(
         None => file_path.to_string_lossy().into_owned(),
     };
 
-    let ogp_metadata = MarkdownOgpMetadata::of_markdown(&file_path);
+    let ogp_metadata = MarkdownMetadata::of_markdown(&file_path);
 
     let extra_data = vec![
         ("title".to_owned(), Data::String(title)),
         (
             "ogp_metadata".to_owned(),
             match ogp_metadata {
-                Some(ogp_metadata) => ogp_metadata.to_data(),
+                Some(ogp_metadata) => ogp_metadata.to_mustache_data(),
                 None => Data::Null,
             },
         ),
     ];
 
     if !file_path.exists() {
+        info!("{:?} not exists", file_path.to_string_lossy());
         return HbpResponse::not_found();
     }
 

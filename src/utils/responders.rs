@@ -1,4 +1,6 @@
+use crate::utils::template::render_from_template_by_default_page;
 use httpstatus::StatusCode;
+use mustache::MapBuilder;
 use rocket::fs::NamedFile;
 use rocket::http::{ContentType, Header, Status};
 use rocket::response::{Responder, Response, Result};
@@ -44,11 +46,22 @@ impl HbpResponse {
         }
     }
     pub fn status(status_code: StatusCode) -> HbpResponse {
-        let content = format!("{} | {}", status_code.as_u16(), status_code.reason_phrase());
+        let status_code = StatusCode::from(status_code.as_u16());
+
+        let error_text = format!("{} | {}", status_code.as_u16(), status_code.reason_phrase());
+        let html = render_from_template_by_default_page(
+            "static/error.html",
+            &Some(
+                MapBuilder::new()
+                    .insert_str("error_text", error_text)
+                    .build(),
+            ),
+        )
+        .unwrap();
 
         HbpResponse {
             status_code,
-            content: HbpContent::Plain(content),
+            content: HbpContent::Html(html),
         }
     }
     pub fn unauthorized() -> HbpResponse {

@@ -1,4 +1,5 @@
 ## > TODOs
+- [ ] Learn `async` #Rust
 - [x] Split `marp`/`markdown` code
 - [ ] Read #Headers from markdown (`MarkdownMetadata`)
 - [ ] Use that to set titles, for docs...?

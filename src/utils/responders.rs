@@ -91,15 +91,10 @@ impl HbpResponse {
         HbpResponse::status(StatusCode::NotFound)
     }
     #[allow(dead_code)]
-    pub fn redirect(uri: rocket::http::uri::Uri) -> HbpResponse {
-        let location = match uri.absolute() {
-            Some(uri) => uri.path().as_str().to_owned(),
-            None => uri.origin().unwrap().path().as_str().to_owned(),
-        };
-
+    pub fn redirect(uri: rocket::http::uri::Origin) -> HbpResponse {
         HbpResponse {
             status_code: StatusCode::MovedPermanently,
-            content: HbpContent::Redirect(location),
+            content: HbpContent::Redirect(uri.into_normalized().to_string()),
         }
     }
     pub fn file(path: PathBuf) -> HbpResponse {

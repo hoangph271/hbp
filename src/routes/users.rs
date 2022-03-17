@@ -12,12 +12,9 @@ pub fn index(jwt: AuthPayload) -> HbpResponse {
 
 #[get("/login")]
 pub fn login() -> HbpResponse {
-    let html = template::render_from_template_by_default_page(
-        "users/login.html",
-        &Some("Login"),
-        &None,
-    )
-    .expect("render users/login.html failed");
+    let html =
+        template::render_from_template_by_default_page("users/login.html", &Some("Login"), &None)
+            .expect("render users/login.html failed");
     HbpResponse::ok(Some(HbpContent::Html(html)))
 }
 
@@ -56,7 +53,7 @@ pub async fn post_login(login_body: Form<LoginBody>, conn: DbConn) -> HbpRespons
             return HbpResponse::status(StatusCode::Unauthorized);
         }
 
-        HbpResponse::status(StatusCode::Unauthorized)
+        HbpResponse::redirect(uri!("/users", login))
     })
     .await
 }

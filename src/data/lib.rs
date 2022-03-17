@@ -85,7 +85,10 @@ pub mod user_orm {
             .first(conn)
         {
             Ok(post) => Ok(post),
-            Err(e) => Err(OrmError::DieselError(e)),
+            Err(e) => {
+                error!("find_one_by_username failed: {:?}", e);
+                Err(OrmError::DieselError(e))
+            }
         }
     }
 

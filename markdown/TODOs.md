@@ -1,11 +1,11 @@
 ## > TODOs
-- [ ] Learn `async` #Rust
 - [x] Split `marp`/`markdown` code
 - [ ] Read #Headers from markdown (`MarkdownMetadata`)
 - [ ] Use that to set titles, for docs...?
 - [ ] `index()` for `/markdown/users/<username>`
 
 ## > DONEs
+- [ ] ~~ Learn `async` #Rust~~
 - [ ] ~~Async HbpResponse::respond_to()~~
 - [ ] ~~System information in index page~~  
 - [ ] ~~Download static folder  ****~~  

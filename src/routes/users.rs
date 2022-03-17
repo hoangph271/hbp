@@ -7,13 +7,17 @@ use rocket::form::Form;
 
 #[get("/")]
 pub fn index(jwt: AuthPayload) -> HbpResponse {
-    return HbpResponse::text(&*format!("hello {:?}", jwt), StatusCode::Ok);
+    HbpResponse::text(&*format!("hello {:?}", jwt), StatusCode::Ok)
 }
 
 #[get("/login")]
 pub fn login() -> HbpResponse {
-    let html = template::render_from_template("users/login.html", &None)
-        .expect("render users/login.html failed");
+    let html = template::render_from_template_by_default_page(
+        "users/login.html",
+        &Some("Login"),
+        &None,
+    )
+    .expect("render users/login.html failed");
     HbpResponse::ok(Some(HbpContent::Html(html)))
 }
 

@@ -6,6 +6,9 @@ use httpstatus::StatusCode;
 use rocket::http::{Cookie, Status};
 use rocket::request::{FromRequest, Outcome, Request};
 
+pub const RESOURCE_JWT_COOKIE: &str = "resource-jwt";
+pub const USER_JWT_COOKIE: &str = "user-jwt";
+
 pub mod jwt {
     use crate::utils::auth::{AuthPayload, UserPayload, UserResoucePayload};
     use crate::utils::types::HbpError;
@@ -33,7 +36,7 @@ pub mod jwt {
 
         match decode::<UserResoucePayload>(token_str, key, validation) {
             Ok(result) => {
-                return Ok(AuthPayload::UserResouce(result.claims));
+                return Ok(AuthPayload::UserResource(result.claims));
             }
             Err(e) => {
                 error!("{e}");
@@ -54,23 +57,22 @@ pub mod jwt {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct UserPayload {
     pub exp: i64,
     pub sub: String,
     pub role: Vec<String>,
 }
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct UserResoucePayload {
     pub exp: i64,
     pub sub: String,
 }
-pub const RESOURCE_JWT_COOKIE: &str = "resource-jwt";
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum AuthPayload {
     User(UserPayload),
-    UserResouce(UserResoucePayload),
+    UserResource(UserResoucePayload),
 }
 
 #[rocket::async_trait]
@@ -78,47 +80,68 @@ impl<'r> FromRequest<'r> for AuthPayload {
     type Error = HbpError;
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        let mut jwt_str = req
+        let jwt_from_query = req.query_value::<&str>("jwt");
+        let jwt_from_header = req
             .headers()
             .get_one(constants::headers::AUTHORIZATION)
             .map(|jwt_str| jwt_str.trim()["Bearer ".len()..].to_owned());
 
-        let resource_jwt_cookies = req.cookies().get_private(RESOURCE_JWT_COOKIE);
+        let jwt_str = if let Some(_jwt_str) = jwt_from_query {
+            _jwt_str.map(|val| val.to_owned()).ok()
+        } else if jwt_from_header.is_some() {
+            jwt_from_header
+        } else {
+            None
+        };
 
-        if jwt_str.is_none() {
-            if let Some(_jwt_str) = req.query_value::<&str>("jwt") {
-                jwt_str = _jwt_str.map(|val| val.to_owned()).ok();
+        let user_jwt_cookie = req.cookies().get_private(USER_JWT_COOKIE);
+        let resource_jwt_cookie = req.cookies().get_private(RESOURCE_JWT_COOKIE);
 
-                if resource_jwt_cookies.is_none() && jwt_str.is_some() {
-                    req.cookies()
-                        .add_private(Cookie::new(RESOURCE_JWT_COOKIE, jwt_str.clone().unwrap()))
+        let jwt = if let Some(jwt_str) = jwt_str.clone() {
+            let jwt = jwt::verify_jwt(&jwt_str).ok();
+
+            if let Some(jwt) = jwt.clone() {
+                match jwt {
+                    AuthPayload::User(_) => {
+                        if user_jwt_cookie.is_none() {
+                            req.cookies()
+                                .add_private(Cookie::new(USER_JWT_COOKIE, jwt_str.clone()));
+                        }
+                    }
+                    AuthPayload::UserResource(_) => {
+                        if resource_jwt_cookie.is_none() {
+                            req.cookies()
+                                .add_private(Cookie::new(RESOURCE_JWT_COOKIE, jwt_str.clone()));
+                        }
+                    }
                 }
-            } else if let Some(val) = resource_jwt_cookies {
-                jwt_str = Some(val.value().to_owned())
             }
-        }
 
-        if let Some(jwt_str) = jwt_str {
-            return match jwt::verify_jwt(&jwt_str) {
-                Ok(claims) => Outcome::Success(claims),
-                Err(e) => {
-                    let error = HbpError::from_message(&*format!("Invalid JWT: {:?}", e));
-                    Outcome::Failure((
-                        Status::from_code(StatusCode::Unauthorized.as_u16()).unwrap(),
-                        error,
-                    ))
-                }
+            jwt
+        } else {
+            let jwt_from_cookies = if user_jwt_cookie.is_some() {
+                user_jwt_cookie
+            } else if resource_jwt_cookie.is_some() {
+                resource_jwt_cookie
+            } else {
+                None
             };
-        }
 
-        let error = HbpError::from_message(&format!(
-            "Header `{}` not found",
-            constants::headers::AUTHORIZATION
-        ));
-        Outcome::Failure((
-            Status::from_code(StatusCode::Unauthorized.as_u16()).unwrap(),
-            error,
-        ))
+            if let Some(jwt_str) = jwt_from_cookies {
+                jwt::verify_jwt(jwt_str.value()).ok()
+            } else {
+                None
+            }
+        };
+
+        if let Some(jwt) = jwt {
+            Outcome::Success(jwt)
+        } else {
+            Outcome::Failure((
+                Status::from_code(StatusCode::Unauthorized.as_u16()).unwrap(),
+                HbpError::from_message("No valid jwt found"),
+            ))
+        }
     }
 }
 
@@ -126,7 +149,7 @@ impl AuthPayload {
     pub fn username(&self) -> &String {
         match self {
             AuthPayload::User(jwt) => &jwt.sub,
-            AuthPayload::UserResouce(jwt) => &jwt.sub,
+            AuthPayload::UserResource(jwt) => &jwt.sub,
         }
     }
 }

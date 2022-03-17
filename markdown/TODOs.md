@@ -3,6 +3,8 @@
 - [ ] Read #Headers from markdown (`MarkdownMetadata`)
 - [ ] Use that to set titles, for docs...?
 - [ ] `index()` for `/markdown/users/<username>`
+- [ ] Store JWT to cookies when login success
+- [ ] ResoucePayload should contain `blob`s for access paths
 
 ## > DONEs
 - [ ] ~~ Learn `async` #Rust~~

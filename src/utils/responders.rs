@@ -71,6 +71,9 @@ impl HbpResponse {
     pub fn forbidden() -> HbpResponse {
         HbpResponse::status(StatusCode::Forbidden)
     }
+    pub fn bad_request() -> HbpResponse {
+        HbpResponse::status(StatusCode::BadRequest)
+    }
     pub fn json<T: serde::Serialize>(content: T, status_code: Option<StatusCode>) -> HbpResponse {
         let json = serde_json::to_string(&content).expect("Stringify JSON failed");
 

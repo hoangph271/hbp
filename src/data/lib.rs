@@ -92,7 +92,6 @@ pub mod user_orm {
         }
     }
 
-    #[allow(dead_code)]
     pub fn create_user(conn: &SqliteConnection, new_user: NewUser) -> Result<User, Error> {
         diesel::insert_into(tbl_users::table)
             .values(InsertableNewUser::from(new_user))

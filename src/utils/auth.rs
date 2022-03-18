@@ -5,6 +5,7 @@ use crate::utils::constants;
 use httpstatus::StatusCode;
 use rocket::http::{Cookie, Status};
 use rocket::request::{FromRequest, Outcome, Request};
+use serde_json::json;
 
 pub const RESOURCE_JWT_COOKIE: &str = "resource-jwt";
 pub const USER_JWT_COOKIE: &str = "user-jwt";
@@ -47,7 +48,7 @@ pub mod jwt {
             "verify_jwt failed for {token_str}"
         )))
     }
-    pub fn sign_jwt(payload: AuthPayload) -> String {
+    pub fn sign_jwt(payload: &str) -> String {
         encode(
             &Header::default(),
             &payload,
@@ -57,12 +58,29 @@ pub mod jwt {
     }
 }
 
+fn timestamp_now() -> i64 {
+    chrono::Utc::now()
+        .checked_add_signed(chrono::Duration::minutes(60))
+        .unwrap()
+        .timestamp()
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct UserPayload {
     pub exp: i64,
     pub sub: String,
     pub role: Vec<String>,
 }
+impl UserPayload {
+    pub fn sign_jwt(role: Vec<String>, sub: String) -> String {
+        jwt::sign_jwt(&json!({
+            "exp": timestamp_now(),
+            "role": role,
+            "sub": sub,
+        }).to_string())
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct UserResoucePayload {
     pub exp: i64,
@@ -80,6 +98,7 @@ impl<'r> FromRequest<'r> for AuthPayload {
     type Error = HbpError;
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
+        // TODO: Fix this shit...! :"/
         let jwt_from_query = req.query_value::<&str>("jwt");
         let jwt_from_header = req
             .headers()
@@ -119,6 +138,8 @@ impl<'r> FromRequest<'r> for AuthPayload {
 
             jwt
         } else {
+            info!("{:?}", user_jwt_cookie);
+
             let jwt_from_cookies = if user_jwt_cookie.is_some() {
                 user_jwt_cookie
             } else if resource_jwt_cookie.is_some() {

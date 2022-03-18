@@ -1,5 +1,6 @@
 ## > TODOs
 - [x] Split `marp`/`markdown` code
+- [x] Signup
 - [ ] Read #Headers from markdown (`MarkdownMetadata`)
 - [ ] Use that to set titles, for docs...?
 - [ ] `index()` for `/markdown/users/<username>`

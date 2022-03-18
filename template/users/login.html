@@ -1,15 +1,9 @@
-<style>
-  form {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    min-height: 340px;
-    gap: 0.8rem;
-  }
-</style>
+<link rel="stylesheet" href="/static/css/auth.css">
 <form action="/users/login" method="post">
   <input type="text" name="username" id="username" placeholder="username">
   <input type="password" name="password" id="password" placeholder="password">
   <button type="submit">Login</button>
+  <div>
+    <a href="/users/signup">Signup here...!</a>
+  </div>
 </form>

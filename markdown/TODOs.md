@@ -4,7 +4,8 @@
 - [ ] Read #Headers from markdown (`MarkdownMetadata`)
 - [ ] Use that to set titles, for docs...?
 - [ ] `index()` for `/markdown/users/<username>`
-- [ ] Store JWT to cookies when login success
+- [x] Store JWT to cookies when login success
+- [ ] Fix: Broken JWT
 - [ ] ResoucePayload should contain `blob`s for access paths
 
 ## > DONEs

@@ -1,7 +1,11 @@
+use crate::utils::template::render_from_template_by_default_page;
 use httpstatus::StatusCode;
+use mustache::MapBuilder;
+use rocket::fs::NamedFile;
 use rocket::http::{ContentType, Header, Status};
 use rocket::response::{Responder, Response, Result};
 use std::io::Cursor;
+use std::path::PathBuf;
 
 #[allow(dead_code)]
 pub enum HbpContent {
@@ -9,6 +13,7 @@ pub enum HbpContent {
     Html(String),
     Json(String),
     Redirect(String),
+    File(Box<PathBuf>),
 }
 
 pub struct HbpResponse {
@@ -41,11 +46,22 @@ impl HbpResponse {
         }
     }
     pub fn status(status_code: StatusCode) -> HbpResponse {
-        let content = format!("{} | {}", status_code.as_u16(), status_code.reason_phrase());
+        let status_code = StatusCode::from(status_code.as_u16());
+
+        let error_text = format!("{} | {}", status_code.as_u16(), status_code.reason_phrase());
+        let html = render_from_template_by_default_page(
+            "static/error.html",
+            &Some(
+                MapBuilder::new()
+                    .insert_str("error_text", error_text)
+                    .build(),
+            ),
+        )
+        .unwrap();
 
         HbpResponse {
             status_code,
-            content: HbpContent::Plain(content),
+            content: HbpContent::Html(html),
         }
     }
     pub fn unauthorized() -> HbpResponse {
@@ -70,6 +86,9 @@ impl HbpResponse {
     pub fn internal_server_error() -> HbpResponse {
         HbpResponse::status(StatusCode::InternalServerError)
     }
+    pub fn not_found() -> HbpResponse {
+        HbpResponse::status(StatusCode::NotFound)
+    }
     #[allow(dead_code)]
     pub fn redirect(uri: rocket::http::uri::Uri) -> HbpResponse {
         let location = match uri.absolute() {
@@ -82,10 +101,14 @@ impl HbpResponse {
             content: HbpContent::Redirect(location),
         }
     }
+    pub fn file(path: PathBuf) -> HbpResponse {
+        HbpResponse::ok(Some(HbpContent::File(Box::new(path))))
+    }
 }
 
 impl<'r> Responder<'r, 'r> for HbpResponse {
-    fn respond_to(self, _: &rocket::Request<'_>) -> Result<'r> {
+    // ! FIXME: Change `respond_to` into async when async Traits roll out...!
+    fn respond_to(self, request: &rocket::Request<'_>) -> Result<'r> {
         let mut response_builder = Response::build();
 
         let status = Status::from_code(self.status_code.as_u16()).unwrap();
@@ -112,6 +135,10 @@ impl<'r> Responder<'r, 'r> for HbpResponse {
                     .header(ContentType::HTML)
                     .status(Status::MovedPermanently)
                     .header(Header::new("Location", path));
+            }
+            HbpContent::File(file_path) => {
+                return futures::executor::block_on(NamedFile::open(&*file_path))
+                    .respond_to(request)
             }
         }
 

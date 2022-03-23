@@ -18,6 +18,7 @@
   --content-mw: 650px;
   --padding-small: 0.4rem;
   --radius-gentle: 0.4rem;
+  --radius-tight: 0.2em;
   --monospace: 'Ubuntu Mono',  'Courier New', Courier, monospace;
 }
 
@@ -79,17 +80,27 @@ code {
 }
 /* #endregion */
 
+.block-img {
+  max-width: 100%;
+}
+
 .hbp-markdown {
   width: calc(100vw - 2rem);
   max-width: var(--content-mw);
   padding: var(--padding-small);
-  margin: 0.8rem auto;
+  margin: 0.8rem auto!important;
 }
 
 /* ? workarounds for `pulldown-cmark` until it works better */
 .hbp-markdown ul  {
   padding: 0 1rem;
   list-style: none;
+}
+
+.hbp-markdown code {
+  background-color: lightgray;
+  padding: 0.2rem;
+  border-radius: var(--radius-tight);
 }
 
 /* ? Custom CSS for MarpIt */

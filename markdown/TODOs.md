@@ -1,14 +1,17 @@
 ## > TODOs
-- [x] Split `marp`/`markdown` code
-- [x] Signup
 - [ ] Read #Headers from markdown (`MarkdownMetadata`)
 - [ ] Use that to set titles, for docs...?
 - [ ] `index()` for `/markdown/users/<username>`
-- [x] Store JWT to cookies when login success
 - [ ] Fix: Broken JWT
 - [ ] ResoucePayload should contain `blob`s for access paths
+- [ ] Finish that `TODO` stuff:
+    - [ ] List todo
+    - [ ] Recreate on new day
 
 ## > DONEs
+- [x] Split `marp`/`markdown` code
+- [x] Signup
+- [x] Store JWT to cookies when login success
 - [ ] ~~ Learn `async` #Rust~~
 - [ ] ~~Async HbpResponse::respond_to()~~
 - [ ] ~~System information in index page~~  

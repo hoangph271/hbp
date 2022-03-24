@@ -3,6 +3,8 @@
 - [ ] Use that to set titles, for docs...?
 - [ ] `index()` for `/markdown/users/<username>`
 - [ ] Fix: Broken JWT
+    - [ ] Add test for JWT utils
+    - [ ] Fix JWT handling for `auth`
 - [ ] ResoucePayload should contain `blob`s for access paths
 - [ ] Finish that `TODO` stuff:
     - [ ] List todo

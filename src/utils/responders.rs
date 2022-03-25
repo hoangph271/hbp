@@ -51,6 +51,7 @@ impl HbpResponse {
         let error_text = format!("{} | {}", status_code.as_u16(), status_code.reason_phrase());
         let html = render_from_template_by_default_page(
             "static/error.html",
+            &Some("Error"),
             &Some(
                 MapBuilder::new()
                     .insert_str("error_text", error_text)
@@ -69,6 +70,9 @@ impl HbpResponse {
     }
     pub fn forbidden() -> HbpResponse {
         HbpResponse::status(StatusCode::Forbidden)
+    }
+    pub fn bad_request() -> HbpResponse {
+        HbpResponse::status(StatusCode::BadRequest)
     }
     pub fn json<T: serde::Serialize>(content: T, status_code: Option<StatusCode>) -> HbpResponse {
         let json = serde_json::to_string(&content).expect("Stringify JSON failed");
@@ -90,15 +94,10 @@ impl HbpResponse {
         HbpResponse::status(StatusCode::NotFound)
     }
     #[allow(dead_code)]
-    pub fn redirect(uri: rocket::http::uri::Uri) -> HbpResponse {
-        let location = match uri.absolute() {
-            Some(uri) => uri.path().as_str().to_owned(),
-            None => uri.origin().unwrap().path().as_str().to_owned(),
-        };
-
+    pub fn redirect(uri: rocket::http::uri::Origin) -> HbpResponse {
         HbpResponse {
             status_code: StatusCode::MovedPermanently,
-            content: HbpContent::Redirect(location),
+            content: HbpContent::Redirect(uri.into_normalized().to_string()),
         }
     }
     pub fn file(path: PathBuf) -> HbpResponse {

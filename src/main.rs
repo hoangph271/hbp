@@ -52,7 +52,9 @@ fn launch() -> rocket::Rocket<rocket::Build> {
             routes![
                 routes::users::index,
                 routes::users::login,
-                routes::users::post_login
+                routes::users::signup,
+                routes::users::post_login,
+                routes::users::post_signup,
             ],
         )
         .register("/", catchers![default_catcher])

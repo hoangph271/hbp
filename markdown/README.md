@@ -7,6 +7,8 @@ Key features:
 - Have one tester after all...!
 - > Nếu t giàu, t sẽ chia cho mỗi người một cái #NFT nhá...! :")
 
+Check out the [TODOs.md](/markdown/TODOs.md)
+
 ---
 
 ### Old trick:

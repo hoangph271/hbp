@@ -73,11 +73,14 @@ pub struct UserPayload {
 }
 impl UserPayload {
     pub fn sign_jwt(role: Vec<String>, sub: String) -> String {
-        jwt::sign_jwt(&json!({
-            "exp": timestamp_now(),
-            "role": role,
-            "sub": sub,
-        }).to_string())
+        jwt::sign_jwt(
+            &json!({
+                "exp": timestamp_now(),
+                "role": role,
+                "sub": sub,
+            })
+            .to_string(),
+        )
     }
 }
 

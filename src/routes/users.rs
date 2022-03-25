@@ -1,7 +1,7 @@
 use crate::data::{lib::user_orm, sqlite::DbConn};
 use crate::utils::auth::{AuthPayload, UserPayload, USER_JWT_COOKIE};
 use crate::utils::responders::{HbpContent, HbpResponse};
-use crate::utils::template;
+use crate::utils::{template, timestamp_now};
 use crate::utils::types::{HbpError, HbpResult};
 use httpstatus::StatusCode;
 use rocket::form::Form;
@@ -56,7 +56,11 @@ pub async fn post_login(
         .await;
 
     if let Some(user) = res {
-        let jwt = UserPayload::sign_jwt(vec![], user.username.clone());
+        let jwt = UserPayload::sign_jwt(&UserPayload {
+            exp: timestamp_now(),
+            sub: user.username,
+            role: vec![],
+        });
         jar.add_private(Cookie::new(USER_JWT_COOKIE, jwt));
 
         HbpResponse::redirect(uri!("/"))

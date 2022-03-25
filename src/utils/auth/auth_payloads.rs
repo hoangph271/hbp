@@ -5,7 +5,6 @@ use crate::utils::constants;
 use httpstatus::StatusCode;
 use rocket::http::{Cookie, Status};
 use rocket::request::{FromRequest, Outcome, Request};
-use serde_json::json;
 
 pub const RESOURCE_JWT_COOKIE: &str = "resource-jwt";
 pub const USER_JWT_COOKIE: &str = "user-jwt";
@@ -14,6 +13,7 @@ pub mod jwt {
     use crate::utils::auth::{AuthPayload, UserPayload, UserResoucePayload};
     use crate::utils::types::HbpError;
     use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+    use serde::Serialize;
 
     fn jwt_secret() -> String {
         use crate::utils::env::{from_env, EnvKey};
@@ -31,7 +31,7 @@ pub mod jwt {
                 return Ok(AuthPayload::User(result.claims));
             }
             Err(e) => {
-                error!("{e}");
+                error!("decode::<UserPayload> fail: {e}");
             }
         }
 
@@ -40,7 +40,7 @@ pub mod jwt {
                 return Ok(AuthPayload::UserResource(result.claims));
             }
             Err(e) => {
-                error!("{e}");
+                error!("decode::<UserResoucePayload> fail: {}", e);
             }
         }
 
@@ -48,7 +48,7 @@ pub mod jwt {
             "verify_jwt failed for {token_str}"
         )))
     }
-    pub fn sign_jwt(payload: &str) -> String {
+    pub fn sign_jwt<T: Serialize>(payload: T) -> String {
         encode(
             &Header::default(),
             &payload,
@@ -58,13 +58,6 @@ pub mod jwt {
     }
 }
 
-fn timestamp_now() -> i64 {
-    chrono::Utc::now()
-        .checked_add_signed(chrono::Duration::minutes(60))
-        .unwrap()
-        .timestamp()
-}
-
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct UserPayload {
     pub exp: i64,
@@ -72,15 +65,8 @@ pub struct UserPayload {
     pub role: Vec<String>,
 }
 impl UserPayload {
-    pub fn sign_jwt(role: Vec<String>, sub: String) -> String {
-        jwt::sign_jwt(
-            &json!({
-                "exp": timestamp_now(),
-                "role": role,
-                "sub": sub,
-            })
-            .to_string(),
-        )
+    pub fn sign_jwt(&self) -> String {
+        jwt::sign_jwt(&self)
     }
 }
 

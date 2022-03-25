@@ -37,6 +37,7 @@ pub fn render_from_template(template_path: &str, data: &Option<Data>) -> HbpResu
 
 pub fn render_from_template_by_default_page(
     template_path: &str,
+    title: &Option<&str>,
     data: &Option<Data>,
 ) -> HbpResult<String> {
     let html = render_from_template(
@@ -47,6 +48,7 @@ pub fn render_from_template_by_default_page(
                     "raw_content",
                     render_from_template(template_path, data).unwrap(),
                 )
+                .insert_str("title", title.unwrap_or(""))
                 .build(),
         ),
     );

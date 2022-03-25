@@ -1,10 +1,19 @@
-Please refer to [README.md](/README.md)  
-#Hahaha...!
+Ask #Ká...?  
+She chose the name...! `// hbp...!`
 
-*> 18/02/2022 - 01:06*
+Key features:
+- Built in #Rust...!
+- So far, no #React BS...!
+- Have one tester after all...!
+- > Nếu t giàu, t sẽ chia cho mỗi người một cái #NFT nhá...! :")
 
-It's a site, my home site...!  
-Let see if I can render some markdown into HTML...?
+Check out the [TODOs.md](/markdown/TODOs.md)
 
-Here are some other things:
-- [x] Check out the [TODOs](TODOs.md)
+---
+
+### Old trick:
+Please refer [README.md](/markdown/README.md)
+
+```
+END
+```

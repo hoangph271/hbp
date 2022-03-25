@@ -7,7 +7,7 @@ pub async fn serve(file: PathBuf) -> Option<NamedFile> {
 }
 // use crate::utils::{
 //     constants,
-//     jwt::JwtPayload,
+//     jwt::AuthPayload,
 //     responders::{HbpContent, HbpResponse},
 //     template,
 // };
@@ -46,7 +46,7 @@ pub async fn serve(file: PathBuf) -> Option<NamedFile> {
 // }
 
 // #[get("/")]
-// pub async fn static_dir(_jwt: JwtPayload) -> Option<HbpResponse> {
+// pub async fn static_dir(_jwt: AuthPayload) -> Option<HbpResponse> {
 //     let data = dir_entries_map(constants::static_path());
 //     let html = template::render_from_template("static/directory.html", &data).ok()?;
 
@@ -112,7 +112,7 @@ pub async fn serve(file: PathBuf) -> Option<NamedFile> {
 // }
 
 // #[get("/<path..>", rank = 1)]
-// pub async fn dir(path: PathBuf, _jwt: JwtPayload) -> Option<HbpResponse> {
+// pub async fn dir(path: PathBuf, _jwt: AuthPayload) -> Option<HbpResponse> {
 //     let full_path = constants::static_path().join(path.clone());
 
 //     if fs::metadata(&full_path).ok()?.is_dir() {

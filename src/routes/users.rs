@@ -1,28 +1,40 @@
 use crate::data::{lib::user_orm, sqlite::DbConn};
 use crate::utils::auth::{AuthPayload, UserPayload, USER_JWT_COOKIE};
 use crate::utils::responders::{HbpContent, HbpResponse};
-use crate::utils::{template, timestamp_now};
 use crate::utils::types::{HbpError, HbpResult};
-use httpstatus::StatusCode;
+use crate::utils::{template, timestamp_now};
+use mustache::Data;
 use rocket::form::Form;
 use rocket::http::{Cookie, CookieJar};
 
 #[get("/")]
 pub fn index(jwt: AuthPayload) -> HbpResponse {
-    HbpResponse::text(&*format!("hello {:?}", jwt), StatusCode::Ok)
+    HbpResponse::html(
+        &template::render_default_layout(
+            "users/profile.html",
+            &Some(jwt.username()),
+            &Some(template::data_from(vec![(
+                "username".to_owned(),
+                Data::String(jwt.username().to_owned()),
+            )])),
+        )
+        .unwrap(),
+        None,
+    )
 }
 
 #[get("/login")]
 pub fn login() -> HbpResponse {
-    HbpResponse::ok(Some(HbpContent::Html(
-        template::render_from_template_by_default_page("users/login.html", &Some("Login"), &None)
+    HbpResponse::html(
+        &template::render_default_layout("users/login.html", &Some("Login"), &None)
             .expect("render users/login.html failed"),
-    )))
+        None,
+    )
 }
 #[get("/signup")]
 pub fn signup() -> HbpResponse {
     HbpResponse::ok(Some(HbpContent::Html(
-        template::render_from_template_by_default_page("users/signup.html", &Some("Signup"), &None)
+        template::render_default_layout("users/signup.html", &Some("Signup"), &None)
             .expect("render users/signup.html failed"),
     )))
 }
@@ -63,7 +75,7 @@ pub async fn post_login(
         });
         jar.add_private(Cookie::new(USER_JWT_COOKIE, jwt));
 
-        HbpResponse::redirect(uri!("/"))
+        HbpResponse::redirect(uri!("/users", index))
     } else {
         HbpResponse::redirect(uri!("/users", login))
     }

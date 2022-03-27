@@ -11,6 +11,7 @@
 - [ ] ~~Async HbpResponse::respond_to()~~
 - [ ] ~~System information in index page~~  
 - [ ] ~~Download static folder  ****~~  
+- [x] User profile after auth
 - [x] Fix: Broken JWT
     - [x] Add test for JWT utils
     - [x] Fix JWT handling for `auth`

@@ -45,7 +45,7 @@ pub async fn render_markdown(
     } else {
         let markdown_html = markdown_to_html(markdown);
 
-        template::render_from_template_by_default_page(
+        template::render_default_layout(
             "static/markdown.html",
             &None,
             &Some(template::data_from(vec![(

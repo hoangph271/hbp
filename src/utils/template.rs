@@ -35,7 +35,7 @@ pub fn render_from_template(template_path: &str, data: &Option<Data>) -> HbpResu
     }
 }
 
-pub fn render_from_template_by_default_page(
+pub fn render_default_layout(
     template_path: &str,
     title: &Option<&str>,
     data: &Option<Data>,
@@ -58,7 +58,7 @@ pub fn render_from_template_by_default_page(
         Err(e) => {
             debug!("{e}");
             HbpResult::Err(HbpError::from_message(&format!(
-                "Failed render_from_template_by_default_page(), {template_path}"
+                "Failed render_default_layout(), {template_path}"
             )))
         }
     }

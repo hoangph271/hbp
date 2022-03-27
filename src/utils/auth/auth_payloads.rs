@@ -156,7 +156,7 @@ impl<'r> FromRequest<'r> for AuthPayload {
 }
 
 impl AuthPayload {
-    pub fn username(&self) -> &String {
+    pub fn username(&self) -> &str {
         match self {
             AuthPayload::User(jwt) => &jwt.sub,
             AuthPayload::UserResource(jwt) => &jwt.sub,

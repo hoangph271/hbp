@@ -27,7 +27,13 @@
       <a href="/">Home</a>
       <a href="/404">Blogs</a>
       <a href="https://github.com/hoangph271/hbp" target="_blank">Source code</a>
-      <a href="/markdown/AboutMe.md">About me</a>
+      {{#username}}
+        <a href="/markdown/users/{{username}}/AboutMe.md">About me</a>
+      {{/username}}
+      <!-- TODO: ^username is NOT really working -->
+      {{^username}}
+        <a href="/users/login">Sign in</a>
+      {{/username}}
     </ul>
   </nav>
   {{{ raw_content }}}

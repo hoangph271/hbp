@@ -12,7 +12,7 @@ pub fn index(jwt: AuthPayload) -> HbpResponse {
     HbpResponse::html(
         &template::render_default_layout(
             "users/profile.html",
-            &Some(jwt.username()),
+            Some(template::DefaultLayoutData::only_title(jwt.username()).username(jwt.username())),
             &Some(template::data_from(vec![(
                 "username".to_owned(),
                 Data::String(jwt.username().to_owned()),
@@ -26,16 +26,24 @@ pub fn index(jwt: AuthPayload) -> HbpResponse {
 #[get("/login")]
 pub fn login() -> HbpResponse {
     HbpResponse::html(
-        &template::render_default_layout("users/login.html", &Some("Login"), &None)
-            .expect("render users/login.html failed"),
+        &template::render_default_layout(
+            "users/login.html",
+            Some(template::DefaultLayoutData::only_title("Login")),
+            &None,
+        )
+        .expect("render users/login.html failed"),
         None,
     )
 }
 #[get("/signup")]
 pub fn signup() -> HbpResponse {
     HbpResponse::ok(Some(HbpContent::Html(
-        template::render_default_layout("users/signup.html", &Some("Signup"), &None)
-            .expect("render users/signup.html failed"),
+        template::render_default_layout(
+            "users/signup.html",
+            Some(template::DefaultLayoutData::only_title("Signup")),
+            &None,
+        )
+        .expect("render users/signup.html failed"),
     )))
 }
 

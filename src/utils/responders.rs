@@ -1,4 +1,4 @@
-use crate::utils::template::render_default_layout;
+use crate::utils::template::{render_default_layout, DefaultLayoutData};
 use httpstatus::StatusCode;
 use mustache::MapBuilder;
 use rocket::fs::NamedFile;
@@ -56,7 +56,7 @@ impl HbpResponse {
         let error_text = format!("{} | {}", status_code.as_u16(), status_code.reason_phrase());
         let html = render_default_layout(
             "static/error.html",
-            &Some("Error"),
+            Some(DefaultLayoutData::only_title("Error")),
             &Some(
                 MapBuilder::new()
                     .insert_str("error_text", error_text)

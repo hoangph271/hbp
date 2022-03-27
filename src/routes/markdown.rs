@@ -27,7 +27,7 @@ pub async fn markdown_file(sub_path: PathBuf) -> HbpResponse {
             )
             .await
             {
-                Ok(html) => HbpResponse::ok(Some(HbpContent::Html(html))),
+                Ok(html) => HbpResponse::html(&html, None),
                 Err(_) => HbpResponse::internal_server_error(),
             }
         }

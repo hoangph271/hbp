@@ -47,7 +47,7 @@ pub async fn render_markdown(
 
         template::render_default_layout(
             "static/markdown.html",
-            &None,
+            None,
             &Some(template::data_from(vec![(
                 "markdown_html".to_owned(),
                 Data::String(markdown_html),

@@ -85,11 +85,13 @@ pub mod user_orm {
             .first(conn)
         {
             Ok(post) => Ok(post),
-            Err(e) => Err(OrmError::DieselError(e)),
+            Err(e) => {
+                error!("find_one_by_username failed: {:?}", e);
+                Err(OrmError::DieselError(e))
+            }
         }
     }
 
-    #[allow(dead_code)]
     pub fn create_user(conn: &SqliteConnection, new_user: NewUser) -> Result<User, Error> {
         diesel::insert_into(tbl_users::table)
             .values(InsertableNewUser::from(new_user))

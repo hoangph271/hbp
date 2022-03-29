@@ -15,6 +15,7 @@ pub struct NewUser<'a> {
     pub hashed_password: &'a str,
     pub title: Option<&'a str>,
 }
+
 #[derive(Insertable)]
 #[table_name = "tbl_users"]
 pub struct InsertableNewUser {

@@ -1,13 +1,24 @@
 ## > TODOs
-- [x] Split `marp`/`markdown` code
 - [ ] Read #Headers from markdown (`MarkdownMetadata`)
 - [ ] Use that to set titles, for docs...?
-- [ ] `index()` for `/markdown/users/<username>`
+- [ ] Finish that `TODO` stuff:
+    - [ ] List todo
+    - [ ] Recreate on new day
 
 ## > DONEs
+- [ ] ~~Learn `async` #Rust~~
 - [ ] ~~Async HbpResponse::respond_to()~~
 - [ ] ~~System information in index page~~  
 - [ ] ~~Download static folder  ****~~  
+- [x] `index()` for `/markdown/users`
+- [x] User profile after auth
+- [x] Fix: Broken JWT
+    - [x] Add test for JWT utils
+    - [x] Fix JWT handling for `auth`
+- [x] ResoucePayload should contain `blob`s for access paths
+- [x] Split `marp`/`markdown` code
+- [x] Signup
+- [x] Store JWT to cookies when login success
 - [x] NamedFile response
 - [x] Binary files in markdown/users
 - [x] JWT from secret cookies

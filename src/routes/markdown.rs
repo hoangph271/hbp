@@ -1,8 +1,8 @@
 use crate::utils::{
-    jwt::JwtPayload,
+    auth::AuthPayload,
     markdown,
-    types::MarkdownMetadata,
     responders::{HbpContent, HbpResponse},
+    types::MarkdownMetadata,
 };
 use httpstatus::StatusCode;
 use mustache::Data;
@@ -27,7 +27,7 @@ pub async fn markdown_file(sub_path: PathBuf) -> HbpResponse {
             )
             .await
             {
-                Ok(html) => HbpResponse::ok(Some(HbpContent::Html(html))),
+                Ok(html) => HbpResponse::html(&html, None),
                 Err(_) => HbpResponse::internal_server_error(),
             }
         }
@@ -40,10 +40,12 @@ pub async fn markdown_file(sub_path: PathBuf) -> HbpResponse {
 }
 
 #[get("/users/<username>/<sub_path..>")]
-pub async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: JwtPayload) -> HbpResponse {
-    let sub = JwtPayload::sub_from(jwt);
-
-    if !sub.eq(username) {
+pub async fn user_markdown_file(
+    username: &str,
+    sub_path: PathBuf,
+    jwt: AuthPayload,
+) -> HbpResponse {
+    if !jwt.username().eq(username) {
         return HbpResponse::status(StatusCode::Forbidden);
     }
 
@@ -76,7 +78,6 @@ pub async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: JwtPaylo
     }
 
     if !markdown::is_markdown(&file_path) {
-        println!("{:?}", file_path);
         return HbpResponse::file(file_path);
     }
 

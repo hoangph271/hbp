@@ -1,7 +1,6 @@
 ## > TODOs
 - [ ] Read #Headers from markdown (`MarkdownMetadata`)
 - [ ] Use that to set titles, for docs...?
-- [ ] `index()` for `/markdown/users/<username>`
 - [ ] Finish that `TODO` stuff:
     - [ ] List todo
     - [ ] Recreate on new day
@@ -11,6 +10,7 @@
 - [ ] ~~Async HbpResponse::respond_to()~~
 - [ ] ~~System information in index page~~  
 - [ ] ~~Download static folder  ****~~  
+- [x] `index()` for `/markdown/users`
 - [x] User profile after auth
 - [x] Fix: Broken JWT
     - [x] Add test for JWT utils

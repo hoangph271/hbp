@@ -1,10 +1,10 @@
 ## > TODOs
 - [ ] Read #Headers from markdown (`MarkdownMetadata`)
 - [ ] Use that to set titles, for docs...?
+- [ ] Learn BonsaiDB
 - [ ] Finish that `TODO` stuff:
     - [ ] List todo
     - [ ] Recreate on new day
-
 ## > DONEs
 - [ ] ~~Learn `async` #Rust~~
 - [ ] ~~Async HbpResponse::respond_to()~~

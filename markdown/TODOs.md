@@ -1,4 +1,7 @@
 ## > TODOs
+- [x] List out all blogs
+- [ ] List blogs with metadata & summary
+- [ ] ~~Paging for blogs~~
 - [ ] Read #Headers from markdown (`MarkdownMetadata`)
 - [ ] Use that to set titles, for docs...?
 - [ ] Finish that `TODO` stuff:

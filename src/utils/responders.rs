@@ -57,7 +57,7 @@ impl HbpResponse {
         let html = render_default_layout(
             "static/error.html",
             Some(DefaultLayoutData::only_title("Error")),
-            &Some(
+            Some(
                 MapBuilder::new()
                     .insert_str("error_text", error_text)
                     .build(),

@@ -63,5 +63,5 @@ pub async fn render_marp(
         data.extend(extra_data);
     }
 
-    template::render_from_template("index.html", &Some(template::data_from(data)))
+    template::render_from_template("index.html", Some(template::simple_data_from(data)))
 }

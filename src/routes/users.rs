@@ -13,7 +13,7 @@ pub fn index(jwt: AuthPayload) -> HbpResponse {
         &template::render_default_layout(
             "users/profile.html",
             Some(template::DefaultLayoutData::only_title(jwt.username()).username(jwt.username())),
-            &Some(template::data_from(vec![(
+            Some(template::simple_data_from(vec![(
                 "username".to_owned(),
                 Data::String(jwt.username().to_owned()),
             )])),
@@ -29,7 +29,7 @@ pub fn login() -> HbpResponse {
         &template::render_default_layout(
             "users/login.html",
             Some(template::DefaultLayoutData::only_title("Login")),
-            &None,
+            None,
         )
         .expect("render users/login.html failed"),
         None,
@@ -41,7 +41,7 @@ pub fn signup() -> HbpResponse {
         template::render_default_layout(
             "users/signup.html",
             Some(template::DefaultLayoutData::only_title("Signup")),
-            &None,
+            None,
         )
         .expect("render users/signup.html failed"),
     )))

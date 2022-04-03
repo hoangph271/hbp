@@ -1,3 +1,14 @@
 <div class="hbp-markdown markdown-body">
   {{{ markdown_html }}}
 </div>
+
+<script>
+  setTimeout(() => {
+    // ? workarounds for `pulldown-cmark` until it works better
+    document.querySelectorAll('.hbp-markdown ul li').forEach(li => {
+      if (!li.querySelector('input[type="checkbox"]')) {
+        li.style.listStyle = 'disc'
+      }
+    })
+  }, 0)
+</script>

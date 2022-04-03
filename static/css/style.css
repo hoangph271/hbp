@@ -104,8 +104,7 @@ code {
   border-radius: var(--radius-gentle);
 }
 
-/* ? workarounds for `pulldown-cmark` until it works better */
-.hbp-markdown ul  {
+.hbp-markdown ul {
   padding: 0 1rem;
   list-style: none;
 }

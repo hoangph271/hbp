@@ -1,4 +1,4 @@
-use crate::utils::template::render_from_template_by_default_page;
+use crate::utils::template::{render_default_layout, DefaultLayoutData};
 use httpstatus::StatusCode;
 use mustache::MapBuilder;
 use rocket::fs::NamedFile;
@@ -23,7 +23,6 @@ pub struct HbpResponse {
 
 #[allow(dead_code)]
 impl HbpResponse {
-    #[allow(dead_code)]
     pub fn empty() -> HbpResponse {
         HbpResponse {
             status_code: StatusCode::Ok,
@@ -34,6 +33,12 @@ impl HbpResponse {
         HbpResponse {
             status_code,
             content: HbpContent::Plain(text.to_owned()),
+        }
+    }
+    pub fn html(html: &str, status_code: Option<StatusCode>) -> HbpResponse {
+        HbpResponse {
+            status_code: status_code.unwrap_or(StatusCode::Ok),
+            content: HbpContent::Html(html.to_owned()),
         }
     }
     pub fn ok(content: Option<HbpContent>) -> HbpResponse {
@@ -49,9 +54,9 @@ impl HbpResponse {
         let status_code = StatusCode::from(status_code.as_u16());
 
         let error_text = format!("{} | {}", status_code.as_u16(), status_code.reason_phrase());
-        let html = render_from_template_by_default_page(
+        let html = render_default_layout(
             "static/error.html",
-            &Some("Error"),
+            Some(DefaultLayoutData::only_title("Error")),
             &Some(
                 MapBuilder::new()
                     .insert_str("error_text", error_text)

@@ -40,7 +40,7 @@ pub mod post_orm {
             .execute(conn)
             .expect("insert new_post failed");
 
-        // FIXME: This is a shame, I know
+        // FIXME: #Shame, I know
         // * It's SQLite, and I'm an idiot, I don't know how to return the just inserted record
         tbl_posts::table.order(tbl_posts::id.desc()).first(conn)
     }

@@ -74,6 +74,7 @@ impl UserPayload {
 pub struct UserResoucePayload {
     pub exp: i64,
     pub sub: String,
+    pub path: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -156,10 +157,28 @@ impl<'r> FromRequest<'r> for AuthPayload {
 }
 
 impl AuthPayload {
-    pub fn username(&self) -> &String {
+    pub fn username(&self) -> &str {
         match self {
             AuthPayload::User(jwt) => &jwt.sub,
             AuthPayload::UserResource(jwt) => &jwt.sub,
+        }
+    }
+
+    pub fn match_path(&self, path: &str) -> bool {
+        match self {
+            AuthPayload::User(_) => false,
+            AuthPayload::UserResource(payload) => {
+                if payload.path.is_empty() {
+                    // ? Yeah, this one to make previously used JWT works
+                    // FIXME: Maybe remove this, or use '*'
+                    return true;
+                }
+
+                match glob::Pattern::new(&payload.path) {
+                    Ok(pattern) => pattern.matches(path),
+                    Err(_) => false,
+                }
+            }
         }
     }
 }

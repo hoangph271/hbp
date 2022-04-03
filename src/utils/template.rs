@@ -35,11 +35,33 @@ pub fn render_from_template(template_path: &str, data: &Option<Data>) -> HbpResu
     }
 }
 
-pub fn render_from_template_by_default_page(
+#[derive(Default)]
+pub struct DefaultLayoutData {
+    title: Option<String>,
+    username: Option<String>,
+}
+impl DefaultLayoutData {
+    pub fn title(mut self, title: &str) -> Self {
+        self.title = Some(title.to_owned());
+
+        self
+    }
+    pub fn username(mut self, username: &str) -> Self {
+        self.username = Some(username.to_owned());
+
+        self
+    }
+    pub fn only_title(title: &str) -> Self {
+        Self::default().title(title)
+    }
+}
+pub fn render_default_layout(
     template_path: &str,
-    title: &Option<&str>,
+    layout_data: Option<DefaultLayoutData>,
     data: &Option<Data>,
 ) -> HbpResult<String> {
+    let layout_data = layout_data.unwrap_or_default();
+
     let html = render_from_template(
         "index.html",
         &Some(
@@ -48,7 +70,11 @@ pub fn render_from_template_by_default_page(
                     "raw_content",
                     render_from_template(template_path, data).unwrap(),
                 )
-                .insert_str("title", title.unwrap_or(""))
+                .insert_str("title", layout_data.title.unwrap_or_else(|| "".to_owned()))
+                .insert_str(
+                    "username",
+                    layout_data.username.unwrap_or_else(|| "".to_owned()),
+                )
                 .build(),
         ),
     );
@@ -58,7 +84,7 @@ pub fn render_from_template_by_default_page(
         Err(e) => {
             debug!("{e}");
             HbpResult::Err(HbpError::from_message(&format!(
-                "Failed render_from_template_by_default_page(), {template_path}"
+                "Failed render_default_layout(), {template_path}"
             )))
         }
     }

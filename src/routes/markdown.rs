@@ -27,7 +27,7 @@ pub async fn markdown_file(sub_path: PathBuf) -> HbpResponse {
             )
             .await
             {
-                Ok(html) => HbpResponse::ok(Some(HbpContent::Html(html))),
+                Ok(html) => HbpResponse::html(&html, None),
                 Err(_) => HbpResponse::internal_server_error(),
             }
         }
@@ -45,24 +45,26 @@ pub async fn user_markdown_file(
     sub_path: PathBuf,
     jwt: AuthPayload,
 ) -> HbpResponse {
-    if !jwt.username().eq(username) {
-        return HbpResponse::status(StatusCode::Forbidden);
-    }
-
     let file_path = PathBuf::from("markdown")
         .join("users")
         .join(username)
         .join(sub_path.clone());
 
+    let file_path_str = file_path.to_string_lossy();
+
+    if !jwt.match_path(&file_path_str) {
+        return HbpResponse::status(StatusCode::Forbidden);
+    }
+
     let title = match file_path.file_name() {
-        Some(file_name) => file_name.to_string_lossy().into_owned(),
-        None => file_path.to_string_lossy().into_owned(),
+        Some(file_name) => file_name.to_string_lossy(),
+        None => file_path_str,
     };
 
     let ogp_metadata = MarkdownMetadata::of_markdown(&file_path);
 
     let extra_data = vec![
-        ("title".to_owned(), Data::String(title)),
+        ("title".to_owned(), Data::String(title.into_owned())),
         (
             "ogp_metadata".to_owned(),
             match ogp_metadata {

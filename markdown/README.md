@@ -8,12 +8,3 @@ Key features:
 - > Nếu t giàu, t sẽ chia cho mỗi người một cái #NFT nhá...! :")
 
 Check out the [TODOs.md](/markdown/TODOs.md)
-
----
-
-### Old trick:
-Please refer [README.md](/markdown/README.md)
-
-```
-END
-```

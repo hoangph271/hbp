@@ -14,11 +14,11 @@ pub fn compile_template(path: PathBuf) -> Template {
     })
 }
 
-pub fn render_from_template(template_path: &str, data: &Option<Data>) -> HbpResult<String> {
+pub fn render_from_template(template_path: &str, data: Option<Data>) -> HbpResult<String> {
     let template = compile_template(PathBuf::from(template_path));
 
     let render_result = if let Some(data) = data {
-        template.render_data_to_string(data)
+        template.render_data_to_string(&data)
     } else {
         template.render_data_to_string(&MapBuilder::new().build())
     };
@@ -28,8 +28,7 @@ pub fn render_from_template(template_path: &str, data: &Option<Data>) -> HbpResu
         Err(e) => {
             error!("{e}");
             HbpResult::Err(HbpError::from_message(&format!(
-                "Failed render_from_template(), {template_path}, {:?}",
-                data
+                "Failed render_from_template(), {template_path}"
             )))
         }
     }
@@ -58,13 +57,13 @@ impl DefaultLayoutData {
 pub fn render_default_layout(
     template_path: &str,
     layout_data: Option<DefaultLayoutData>,
-    data: &Option<Data>,
+    data: Option<Data>,
 ) -> HbpResult<String> {
     let layout_data = layout_data.unwrap_or_default();
 
     let html = render_from_template(
         "index.html",
-        &Some(
+        Some(
             MapBuilder::new()
                 .insert_str(
                     "raw_content",
@@ -90,7 +89,7 @@ pub fn render_default_layout(
     }
 }
 
-pub fn data_from(fields: TemplateData) -> Data {
+pub fn simple_data_from(fields: TemplateData) -> Data {
     let mut builder = MapBuilder::new();
 
     fn insert_map(mut builder: MapBuilder, values: &HashMap<String, Data>) -> MapBuilder {
@@ -98,7 +97,7 @@ pub fn data_from(fields: TemplateData) -> Data {
             builder = match value {
                 Data::String(value) => builder.insert_str(key, value),
                 Data::Map(values) => insert_map(builder, values),
-                _ => builder,
+                _ => panic!(),
             }
         }
 

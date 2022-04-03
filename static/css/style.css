@@ -22,6 +22,18 @@
   --monospace: 'Ubuntu Mono',  'Courier New', Courier, monospace;
 }
 
+/* * Dark theme */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bgr-breath: #A13333;
+    --grunt: #bf8d22;
+    --grungy: #494040;
+    --bgr-icecream: #461111;
+    --equal-shadow-gentle: rgba(155, 155, 155, 0.25) 0px 2px 4px;
+    --equal-shadow-big: rgba(155, 155, 155, 0.25) 0px 3px 6px;
+  }
+}
+
 /* * Tag restyles */
 /* #region */
 body {
@@ -89,6 +101,7 @@ code {
   max-width: var(--content-mw);
   padding: var(--padding-small);
   margin: 0.8rem auto!important;
+  border-radius: var(--radius-gentle);
 }
 
 /* ? workarounds for `pulldown-cmark` until it works better */

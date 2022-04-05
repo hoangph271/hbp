@@ -20,10 +20,28 @@ impl Error for HbpError {
         &self.msg
     }
 }
+impl From<std::io::Error> for HbpError {
+    fn from (std_error: std::io::Error) -> HbpError {
+        error!("{}", std_error);
+        HbpError::from_message("IO Error")
+    }
+}
+impl From<regex::Error> for HbpError {
+    fn from (regex_error: regex::Error) -> HbpError {
+        error!("{}", regex_error);
+        HbpError::from_message("Regex Error")
+    }
+}
+
 impl HbpError {
     pub fn from_message(msg: &str) -> HbpError {
         HbpError {
             msg: String::from(msg),
+        }
+    }
+    pub fn unimplemented () -> HbpError {
+        HbpError {
+            msg: String::from("unimplemented"),
         }
     }
 }

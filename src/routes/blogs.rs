@@ -1,29 +1,9 @@
+use crate::shared::entities::blog::*;
 use crate::utils::responders::HbpResponse;
 use crate::utils::template::{render_default_layout, DefaultLayoutData};
 use chrono::{DateTime, Utc};
-use mustache::{Data, MapBuilder};
-use serde::Serialize;
+use mustache::MapBuilder;
 use std::fs::{read, read_dir};
-
-#[derive(Debug, Serialize)]
-struct Blog {
-    title: String,
-    content: String,
-    dob: String,
-}
-
-impl From<Blog> for Data {
-    fn from(blog: Blog) -> Data {
-        MapBuilder::new()
-            .insert("title", &blog.title)
-            .unwrap()
-            .insert("dob", &blog.dob)
-            .unwrap()
-            .insert("content", &blog.content)
-            .unwrap()
-            .build()
-    }
-}
 
 #[get("/")]
 pub fn index() -> HbpResponse {
@@ -38,10 +18,13 @@ pub fn index() -> HbpResponse {
             let bytes = read(entry.path()).unwrap();
             let content = String::from_utf8_lossy(&bytes).to_string();
 
+            Blog::from_markdown(&entry.path()).unwrap();
+
             Blog {
                 title,
                 content,
                 dob,
+                tags: None,
             }
         })
         .collect();

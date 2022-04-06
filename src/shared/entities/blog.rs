@@ -4,7 +4,7 @@ use mustache::{Data, MapBuilder};
 use regex::Regex;
 use serde::Serialize;
 use std::fs;
-use std::path::PathBuf;
+use std::path::Path;
 
 #[derive(Debug, Serialize)]
 pub struct Blog {
@@ -28,7 +28,7 @@ impl From<Blog> for Data {
 }
 
 impl Blog {
-    pub fn from_markdown(path: &PathBuf) -> HbpResult<Blog> {
+    pub fn from_markdown(path: &Path) -> HbpResult<Blog> {
         if !path.exists() {
             return Err(HbpError::from_message(&format!(
                 "{} NOT exists",

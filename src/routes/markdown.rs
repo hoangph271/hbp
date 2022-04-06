@@ -1,6 +1,7 @@
 use crate::utils::{
     auth::{AuthPayload, UserPayload},
     markdown,
+    markdown::MarkdownData,
     responders::{HbpContent, HbpResponse},
     types::MarkdownMetadata,
 };
@@ -16,10 +17,10 @@ pub async fn markdown_file(sub_path: PathBuf) -> HbpResponse {
         return HbpResponse::file(file_path);
     }
 
-    match markdown::read_markdown(&file_path) {
-        Ok(content) => {
+    match MarkdownData::from_file(file_path.clone()) {
+        Ok(markdown_data) => {
             match markdown::render_markdown(
-                &content,
+                &markdown_data,
                 Some(vec![(
                     "title".to_owned(),
                     Data::String(file_path.to_string_lossy().into_owned()),
@@ -92,8 +93,8 @@ pub async fn user_markdown_file(
         return HbpResponse::file(file_path);
     }
 
-    if let Ok(content) = markdown::read_markdown(&file_path) {
-        return match markdown::render_markdown(&content, Some(extra_data)).await {
+    if let Ok(markdown_data) = MarkdownData::from_file(file_path) {
+        return match markdown::render_markdown(&markdown_data, Some(extra_data)).await {
             Ok(html) => HbpResponse::ok(Some(HbpContent::Html(html))),
             Err(e) => {
                 error!("{}", e);

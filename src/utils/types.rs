@@ -21,15 +21,21 @@ impl Error for HbpError {
     }
 }
 impl From<std::io::Error> for HbpError {
-    fn from (std_error: std::io::Error) -> HbpError {
+    fn from(std_error: std::io::Error) -> HbpError {
         error!("{}", std_error);
         HbpError::from_message("IO Error")
     }
 }
 impl From<regex::Error> for HbpError {
-    fn from (regex_error: regex::Error) -> HbpError {
+    fn from(regex_error: regex::Error) -> HbpError {
         error!("{}", regex_error);
         HbpError::from_message("Regex Error")
+    }
+}
+impl From<anyhow::Error> for HbpError {
+    fn from(anyhow_error: anyhow::Error) -> HbpError {
+        error!("{}", anyhow_error);
+        HbpError::from_message("anyhow Error")
     }
 }
 
@@ -39,7 +45,7 @@ impl HbpError {
             msg: String::from(msg),
         }
     }
-    pub fn unimplemented () -> HbpError {
+    pub fn unimplemented() -> HbpError {
         HbpError {
             msg: String::from("unimplemented"),
         }

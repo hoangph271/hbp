@@ -1,5 +1,5 @@
 use crate::utils::{
-    auth::AuthPayload,
+    auth::{AuthPayload, UserPayload},
     markdown,
     responders::{HbpContent, HbpResponse},
     types::MarkdownMetadata,
@@ -51,8 +51,17 @@ pub async fn user_markdown_file(
         .join(sub_path.clone());
 
     let file_path_str = file_path.to_string_lossy();
+    let user_assert = |payload: &UserPayload, path: &str| {
+        let prefix = PathBuf::from("markdown")
+            .join("users")
+            .join(payload.sub.clone())
+            .to_string_lossy()
+            .into_owned();
 
-    if !jwt.match_path(&file_path_str) {
+        path.starts_with(&*prefix)
+    };
+
+    if !jwt.match_path(&file_path_str, Some(user_assert)) {
         return HbpResponse::status(StatusCode::Forbidden);
     }
 

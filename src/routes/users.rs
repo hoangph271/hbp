@@ -81,6 +81,7 @@ pub async fn post_login(
             sub: user.username,
             role: vec![],
         });
+
         jar.add_private(Cookie::new(USER_JWT_COOKIE, jwt));
 
         HbpResponse::redirect(uri!("/users", index))

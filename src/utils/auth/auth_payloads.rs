@@ -164,9 +164,18 @@ impl AuthPayload {
         }
     }
 
-    pub fn match_path(&self, path: &str) -> bool {
+    pub fn match_path<F>(&self, path: &str, user_assert: Option<F>) -> bool
+    where
+        F: FnOnce(&UserPayload, &str) -> bool,
+    {
         match self {
-            AuthPayload::User(_) => false,
+            AuthPayload::User(payload) => {
+                if let Some(user_assert) = user_assert {
+                    user_assert(payload, path)
+                } else {
+                    false
+                }
+            }
             AuthPayload::UserResource(payload) => {
                 if payload.path.is_empty() {
                     // ? Yeah, this one to make previously used JWT works

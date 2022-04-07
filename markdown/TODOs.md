@@ -1,18 +1,21 @@
 ## > TODOs
-- [x] List out all blogs
-- [ ] List blogs with metadata & summary
-- [ ] ~~Paging for blogs~~
-- [ ] Read #Headers from markdown (`MarkdownMetadata`)
-- [ ] Use that to set titles, for docs...?
 - [ ] Finish that `TODO` stuff:
     - [ ] List todo
     - [ ] Recreate on new day
+- [ ] FIXME: Consistent auth status in all pages
+
 ## > DONEs
+- [ ] ~~Paging for blogs~~
 - [ ] ~~Learn `async` #Rust~~
 - [ ] ~~Async HbpResponse::respond_to()~~
 - [ ] ~~System information in index page~~  
 - [ ] ~~Download static folder  ****~~  
-- [x] Learn BonsaiDB
+- [x] Unify Markdown data & metadata
+- [x] Read #Headers from markdown (`MarkdownMetadata`)  
+- [x] Use that to set titles, for docs...?  
+- [x] List out all blogs  
+- [x] List blogs with metadata & summary  
+- [x] Learn BonsaiDB  
 - [x] `index()` for `/markdown/users`
 - [x] User profile after auth
 - [x] Fix: Broken JWT

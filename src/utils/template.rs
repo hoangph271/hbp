@@ -36,17 +36,17 @@ pub fn render_from_template(template_path: &str, data: Option<Data>) -> HbpResul
 
 #[derive(Default)]
 pub struct DefaultLayoutData {
-    title: Option<String>,
-    username: Option<String>,
+    title: String,
+    username: String,
 }
 impl DefaultLayoutData {
     pub fn title(mut self, title: &str) -> Self {
-        self.title = Some(title.to_owned());
+        self.title = title.to_owned();
 
         self
     }
     pub fn username(mut self, username: &str) -> Self {
-        self.username = Some(username.to_owned());
+        self.username = username.to_owned();
 
         self
     }
@@ -60,23 +60,19 @@ pub fn render_default_layout(
     data: Option<Data>,
 ) -> HbpResult<String> {
     let layout_data = layout_data.unwrap_or_default();
+    let mut template_data = MapBuilder::new();
 
-    let html = render_from_template(
-        "index.html",
-        Some(
-            MapBuilder::new()
-                .insert_str(
-                    "raw_content",
-                    render_from_template(template_path, data).unwrap(),
-                )
-                .insert_str("title", layout_data.title.unwrap_or_else(|| "".to_owned()))
-                .insert_str(
-                    "username",
-                    layout_data.username.unwrap_or_else(|| "".to_owned()),
-                )
-                .build(),
-        ),
+    template_data = template_data.insert_str("title", layout_data.title);
+    template_data = template_data.insert_str(
+        "raw_content",
+        render_from_template(template_path, data).unwrap(),
     );
+
+    if !layout_data.username.is_empty() {
+        template_data = template_data.insert_str("username", layout_data.username);
+    }
+
+    let html = render_from_template("index.html", Some(template_data.build()));
 
     match html {
         Ok(html) => HbpResult::Ok(html),

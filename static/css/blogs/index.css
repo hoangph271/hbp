@@ -1,0 +1,25 @@
+.blog-list {
+  list-style: none;
+  padding: 0;
+  max-width: var(--content-mw);
+  margin: var(--content-margin);
+}
+
+.blog-item {
+  padding: 1rem;
+  border: 0 solid var(--tan);
+}
+.blog-item:not(:first-child) {
+  border-top-width: 1px;
+}
+
+.blog-title {
+  font-size: xx-large;
+  display: block;
+}
+
+.blog-cover-image {
+  height: 8rem;
+  background-position: center;
+  background-size: cover;
+}

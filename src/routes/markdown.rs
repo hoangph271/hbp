@@ -1,12 +1,12 @@
+use crate::shared::entities::markdown::Markdown;
 use crate::utils::{
-    auth::AuthPayload,
+    auth::{AuthPayload, UserPayload},
     markdown,
     responders::{HbpContent, HbpResponse},
-    types::MarkdownMetadata,
 };
 use httpstatus::StatusCode;
 use mustache::Data;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[get("/<sub_path..>")]
 pub async fn markdown_file(sub_path: PathBuf) -> HbpResponse {
@@ -16,17 +16,9 @@ pub async fn markdown_file(sub_path: PathBuf) -> HbpResponse {
         return HbpResponse::file(file_path);
     }
 
-    match markdown::read_markdown(&file_path) {
-        Ok(content) => {
-            match markdown::render_markdown(
-                &content,
-                Some(vec![(
-                    "title".to_owned(),
-                    Data::String(file_path.to_string_lossy().into_owned()),
-                )]),
-            )
-            .await
-            {
+    match Markdown::from_markdown(&file_path) {
+        Ok(markdown_data) => {
+            match markdown::render_markdown(&markdown_data, markdown_extra_data(&file_path)).await {
                 Ok(html) => HbpResponse::html(&html, None),
                 Err(_) => HbpResponse::internal_server_error(),
             }
@@ -51,28 +43,19 @@ pub async fn user_markdown_file(
         .join(sub_path.clone());
 
     let file_path_str = file_path.to_string_lossy();
+    let user_assert = |payload: &UserPayload, path: &str| {
+        let prefix = PathBuf::from("markdown")
+            .join("users")
+            .join(payload.sub.clone())
+            .to_string_lossy()
+            .into_owned();
 
-    if !jwt.match_path(&file_path_str) {
-        return HbpResponse::status(StatusCode::Forbidden);
-    }
-
-    let title = match file_path.file_name() {
-        Some(file_name) => file_name.to_string_lossy(),
-        None => file_path_str,
+        path.starts_with(&*prefix)
     };
 
-    let ogp_metadata = MarkdownMetadata::of_markdown(&file_path);
-
-    let extra_data = vec![
-        ("title".to_owned(), Data::String(title.into_owned())),
-        (
-            "ogp_metadata".to_owned(),
-            match ogp_metadata {
-                Some(ogp_metadata) => ogp_metadata.to_mustache_data(),
-                None => Data::Null,
-            },
-        ),
-    ];
+    if !jwt.match_path(&file_path_str, Some(user_assert)) {
+        return HbpResponse::status(StatusCode::Forbidden);
+    }
 
     if !file_path.exists() {
         info!("{:?} not exists", file_path.to_string_lossy());
@@ -83,8 +66,10 @@ pub async fn user_markdown_file(
         return HbpResponse::file(file_path);
     }
 
-    if let Ok(content) = markdown::read_markdown(&file_path) {
-        return match markdown::render_markdown(&content, Some(extra_data)).await {
+    if let Ok(markdown_data) = Markdown::from_markdown(&file_path) {
+        return match markdown::render_markdown(&markdown_data, markdown_extra_data(&file_path))
+            .await
+        {
             Ok(html) => HbpResponse::ok(Some(HbpContent::Html(html))),
             Err(e) => {
                 error!("{}", e);
@@ -94,4 +79,16 @@ pub async fn user_markdown_file(
     }
 
     HbpResponse::internal_server_error()
+}
+
+fn markdown_extra_data(file_path: &Path) -> Option<Vec<(String, Data)>> {
+    if let Ok(markdown) = Markdown::from_markdown(file_path) {
+        Some(vec![
+            ("title".to_owned(), Data::String(markdown.title.clone())),
+            ("og_title".to_owned(), Data::String(markdown.title)),
+            ("og_image".to_owned(), Data::String(markdown.cover_image)),
+        ])
+    } else {
+        None
+    }
 }

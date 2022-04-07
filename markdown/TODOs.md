@@ -1,9 +1,5 @@
 ## > TODOs
-- [x] List out all blogs
-- [ ] List blogs with metadata & summary
 - [ ] ~~Paging for blogs~~
-- [ ] Read #Headers from markdown (`MarkdownMetadata`)
-- [ ] Use that to set titles, for docs...?
 - [ ] Finish that `TODO` stuff:
     - [ ] List todo
     - [ ] Recreate on new day
@@ -12,7 +8,11 @@
 - [ ] ~~Async HbpResponse::respond_to()~~
 - [ ] ~~System information in index page~~  
 - [ ] ~~Download static folder  ****~~  
-- [x] Learn BonsaiDB
+- [x] Read #Headers from markdown (`MarkdownMetadata`)  
+- [x] Use that to set titles, for docs...?  
+- [x] List out all blogs  
+- [x] List blogs with metadata & summary  
+- [x] Learn BonsaiDB  
 - [x] `index()` for `/markdown/users`
 - [x] User profile after auth
 - [x] Fix: Broken JWT

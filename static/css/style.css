@@ -15,7 +15,8 @@
   --orange: #BF4634;
   --equal-shadow-gentle: rgba(0, 0, 0, 0.25) 0px 2px 4px;
   --equal-shadow-big: rgba(0, 0, 0, 0.25) 0px 3px 6px;
-  --content-mw: 650px;
+  --content-mw: 36rem;
+  --content-margin: 1rem auto;
   --padding-small: 0.4rem;
   --radius-gentle: 0.4rem;
   --radius-tight: 0.2em;

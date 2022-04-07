@@ -1,9 +1,17 @@
-<div>
+<link rel="stylesheet" href="/static/css/blogs/index.css">
+<ul class="blog-list">
   {{#blogs}}
-    <li>
-      <a href="/markdown/blogs/{{ title }}">
+    <li class="blog-item">
+      <div class="blog-cover-image" style="background-image: url({{ cover_image }});"></div>
+      <a href="/markdown/blogs/{{ file_name }}" class="blog-title">
         {{ title }}
       </a>
+      <p>{{ author }} - {{ dob }}</p>
+      <code>
+        {{#tags}}
+          #{{ . }}
+        {{/tags}}
+      </code>
     </li>
   {{/blogs}}
-</div>
+  </ul>

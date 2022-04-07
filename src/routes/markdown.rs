@@ -1,7 +1,7 @@
+use crate::shared::entities::blog::MarkdownData;
 use crate::utils::{
     auth::{AuthPayload, UserPayload},
     markdown,
-    markdown::MarkdownData,
     responders::{HbpContent, HbpResponse},
     types::MarkdownMetadata,
 };

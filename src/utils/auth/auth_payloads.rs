@@ -106,7 +106,7 @@ impl<'r> FromRequest<'r> for AuthPayload {
         let user_jwt_cookie = req.cookies().get_private(USER_JWT_COOKIE);
         let resource_jwt_cookie = req.cookies().get_private(RESOURCE_JWT_COOKIE);
 
-        let jwt = if let Some(jwt_str) = jwt_str.clone() {
+        let jwt = if let Some(jwt_str) = jwt_str {
             let jwt = jwt::verify_jwt(&jwt_str).ok();
 
             if let Some(jwt) = jwt.clone() {
@@ -114,13 +114,13 @@ impl<'r> FromRequest<'r> for AuthPayload {
                     AuthPayload::User(_) => {
                         if user_jwt_cookie.is_none() {
                             req.cookies()
-                                .add_private(Cookie::new(USER_JWT_COOKIE, jwt_str.clone()));
+                                .add_private(Cookie::new(USER_JWT_COOKIE, jwt_str));
                         }
                     }
                     AuthPayload::UserResource(_) => {
                         if resource_jwt_cookie.is_none() {
                             req.cookies()
-                                .add_private(Cookie::new(RESOURCE_JWT_COOKIE, jwt_str.clone()));
+                                .add_private(Cookie::new(RESOURCE_JWT_COOKIE, jwt_str));
                         }
                     }
                 }

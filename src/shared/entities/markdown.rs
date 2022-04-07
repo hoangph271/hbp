@@ -81,13 +81,13 @@ impl Markdown {
                 .collect();
 
             markdown.title = if let Some(title) = header_map.remove("title") {
-                title.to_owned()
+                title
             } else {
                 markdown.file_name.clone()
             };
 
             if let Some(author) = header_map.remove("author") {
-                markdown.author = author.to_owned();
+                markdown.author = author;
             }
 
             if let Some(tags) = header_map.remove("tags") {
@@ -95,11 +95,11 @@ impl Markdown {
             }
 
             if let Some(cover_image) = header_map.remove("cover_image") {
-                markdown.cover_image = cover_image.to_owned();
+                markdown.cover_image = cover_image;
             }
 
             markdown.dob = if let Some(dob) = header_map.remove("dob") {
-                dob.to_owned()
+                dob
             } else {
                 format!(
                     "{}",

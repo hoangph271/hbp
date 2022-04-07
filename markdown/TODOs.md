@@ -1,13 +1,16 @@
 ## > TODOs
-- [ ] ~~Paging for blogs~~
 - [ ] Finish that `TODO` stuff:
     - [ ] List todo
     - [ ] Recreate on new day
+- [ ] FIXME: Consistent auth status in all pages
+
 ## > DONEs
+- [ ] ~~Paging for blogs~~
 - [ ] ~~Learn `async` #Rust~~
 - [ ] ~~Async HbpResponse::respond_to()~~
 - [ ] ~~System information in index page~~  
 - [ ] ~~Download static folder  ****~~  
+- [x] Unify Markdown data & metadata
 - [x] Read #Headers from markdown (`MarkdownMetadata`)  
 - [x] Use that to set titles, for docs...?  
 - [x] List out all blogs  

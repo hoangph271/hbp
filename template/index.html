@@ -8,13 +8,19 @@
   <title>{{ title }}</title>
   <link rel="icon" href="/static/svg/sneu.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/static/css/style.css">
-  {{#ogp_metadata}}
+  {{#og_title}}
     <meta property="og:title" content="{{ og_title }}" />
+  {{/og_title}}
+  {{#og_type}}
     <meta property="og:type" content="{{ og_type }}" />
+  {{/og_type}}
+  {{#og_url}}
     <meta property="og:url" content="{{ og_url }}" />
+  {{/og_url}}
+  {{#og_image}}
     <meta property="og:image" content="{{ og_image }}" />
     <meta property="og:image:secure" content="{{ og_image }}" />
-  {{/ogp_metadata}}
+  {{/og_image}}
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.1.0/github-markdown.min.css" integrity="sha512-KUoB3bZ1XRBYj1QcH4BHCQjurAZnCO3WdrswyLDtp7BMwCw7dPZngSLqILf68SGgvnWHTD5pPaYrXi6wiRJ65g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 

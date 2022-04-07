@@ -1,4 +1,4 @@
-use crate::shared::entities::blog::MarkdownData;
+use crate::shared::entities::markdown::Markdown;
 use crate::utils::marper;
 use crate::utils::template::{
     render_default_layout, simple_data_from, DefaultLayoutData, TemplateData,
@@ -32,17 +32,17 @@ pub fn is_markdown(file_path: &Path) -> bool {
 }
 
 pub async fn render_markdown(
-    markdown_data: &MarkdownData,
+    markdown: &Markdown,
     extra_data: Option<TemplateData>,
 ) -> HbpResult<String> {
-    if marper::is_marp(&markdown_data.content) {
-        marper::render_marp(&markdown_data.content, extra_data).await
+    if marper::is_marp(&markdown.content) {
+        marper::render_marp(&markdown.content, extra_data).await
     } else {
-        let markdown_html = markdown_to_html(&markdown_data.content);
+        let markdown_html = markdown_to_html(&markdown.content);
 
         render_default_layout(
             "static/markdown.html",
-            Some(DefaultLayoutData::only_title(&markdown_data.title())),
+            Some(DefaultLayoutData::only_title(&markdown.title)),
             Some(simple_data_from(vec![(
                 "markdown_html".to_owned(),
                 Data::String(markdown_html),

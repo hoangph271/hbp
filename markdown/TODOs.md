@@ -10,6 +10,7 @@
 - [ ] ~~Async HbpResponse::respond_to()~~
 - [ ] ~~System information in index page~~  
 - [ ] ~~Download static folder  ****~~  
+- [x] Consistent blog sorting between OSes
 - [x] Unify Markdown data & metadata
 - [x] Read #Headers from markdown (`MarkdownMetadata`)  
 - [x] Use that to set titles, for docs...?  

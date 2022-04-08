@@ -83,21 +83,29 @@ pub async fn user_markdown_file(
     }
 
     if let Ok(markdown_data) = Markdown::from_markdown(&file_path) {
-        return match markdown::render_markdown(
-            &markdown_data,
-            Some(DefaultLayoutData::only_title(&markdown_data.title).maybe_auth(Some(jwt))),
-        )
-        .await
-        {
+        let html_result = async {
+            if markdown::is_marp(&markdown_data.content) {
+                markdown::render_marp(&markdown_data, markdown_extra_data(&file_path)).await
+            } else {
+                markdown::render_markdown(
+                    &markdown_data,
+                    Some(DefaultLayoutData::only_title(&markdown_data.title).maybe_auth(Some(jwt))),
+                )
+                .await
+            }
+        }
+        .await;
+
+        match html_result {
             Ok(html) => HbpResponse::ok(Some(HbpContent::Html(html))),
             Err(e) => {
                 error!("{}", e);
                 HbpResponse::internal_server_error()
             }
-        };
+        }
+    } else {
+        HbpResponse::internal_server_error()
     }
-
-    HbpResponse::internal_server_error()
 }
 
 fn markdown_extra_data(file_path: &Path) -> Option<Vec<(String, Data)>> {

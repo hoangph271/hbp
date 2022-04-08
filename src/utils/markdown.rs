@@ -3,7 +3,7 @@ use crate::utils::marper;
 use crate::utils::template::{
     render_default_layout, simple_data_from, DefaultLayoutData, TemplateData,
 };
-use crate::utils::types::HbpResult;
+use crate::utils::types::{HbpError, HbpResult};
 use mustache::Data;
 use pulldown_cmark::{html, Options, Parser};
 use std::path::Path;
@@ -31,22 +31,34 @@ pub fn is_markdown(file_path: &Path) -> bool {
     }
 }
 
-pub async fn render_markdown(
+pub async fn render_marp(
     markdown: &Markdown,
     extra_data: Option<TemplateData>,
 ) -> HbpResult<String> {
-    if marper::is_marp(&markdown.content) {
-        marper::render_marp(&markdown.content, extra_data).await
-    } else {
-        let markdown_html = markdown_to_html(&markdown.content);
-
-        render_default_layout(
-            "static/markdown.html",
-            Some(DefaultLayoutData::only_title(&markdown.title)),
-            Some(simple_data_from(vec![(
-                "markdown_html".to_owned(),
-                Data::String(markdown_html),
-            )])),
-        )
+    if !marper::is_marp(&markdown.content) {
+        return Err(HbpError::from_message(&format!(
+            "NOT a marp: {}",
+            markdown.file_name
+        )));
     }
+
+    marper::render_marp(&markdown.content, extra_data).await
+}
+pub fn is_marp(content: &str) -> bool {
+    marper::is_marp(content)
+}
+pub async fn render_markdown(
+    markdown: &Markdown,
+    layout_data: Option<DefaultLayoutData>,
+) -> HbpResult<String> {
+    let markdown_html = markdown_to_html(&markdown.content);
+
+    render_default_layout(
+        "static/markdown.html",
+        layout_data,
+        Some(simple_data_from(vec![(
+            "markdown_html".to_owned(),
+            Data::String(markdown_html),
+        )])),
+    )
 }

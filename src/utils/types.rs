@@ -15,6 +15,11 @@ impl Error for HbpError {
         &self.msg
     }
 }
+impl From<httpstatus::StatusCode> for HbpError {
+    fn from(status_code: httpstatus::StatusCode) -> HbpError {
+        HbpError::from_message(&format!("StatusCode: {}", status_code.as_u16()))
+    }
+}
 impl From<std::io::Error> for HbpError {
     fn from(std_error: std::io::Error) -> HbpError {
         error!("{}", std_error);

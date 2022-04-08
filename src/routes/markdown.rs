@@ -1,4 +1,5 @@
 use crate::shared::entities::markdown::Markdown;
+use crate::utils::template::DefaultLayoutData;
 use crate::utils::{
     auth::{AuthPayload, UserPayload},
     markdown,
@@ -9,7 +10,7 @@ use mustache::Data;
 use std::path::{Path, PathBuf};
 
 #[get("/<sub_path..>")]
-pub async fn markdown_file(sub_path: PathBuf) -> HbpResponse {
+pub async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpResponse {
     let file_path = PathBuf::from("markdown").join(sub_path.clone());
 
     if !markdown::is_markdown(&sub_path) {
@@ -18,14 +19,29 @@ pub async fn markdown_file(sub_path: PathBuf) -> HbpResponse {
 
     match Markdown::from_markdown(&file_path) {
         Ok(markdown_data) => {
-            match markdown::render_markdown(&markdown_data, markdown_extra_data(&file_path)).await {
+            let html_result = async {
+                if markdown::is_marp(&markdown_data.content) {
+                    markdown::render_marp(&markdown_data, markdown_extra_data(&file_path)).await
+                } else {
+                    let html = markdown::render_markdown(
+                        &markdown_data,
+                        Some(DefaultLayoutData::only_title(&markdown_data.title).maybe_auth(jwt)),
+                    )
+                    .await;
+                    html
+                }
+            };
+
+            match html_result.await {
                 Ok(html) => HbpResponse::html(&html, None),
-                Err(_) => HbpResponse::internal_server_error(),
+                Err(e) => {
+                    error!("{}", e);
+                    HbpResponse::status(StatusCode::InternalServerError)
+                }
             }
         }
         Err(e) => {
             error!("{e}");
-
             HbpResponse::status(StatusCode::InternalServerError)
         }
     }
@@ -67,8 +83,11 @@ pub async fn user_markdown_file(
     }
 
     if let Ok(markdown_data) = Markdown::from_markdown(&file_path) {
-        return match markdown::render_markdown(&markdown_data, markdown_extra_data(&file_path))
-            .await
+        return match markdown::render_markdown(
+            &markdown_data,
+            Some(DefaultLayoutData::only_title(&markdown_data.title).maybe_auth(Some(jwt))),
+        )
+        .await
         {
             Ok(html) => HbpResponse::ok(Some(HbpContent::Html(html))),
             Err(e) => {

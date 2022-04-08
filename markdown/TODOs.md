@@ -2,7 +2,6 @@
 - [ ] Finish that `TODO` stuff:
     - [ ] List todo
     - [ ] Recreate on new day
-- [ ] FIXME: Consistent auth status in all pages
 
 ## > DONEs
 - [ ] ~~Paging for blogs~~
@@ -10,6 +9,10 @@
 - [ ] ~~Async HbpResponse::respond_to()~~
 - [ ] ~~System information in index page~~  
 - [ ] ~~Download static folder  ****~~  
+- [x] FIXME: Consistent auth status in all pages
+  - [x] `/blogs`
+  - [x] `/markdown/`
+- [x] Consistent blog sorting between OSes
 - [x] Unify Markdown data & metadata
 - [x] Read #Headers from markdown (`MarkdownMetadata`)  
 - [x] Use that to set titles, for docs...?  

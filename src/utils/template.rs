@@ -1,3 +1,4 @@
+use crate::utils::auth::AuthPayload;
 use crate::utils::types::{HbpError, HbpResult};
 use mustache::{Data, MapBuilder, Template};
 use std::collections::hash_map::HashMap;
@@ -45,6 +46,20 @@ impl DefaultLayoutData {
 
         self
     }
+    pub fn maybe_auth(mut self, jwt: Option<AuthPayload>) -> Self {
+        let username = if let Some(jwt) = jwt {
+            match jwt {
+                AuthPayload::User(user) => user.sub,
+                AuthPayload::UserResource(user_resouce) => user_resouce.sub,
+            }
+        } else {
+            "".to_owned()
+        };
+
+        self.username = username;
+
+        self
+    }
     pub fn username(mut self, username: &str) -> Self {
         self.username = username.to_owned();
 
@@ -59,17 +74,18 @@ pub fn render_default_layout(
     layout_data: Option<DefaultLayoutData>,
     data: Option<Data>,
 ) -> HbpResult<String> {
-    let layout_data = layout_data.unwrap_or_default();
     let mut template_data = MapBuilder::new();
 
-    template_data = template_data.insert_str("title", layout_data.title);
-    template_data = template_data.insert_str(
-        "raw_content",
-        render_from_template(template_path, data).unwrap(),
-    );
+    if let Some(layout_data) = layout_data {
+        template_data = template_data.insert_str("title", layout_data.title);
+        template_data = template_data.insert_str(
+            "raw_content",
+            render_from_template(template_path, data).unwrap(),
+        );
 
-    if !layout_data.username.is_empty() {
-        template_data = template_data.insert_str("username", layout_data.username);
+        if !layout_data.username.is_empty() {
+            template_data = template_data.insert_str("username", layout_data.username);
+        }
     }
 
     let html = render_from_template("index.html", Some(template_data.build()));

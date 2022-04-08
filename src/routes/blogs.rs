@@ -1,12 +1,14 @@
 use crate::shared::entities::markdown::Markdown;
+use crate::utils::auth::AuthPayload;
 use crate::utils::responders::HbpResponse;
 use crate::utils::template::{render_default_layout, DefaultLayoutData};
+use chrono::NaiveDate;
 use mustache::MapBuilder;
 use std::fs::read_dir;
 
 #[get("/")]
-pub fn index() -> HbpResponse {
-    let markdowns: Vec<Markdown> = read_dir("markdown/blogs")
+pub fn index(jwt: Option<AuthPayload>) -> HbpResponse {
+    let mut markdowns: Vec<Markdown> = read_dir("markdown/blogs")
         .unwrap()
         .map(|entry| {
             let entry = entry.unwrap();
@@ -15,9 +17,18 @@ pub fn index() -> HbpResponse {
         })
         .collect();
 
+    markdowns.sort_by(|m1, m2| {
+        const DATE_FORMAT: &str = "%m/%d/%Y";
+        NaiveDate::parse_from_str(&m2.dob, DATE_FORMAT)
+            .unwrap()
+            .cmp(&NaiveDate::parse_from_str(&m1.dob, DATE_FORMAT).unwrap())
+    });
+
+    let default_layout_data = DefaultLayoutData::only_title("Blogs").maybe_auth(jwt);
+
     let html = render_default_layout(
         "blogs/index.html",
-        Some(DefaultLayoutData::only_title("Blogs")),
+        Some(default_layout_data),
         Some(
             MapBuilder::new()
                 .insert_vec("blogs", |builder| {

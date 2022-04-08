@@ -10,8 +10,8 @@ extern crate serde_derive;
 
 mod data;
 mod routes;
-mod utils;
 mod shared;
+mod utils;
 // #endregion
 
 #[launch]

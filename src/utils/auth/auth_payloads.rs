@@ -128,8 +128,6 @@ impl<'r> FromRequest<'r> for AuthPayload {
 
             jwt
         } else {
-            info!("{:?}", user_jwt_cookie);
-
             let jwt_from_cookies = if user_jwt_cookie.is_some() {
                 user_jwt_cookie
             } else if resource_jwt_cookie.is_some() {

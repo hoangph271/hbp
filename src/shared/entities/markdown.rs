@@ -47,6 +47,23 @@ impl From<Markdown> for Data {
     }
 }
 
+fn extract_markdown_header_content(content: &str) -> Option<String> {
+    if let Some(header_comment) = Regex::new("<!--((.|\n)*?)-->").ok()?.find(content) {
+        if header_comment.start() != 0 {
+            None
+        } else {
+            let (start, end) = (
+                header_comment.start() + "<!--".len(),
+                header_comment.end() - "-->".len(),
+            );
+            let header_content = (&content[start..end]).to_string();
+            Some(header_content)
+        }
+    } else {
+        None
+    }
+}
+
 impl Markdown {
     pub fn from_markdown(path: &Path) -> HbpResult<Markdown> {
         if !path.exists() {
@@ -56,17 +73,13 @@ impl Markdown {
             )));
         }
 
-        let content = fs::read_to_string(path)?;
         let mut markdown = Markdown {
-            content: content.clone(),
+            content: fs::read_to_string(path)?,
             file_name: path.file_name().unwrap().to_string_lossy().into_owned(),
             ..Markdown::default()
         };
 
-        if let Some(header_comment) = Regex::new("<!--((.|\n)*?)-->")?.find(&content) {
-            let header_comment = &content
-                [(header_comment.start() + "<!--".len())..(header_comment.end() - "-->".len())];
-
+        if let Some(header_comment) = extract_markdown_header_content(&markdown.content) {
             let mut header_map: HashMap<String, String> = header_comment
                 .trim()
                 .split('\n')
@@ -111,5 +124,15 @@ impl Markdown {
         }
 
         Ok(markdown)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn skip_if_no_metadata_comment() {
+        assert_eq!(extract_markdown_header_content(""), None);
     }
 }

@@ -6,8 +6,8 @@
       <a href="/markdown/blogs/{{ file_name }}" class="blog-title">
         {{ title }}
       </a>
-      <p>{{ author }} - {{ dob }}</p>
-      <code>
+      <p class="blog-author">{{ author }} - {{ dob }}</p>
+      <code class="blog-tags">
         {{#tags}}
           #{{ . }}
         {{/tags}}

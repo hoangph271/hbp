@@ -18,6 +18,11 @@
   display: block;
 }
 
+.blog-author, code.blog-tags {
+  color: var(--cream);
+}
+
+
 .blog-cover-image {
   height: 8rem;
   background-position: center;

@@ -13,4 +13,8 @@ It's actually live [here](https://alpha-sneu.xyz/)
 sudo apt-get install libsqlite3-dev -y
 ```
 
-- 
+- Setup the `SQLite` DB:
+
+```
+diesel migration run
+```

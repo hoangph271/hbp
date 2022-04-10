@@ -83,28 +83,22 @@ pub enum AuthPayload {
     UserResource(UserResoucePayload),
 }
 
+fn jwt_str_from_request(req: &Request) -> Option<String> {
+    match req.query_value::<&str>("jwt") {
+        Some(jwt) => jwt.map(|val| val.to_owned()).ok(),
+        None => req
+            .headers()
+            .get_one(constants::headers::AUTHORIZATION)
+            .map(|jwt_str| jwt_str.trim()["Bearer ".len()..].to_owned()),
+    }
+}
+
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for AuthPayload {
     type Error = HbpError;
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        // TODO: Fix this shit...! :"/
-        let jwt_from_query = req.query_value::<&str>("jwt");
-        let jwt_from_header = req
-            .headers()
-            .get_one(constants::headers::AUTHORIZATION)
-            .map(|jwt_str| jwt_str.trim()["Bearer ".len()..].to_owned());
-
-        let jwt_str = if let Some(_jwt_str) = jwt_from_query {
-            _jwt_str.map(|val| val.to_owned()).ok()
-        } else if jwt_from_header.is_some() {
-            jwt_from_header
-        } else {
-            None
-        };
-
-        let user_jwt_cookie = req.cookies().get_private(USER_JWT_COOKIE);
-        let resource_jwt_cookie = req.cookies().get_private(RESOURCE_JWT_COOKIE);
+        let jwt_str = jwt_str_from_request(req);
 
         let jwt = if let Some(jwt_str) = jwt_str {
             let jwt = jwt::verify_jwt(&jwt_str).ok();
@@ -112,22 +106,21 @@ impl<'r> FromRequest<'r> for AuthPayload {
             if let Some(jwt) = jwt.clone() {
                 match jwt {
                     AuthPayload::User(_) => {
-                        if user_jwt_cookie.is_none() {
-                            req.cookies()
-                                .add_private(Cookie::new(USER_JWT_COOKIE, jwt_str));
-                        }
+                        req.cookies()
+                            .add_private(Cookie::new(USER_JWT_COOKIE, jwt_str));
                     }
                     AuthPayload::UserResource(_) => {
-                        if resource_jwt_cookie.is_none() {
-                            req.cookies()
-                                .add_private(Cookie::new(RESOURCE_JWT_COOKIE, jwt_str));
-                        }
+                        req.cookies()
+                            .add_private(Cookie::new(RESOURCE_JWT_COOKIE, jwt_str));
                     }
                 }
             }
 
             jwt
         } else {
+            let user_jwt_cookie = req.cookies().get_private(USER_JWT_COOKIE);
+            let resource_jwt_cookie = req.cookies().get_private(RESOURCE_JWT_COOKIE);
+
             let jwt_from_cookies = if user_jwt_cookie.is_some() {
                 user_jwt_cookie
             } else if resource_jwt_cookie.is_some() {

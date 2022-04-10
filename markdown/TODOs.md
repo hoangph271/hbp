@@ -9,6 +9,7 @@
 - [ ] ~~Async HbpResponse::respond_to()~~
 - [ ] ~~System information in index page~~  
 - [ ] ~~Download static folder  ****~~  
+- [x] Invalid JWT cache
 - [x] FIXME: Consistent auth status in all pages
   - [x] `/blogs`
   - [x] `/markdown/`

@@ -3,6 +3,10 @@
     - [ ] List todo
     - [ ] Recreate on new day
 
+- [ ] Plan auth
+    - Handle only user auth in cookies...?
+    - Handle resource auth...?
+
 ## > DONEs
 - [ ] ~~Paging for blogs~~
 - [ ] ~~Learn `async` #Rust~~

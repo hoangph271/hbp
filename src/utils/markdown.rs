@@ -1,4 +1,4 @@
-use crate::shared::entities::markdown::Markdown;
+use crate::shared::entities::markdown::*;
 use crate::utils::marper;
 use crate::utils::template::{
     render_default_layout, simple_data_from, DefaultLayoutData, TemplateData,
@@ -65,20 +65,34 @@ pub async fn render_markdown(
     )
 }
 
-pub fn markdown_from_dir<P: AsRef<Path>>(path: &P) -> Vec<Markdown> {
+pub fn markdown_from_dir<P: AsRef<Path>>(path: &P) -> Vec<MarkdownOrMarkdownDir> {
     read_dir(path)
         .unwrap()
-        .map(|entry| {
+        .filter_map(|entry| {
             let entry = entry.unwrap();
 
-            Markdown::from_markdown(&entry.path()).unwrap()
+            if entry.path().is_dir() {
+                Some(MarkdownOrMarkdownDir::MarkdownDir(MarkdownDir {
+                    title: match entry.path().file_name() {
+                        Some(file_name) => file_name.to_string_lossy().to_string(),
+                        None => "Untitled".to_owned(),
+                    },
+                    url: format!("{}", entry.path().to_string_lossy()),
+                }))
+            } else if entry.path().to_string_lossy().ends_with(".md") {
+                Some(MarkdownOrMarkdownDir::Markdown(
+                    Markdown::from_markdown(&entry.path()).unwrap(),
+                ))
+            } else {
+                None
+            }
         })
         .collect()
 }
 
 pub fn render_markdown_list(
     default_layout_data: DefaultLayoutData,
-    markdowns: Vec<Markdown>,
+    markdowns: Vec<MarkdownOrMarkdownDir>,
 ) -> String {
     render_default_layout(
         "markdown/list.html",
@@ -89,7 +103,14 @@ pub fn render_markdown_list(
                     let mut builder = builder;
 
                     for markdown in &markdowns {
-                        builder = builder.push(&markdown).unwrap();
+                        builder = match markdown {
+                            MarkdownOrMarkdownDir::Markdown(markdown) => {
+                                builder.push(&markdown).unwrap()
+                            }
+                            MarkdownOrMarkdownDir::MarkdownDir(markdown_dir) => {
+                                builder.push(&markdown_dir).unwrap()
+                            }
+                        };
                     }
 
                     builder

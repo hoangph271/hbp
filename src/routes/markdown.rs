@@ -7,6 +7,7 @@ use crate::utils::{
 };
 use httpstatus::StatusCode;
 use mustache::Data;
+use chrono::NaiveDate;
 use std::path::{Path, PathBuf};
 
 #[get("/<sub_path..>")]
@@ -86,6 +87,13 @@ pub async fn user_markdown_file(
                 if markdown.author.is_empty() {
                     markdown.author = username.to_owned();
                 }
+            });
+
+            markdowns.sort_by(|m1, m2| {
+                const DATE_FORMAT: &str = "%m/%d/%Y";
+                NaiveDate::parse_from_str(&m2.dob, DATE_FORMAT)
+                    .unwrap()
+                    .cmp(&NaiveDate::parse_from_str(&m1.dob, DATE_FORMAT).unwrap())
             });
 
             HbpResponse::html(

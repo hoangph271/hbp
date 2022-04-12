@@ -130,7 +130,7 @@ impl Markdown {
                 "{}",
                 DateTime::<Utc>::from(path.metadata()?.created()?)
                     .date()
-                    .format("%Y/%m/%d")
+                    .format("%m/%d/%Y")
             );
             info!("{}", markdown.dob);
         }

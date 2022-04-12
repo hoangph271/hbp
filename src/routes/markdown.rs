@@ -1,13 +1,13 @@
-use crate::shared::entities::markdown::Markdown;
+use crate::shared::entities::markdown::*;
 use crate::utils::template::DefaultLayoutData;
 use crate::utils::{
     auth::{AuthPayload, UserPayload},
     markdown,
     responders::{HbpContent, HbpResponse},
 };
+// use chrono::NaiveDate;
 use httpstatus::StatusCode;
 use mustache::Data;
-use chrono::NaiveDate;
 use std::path::{Path, PathBuf};
 
 #[get("/<sub_path..>")]
@@ -84,17 +84,20 @@ pub async fn user_markdown_file(
             let mut markdowns = markdown::markdown_from_dir(&file_path);
 
             markdowns.iter_mut().for_each(|markdown| {
-                if markdown.author.is_empty() {
-                    markdown.author = username.to_owned();
+                if let MarkdownOrMarkdownDir::Markdown(markdown) = markdown {
+                    if markdown.author.is_empty() {
+                        markdown.author = username.to_owned();
+                    }
                 }
             });
 
-            markdowns.sort_by(|m1, m2| {
-                const DATE_FORMAT: &str = "%m/%d/%Y";
-                NaiveDate::parse_from_str(&m2.dob, DATE_FORMAT)
-                    .unwrap()
-                    .cmp(&NaiveDate::parse_from_str(&m1.dob, DATE_FORMAT).unwrap())
-            });
+            // TODO: Sort...! :"<
+            // markdowns.sort_by(|m1, m2| {
+            //     const DATE_FORMAT: &str = "%m/%d/%Y";
+            //     NaiveDate::parse_from_str(&m2.dob, DATE_FORMAT)
+            //         .unwrap()
+            //         .cmp(&NaiveDate::parse_from_str(&m1.dob, DATE_FORMAT).unwrap())
+            // });
 
             HbpResponse::html(
                 &markdown::render_markdown_list(

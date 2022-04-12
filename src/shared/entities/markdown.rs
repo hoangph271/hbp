@@ -139,6 +139,17 @@ impl Markdown {
     }
 }
 
+#[derive(Debug, Serialize)]
+pub struct MarkdownDir {
+    pub title: String,
+    pub url: String,
+}
+
+pub enum MarkdownOrMarkdownDir {
+    Markdown(Markdown),
+    MarkdownDir(MarkdownDir),
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

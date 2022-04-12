@@ -1,0 +1,19 @@
+<link rel="stylesheet" href="/static/css/blogs/index.css">
+<ul class="markdown-list">
+  {{#markdowns}}
+    <li class="markdown-item">
+      {{#cover_image}}
+        <div class="markdown-cover-image" style="background-image: url({{ cover_image }});"></div>
+      {{/cover_image}}
+      <a href="/{{ url }}" class="markdown-title">
+        {{ title }}
+      </a>
+      <p class="markdown-author">{{ author }} - {{ dob }}</p>
+      {{#tags}}
+        <code class="markdown-tags">
+          #{{ . }}
+        </code>
+      {{/tags}}
+    </li>
+  {{/markdowns}}
+  </ul>

@@ -79,7 +79,25 @@ pub async fn user_markdown_file(
     }
 
     if !markdown::is_markdown(&file_path) {
-        return HbpResponse::file(file_path);
+        return if file_path.is_dir() {
+            let mut markdowns = markdown::markdown_from_dir(&file_path);
+
+            markdowns.iter_mut().for_each(|markdown| {
+                if markdown.author.is_empty() {
+                    markdown.author = username.to_owned();
+                }
+            });
+
+            HbpResponse::html(
+                &markdown::render_markdown_list(
+                    DefaultLayoutData::only_title(&file_path_str).maybe_auth(Some(jwt)),
+                    markdowns,
+                ),
+                None,
+            )
+        } else {
+            HbpResponse::file(file_path)
+        };
     }
 
     if let Ok(markdown_data) = Markdown::from_markdown(&file_path) {

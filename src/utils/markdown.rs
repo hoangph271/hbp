@@ -5,7 +5,9 @@ use crate::utils::template::{
 };
 use crate::utils::types::{HbpError, HbpResult};
 use mustache::Data;
+use mustache::MapBuilder;
 use pulldown_cmark::{html, Options, Parser};
+use std::fs::read_dir;
 use std::path::Path;
 
 pub fn markdown_to_html(markdown: &str) -> String {
@@ -54,11 +56,46 @@ pub async fn render_markdown(
     let markdown_html = markdown_to_html(&markdown.content);
 
     render_default_layout(
-        "static/markdown.html",
+        "markdown/markdown.html",
         layout_data,
         Some(simple_data_from(vec![(
             "markdown_html".to_owned(),
             Data::String(markdown_html),
         )])),
     )
+}
+
+pub fn markdown_from_dir<P: AsRef<Path>>(path: &P) -> Vec<Markdown> {
+    read_dir(path)
+        .unwrap()
+        .map(|entry| {
+            let entry = entry.unwrap();
+
+            Markdown::from_markdown(&entry.path()).unwrap()
+        })
+        .collect()
+}
+
+pub fn render_markdown_list(
+    default_layout_data: DefaultLayoutData,
+    markdowns: Vec<Markdown>,
+) -> String {
+    render_default_layout(
+        "markdown/list.html",
+        Some(default_layout_data),
+        Some(
+            MapBuilder::new()
+                .insert_vec("markdowns", |builder| {
+                    let mut builder = builder;
+
+                    for markdown in &markdowns {
+                        builder = builder.push(&markdown).unwrap();
+                    }
+
+                    builder
+                })
+                .build(),
+        ),
+    )
+    .unwrap()
 }

@@ -17,6 +17,7 @@ pub struct Markdown {
     pub dob: String,
     pub tags: Option<Vec<String>>,
     pub cover_image: String,
+    pub url: String,
 }
 
 impl From<Markdown> for Data {
@@ -76,6 +77,7 @@ impl Markdown {
         let mut markdown = Markdown {
             content: fs::read_to_string(path)?,
             file_name: path.file_name().unwrap().to_string_lossy().into_owned(),
+            url: path.to_string_lossy().to_string(),
             ..Markdown::default()
         };
 
@@ -111,16 +113,26 @@ impl Markdown {
                 markdown.cover_image = cover_image;
             }
 
-            markdown.dob = if let Some(dob) = header_map.remove("dob") {
-                dob
-            } else {
-                format!(
-                    "{}",
-                    DateTime::<Utc>::from(path.metadata()?.created()?)
-                        .date()
-                        .format("YYYY/mm/dd")
-                )
+            if let Some(dob) = header_map.remove("dob") {
+                markdown.dob = dob;
             }
+        }
+
+        if markdown.title.is_empty() {
+            markdown.title = match path.file_name() {
+                Some(file_name) => file_name.to_string_lossy().to_string(),
+                None => "Untitled...!".to_owned(),
+            };
+        }
+
+        if markdown.dob.is_empty() {
+            markdown.dob = format!(
+                "{}",
+                DateTime::<Utc>::from(path.metadata()?.created()?)
+                    .date()
+                    .format("%Y/%m/%d")
+            );
+            info!("{}", markdown.dob);
         }
 
         Ok(markdown)

@@ -1,29 +1,28 @@
-.blog-list {
+.markdown-list {
   list-style: none;
   padding: 0;
   max-width: var(--content-mw);
   margin: var(--content-margin);
 }
 
-.blog-item {
+.markdown-item {
   padding: 1rem;
   border: 0 solid var(--tan);
 }
-.blog-item:not(:first-child) {
+.markdown-item:not(:first-child) {
   border-top-width: 1px;
 }
 
-.blog-title {
+.markdown-title {
   font-size: xx-large;
   display: block;
 }
 
-.blog-author, code.blog-tags {
-  color: var(--cream);
+.markdown-author, code.markdown-tags {
+  color: var(--orange);
 }
 
-
-.blog-cover-image {
+.markdown-cover-image {
   height: 8rem;
   background-position: center;
   background-size: cover;

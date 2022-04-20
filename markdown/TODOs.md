@@ -2,6 +2,7 @@
 - [ ] Finish that `TODO` stuff:
     - [ ] List todo
     - [ ] Recreate on new day
+- [ ] Handle markdown sorting correctly
 
 ## > DONEs
 - [ ] ~~Paging for blogs~~

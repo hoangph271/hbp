@@ -7,7 +7,7 @@ use crate::utils::template::DefaultLayoutData;
 
 #[get("/")]
 pub fn index(jwt: Option<AuthPayload>) -> HbpResponse {
-    let markdowns: Vec<MarkdownOrMarkdownDir> = markdown_from_dir(&"markdown/blogs");
+    let markdowns: Vec<MarkdownOrMarkdownDir> = markdown_from_dir(&"markdown/blogs").unwrap();
 
     // FIXME: Now with dir, how to sort...?
     // markdowns.sort_by(|m1, m2| {

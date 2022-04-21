@@ -81,7 +81,7 @@ pub async fn user_markdown_file(
 
     if !markdown::is_markdown(&file_path) {
         return if file_path.is_dir() {
-            let mut markdowns = markdown::markdown_from_dir(&file_path);
+            let mut markdowns = markdown::markdown_from_dir(&file_path).unwrap();
 
             markdowns.iter_mut().for_each(|markdown| {
                 if let MarkdownOrMarkdownDir::Markdown(markdown) = markdown {

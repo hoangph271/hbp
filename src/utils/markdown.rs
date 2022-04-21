@@ -65,11 +65,11 @@ pub async fn render_markdown(
     )
 }
 
-pub fn markdown_from_dir<P: AsRef<Path>>(path: &P) -> Vec<MarkdownOrMarkdownDir> {
-    read_dir(path)
+pub fn markdown_from_dir<P: AsRef<Path>>(path: &P) -> HbpResult<Vec<MarkdownOrMarkdownDir>> {
+    let markdowns = read_dir(path)
         .unwrap()
         .filter_map(|entry| {
-            let entry = entry.unwrap();
+            let entry = entry.ok()?;
 
             if entry.path().is_dir() {
                 Some(MarkdownOrMarkdownDir::MarkdownDir(MarkdownDir {
@@ -80,14 +80,16 @@ pub fn markdown_from_dir<P: AsRef<Path>>(path: &P) -> Vec<MarkdownOrMarkdownDir>
                     url: format!("{}", entry.path().to_string_lossy()),
                 }))
             } else if entry.path().to_string_lossy().ends_with(".md") {
-                Some(MarkdownOrMarkdownDir::Markdown(
-                    Markdown::from_markdown(&entry.path()).unwrap(),
-                ))
+                Some(MarkdownOrMarkdownDir::Markdown(Markdown::from_markdown(
+                    &entry.path(),
+                ).ok()?))
             } else {
                 None
             }
         })
-        .collect()
+        .collect();
+
+    Ok(markdowns)
 }
 
 pub fn render_markdown_list(

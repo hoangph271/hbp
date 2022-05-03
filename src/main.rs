@@ -34,7 +34,8 @@ fn launch() -> rocket::Rocket<rocket::Build> {
             "/markdown",
             routes![
                 routes::markdown::markdown_file,
-                routes::markdown::user_markdown_file
+                routes::markdown::user_markdown_file,
+                routes::markdown::user_markdown_editor,
             ],
         )
         .mount("/static", routes![routes::static_files::serve])

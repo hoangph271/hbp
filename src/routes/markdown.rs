@@ -1,5 +1,5 @@
 use crate::shared::entities::markdown::*;
-use crate::utils::template::DefaultLayoutData;
+use crate::utils::template::{render_from_template, DefaultLayoutData};
 use crate::utils::{
     auth::{AuthPayload, UserPayload},
     markdown,
@@ -9,6 +9,24 @@ use crate::utils::{
 use httpstatus::StatusCode;
 use mustache::Data;
 use std::path::{Path, PathBuf};
+
+fn asser_payload_access(payload: &UserPayload, path: &str) -> bool {
+    let prefix = PathBuf::from("markdown")
+        .join("users")
+        .join(payload.sub.clone())
+        .to_string_lossy()
+        .into_owned();
+
+    path.starts_with(&*prefix)
+}
+fn markdown_path_from(username: &str, sub_path: &Path) -> (String, PathBuf) {
+    let file_path = PathBuf::from("markdown")
+        .join("users")
+        .join(username)
+        .join(sub_path);
+
+    (file_path.to_string_lossy().to_string(), file_path)
+}
 
 #[get("/<sub_path..>")]
 pub async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpResponse {
@@ -48,29 +66,34 @@ pub async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpRe
     }
 }
 
-#[get("/users/<username>/<sub_path..>")]
+#[get("/users/_edit/<username>/<sub_path..>")]
+pub async fn user_markdown_editor(
+    username: &str,
+    sub_path: PathBuf,
+    jwt: AuthPayload,
+) -> HbpResponse {
+    let (file_path_str, _) = markdown_path_from(username, &sub_path);
+
+    if !jwt.match_path(&file_path_str, Some(asser_payload_access)) {
+        return HbpResponse::status(StatusCode::Forbidden);
+    }
+
+    HbpResponse::html(
+        // TODO: target_path option
+        &render_from_template("markdown/write-markdown.html", None).unwrap(),
+        None,
+    )
+}
+
+#[get("/users/<username>/<sub_path..>", rank = 1)]
 pub async fn user_markdown_file(
     username: &str,
     sub_path: PathBuf,
     jwt: AuthPayload,
 ) -> HbpResponse {
-    let file_path = PathBuf::from("markdown")
-        .join("users")
-        .join(username)
-        .join(sub_path.clone());
+    let (file_path_str, file_path) = markdown_path_from(username, &sub_path);
 
-    let file_path_str = file_path.to_string_lossy();
-    let user_assert = |payload: &UserPayload, path: &str| {
-        let prefix = PathBuf::from("markdown")
-            .join("users")
-            .join(payload.sub.clone())
-            .to_string_lossy()
-            .into_owned();
-
-        path.starts_with(&*prefix)
-    };
-
-    if !jwt.match_path(&file_path_str, Some(user_assert)) {
+    if !jwt.match_path(&file_path_str, Some(asser_payload_access)) {
         return HbpResponse::status(StatusCode::Forbidden);
     }
 

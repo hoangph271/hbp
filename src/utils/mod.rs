@@ -1,6 +1,7 @@
 pub mod auth;
 pub mod constants;
 pub mod env;
+pub mod guards;
 pub mod markdown;
 pub mod marper;
 pub mod responders;

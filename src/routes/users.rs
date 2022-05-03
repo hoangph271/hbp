@@ -1,5 +1,6 @@
 use crate::data::{lib::user_orm, sqlite::DbConn};
-use crate::utils::auth::{AuthPayload, UserPayload, USER_JWT_COOKIE};
+use crate::utils::auth::{AuthPayload, UserPayload};
+use crate::utils::guards::auth_payload::USER_JWT_COOKIE;
 use crate::utils::responders::{HbpContent, HbpResponse};
 use crate::utils::types::{HbpError, HbpResult};
 use crate::utils::{template, timestamp_now};

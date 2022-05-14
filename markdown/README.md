@@ -1,10 +1,19 @@
-Ask #Ká...?  
-She chose the name...! `// hbp...!`
+> To be abandoned `Rocket.rs` website
 
-Key features:
-- Built in #Rust...!
-- So far, no #React #BS...!
-- Have one tester after all...!
-- > Nếu t giàu, t sẽ chia cho mỗi người một cái #NFT nhá...! :")
+Please refer [README.md](/markdown/README.md).  
+It's actually live [here](https://alpha-sneu.xyz/)
 
-Check out the [TODOs.md](/markdown/TODOs.md)
+---
+
+## Linux setup:
+
+- You'll need this for SQLite:
+```
+sudo apt-get install libsqlite3-dev -y
+```
+
+- Setup the `SQLite` DB:
+
+```
+diesel migration run
+```

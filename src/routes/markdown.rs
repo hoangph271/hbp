@@ -66,17 +66,9 @@ pub async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpRe
     }
 }
 
-#[get("/users/_edit/<username>/<sub_path..>")]
-pub async fn user_markdown_editor(
-    username: &str,
-    sub_path: PathBuf,
-    jwt: AuthPayload,
-) -> HbpResponse {
-    let (file_path_str, _) = markdown_path_from(username, &sub_path);
-
-    if !jwt.match_path(&file_path_str, Some(asser_payload_access)) {
-        return HbpResponse::status(StatusCode::Forbidden);
-    }
+#[get("/_edit/<sub_path..>")]
+pub async fn user_markdown_editor(sub_path: PathBuf, jwt: AuthPayload) -> HbpResponse {
+    let file_path_str = PathBuf::from("markdown").join(sub_path.clone());
 
     HbpResponse::html(
         // TODO: target_path option

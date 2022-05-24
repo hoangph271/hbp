@@ -28,7 +28,7 @@ fn markdown_path_from(username: &str, sub_path: &Path) -> (String, PathBuf) {
     (file_path.to_string_lossy().to_string(), file_path)
 }
 
-#[get("/<sub_path..>")]
+#[get("/<sub_path..>", rank = 2)]
 pub async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpResponse {
     let file_path = PathBuf::from("markdown").join(sub_path.clone());
 
@@ -91,6 +91,19 @@ pub async fn user_markdown_file(
     if !file_path.exists() {
         info!("{:?} not exists", file_path.to_string_lossy());
         return HbpResponse::not_found();
+    }
+
+    if file_path.is_dir() {
+        let markdowns: Vec<MarkdownOrMarkdownDir> =
+            markdown::markdown_from_dir(&file_path).unwrap();
+
+        return HbpResponse::html(
+            &markdown::render_markdown_list(
+                DefaultLayoutData::only_title(&file_path_str),
+                markdowns,
+            ),
+            None,
+        );
     }
 
     if !markdown::is_markdown(&file_path) {

@@ -4,7 +4,7 @@
     - [ ] Recreate on new day
 - [ ] Handle markdown sorting correctly
 - [ ] POST markdown
-- [ ] Directory view for user markdowns
+- [x] Directory view for user markdowns
 
 ## > DONEs
 - [ ] ~~Paging for blogs~~

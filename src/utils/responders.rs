@@ -130,5 +130,3 @@ impl<'r> Responder<'r, 'r> for HbpResponse {
         Ok(response_builder.finalize())
     }
 }
-
-// impl<'r> Responder<'r, 'r> for 

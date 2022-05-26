@@ -21,20 +21,7 @@ pub struct HbpResponse {
     pub content: HbpContent,
 }
 
-#[allow(dead_code)]
 impl HbpResponse {
-    pub fn empty() -> HbpResponse {
-        HbpResponse {
-            status_code: StatusCode::Ok,
-            content: HbpContent::Plain(String::new()),
-        }
-    }
-    pub fn text(text: &str, status_code: StatusCode) -> HbpResponse {
-        HbpResponse {
-            status_code,
-            content: HbpContent::Plain(text.to_owned()),
-        }
-    }
     pub fn html(html: &str, status_code: Option<StatusCode>) -> HbpResponse {
         HbpResponse {
             status_code: status_code.unwrap_or(StatusCode::Ok),
@@ -70,14 +57,8 @@ impl HbpResponse {
             content: HbpContent::Html(html),
         }
     }
-    pub fn unauthorized() -> HbpResponse {
-        HbpResponse::status(StatusCode::Unauthorized)
-    }
     pub fn forbidden() -> HbpResponse {
         HbpResponse::status(StatusCode::Forbidden)
-    }
-    pub fn bad_request() -> HbpResponse {
-        HbpResponse::status(StatusCode::BadRequest)
     }
     pub fn json<T: serde::Serialize>(content: T, status_code: Option<StatusCode>) -> HbpResponse {
         let json = serde_json::to_string(&content).expect("Stringify JSON failed");
@@ -149,3 +130,5 @@ impl<'r> Responder<'r, 'r> for HbpResponse {
         Ok(response_builder.finalize())
     }
 }
+
+// impl<'r> Responder<'r, 'r> for 

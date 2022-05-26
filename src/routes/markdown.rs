@@ -85,7 +85,7 @@ pub async fn user_markdown_file(
     let (file_path_str, file_path) = markdown_path_from(username, &sub_path);
 
     if !jwt.match_path(&file_path_str, Some(asser_payload_access)) {
-        return HbpResponse::status(StatusCode::Forbidden);
+        return HbpResponse::forbidden();
     }
 
     if !file_path.exists() {

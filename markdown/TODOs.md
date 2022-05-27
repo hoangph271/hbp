@@ -4,7 +4,6 @@
     - [ ] Recreate on new day
 - [ ] Handle markdown sorting correctly
 - [ ] POST markdown
-- [x] Directory view for user markdowns
 
 ## > DONEs
 - [ ] ~~Paging for blogs~~
@@ -12,6 +11,7 @@
 - [ ] ~~Async HbpResponse::respond_to()~~
 - [ ] ~~System information in index page~~  
 - [ ] ~~Download static folder  ****~~  
+- [x] Directory view for user markdowns
 - [x] List markdown folder
 - [x] Invalid JWT cache
 - [x] FIXME: Consistent auth status in all pages

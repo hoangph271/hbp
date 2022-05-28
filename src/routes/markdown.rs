@@ -99,7 +99,7 @@ pub async fn user_markdown_file(
 
         return HbpResponse::html(
             &markdown::render_markdown_list(
-                DefaultLayoutData::only_title(&file_path_str),
+                DefaultLayoutData::only_title(&file_path_str).username(username),
                 markdowns,
             ),
             None,

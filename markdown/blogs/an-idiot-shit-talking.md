@@ -7,6 +7,10 @@ tags: youtube, rust, js, hbp
 -->
 ## An idiot shit-talking
 
+- [The only thing that blockchain brings us](https://youtu.be/qRWkcUMW3ec)
+- [Android is the most poorly executed open source project](https://youtu.be/PSGhBtjWq50)
+- [File size limit is good](https://youtu.be/5gtY_dZCQs8)
+- [JavaScript is eating the world](https://youtu.be/VTLud-16qao)
 - [Rick & Morty](https://youtu.be/iIgF3zok9yM)
 - [26/05/2022](https://youtu.be/lkoLbxaP1sA)
 - [24/05/2022](https://youtu.be/TaGrju329aA)

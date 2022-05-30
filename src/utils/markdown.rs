@@ -77,7 +77,15 @@ pub fn markdown_from_dir<P: AsRef<Path>>(path: &P) -> HbpResult<Vec<MarkdownOrMa
                         Some(file_name) => file_name.to_string_lossy().to_string(),
                         None => "Untitled".to_owned(),
                     },
-                    url: format!("{}", entry.path().to_string_lossy()),
+                    url: entry
+                        .path()
+                        .to_string_lossy()
+                        .split('/')
+                        .map(|part| {
+                            urlencoding::encode(part).to_string()
+                        })
+                        .collect::<Vec<String>>()
+                        .join("/"),
                 }))
             } else if entry.path().to_string_lossy().ends_with(".md") {
                 Some(MarkdownOrMarkdownDir::Markdown(

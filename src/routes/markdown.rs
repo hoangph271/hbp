@@ -5,7 +5,6 @@ use crate::utils::{
     markdown,
     responders::{HbpContent, HbpResponse},
 };
-// use chrono::NaiveDate;
 use httpstatus::StatusCode;
 use mustache::Data;
 use std::path::{Path, PathBuf};
@@ -98,12 +97,17 @@ pub async fn user_markdown_file(
             markdown::markdown_from_dir(&file_path).unwrap();
 
         let moveup_url = file_path.parent().unwrap().to_str().unwrap();
+        let is_user_root = moveup_url.eq("markdown/users");
 
         return HbpResponse::html(
             &markdown::render_markdown_list(
                 DefaultLayoutData::only_title(&file_path_str).username(username),
                 markdowns,
-                Some(moveup_url.to_owned()),
+                if is_user_root {
+                    None
+                } else {
+                    Some(moveup_url.to_owned())
+                },
             ),
             None,
         );

@@ -7,7 +7,10 @@ tags: youtube, rust, js, hbp
 -->
 ## An idiot shit-talking
 
-- [https://youtu.be/_P7KJGBP6JQ](https://youtu.be/_P7KJGBP6JQ)
+> A bunch of YouTube videos I made...!  
+> Just me talking about stuffs that I think worth talking about...! :"}
+
+- [The #Burnout](https://youtu.be/_P7KJGBP6JQ)
 - [The only thing that blockchain brings us](https://youtu.be/qRWkcUMW3ec)
 - [Android is the most poorly executed open source project](https://youtu.be/PSGhBtjWq50)
 - [File size limit is good](https://youtu.be/5gtY_dZCQs8)

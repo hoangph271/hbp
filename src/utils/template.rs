@@ -39,7 +39,6 @@ pub fn render_from_template(template_path: &str, data: Option<Data>) -> HbpResul
 pub struct DefaultLayoutData {
     title: String,
     username: String,
-    moveup_url: String
 }
 impl DefaultLayoutData {
     pub fn title(mut self, title: &str) -> Self {
@@ -63,11 +62,6 @@ impl DefaultLayoutData {
     }
     pub fn username(mut self, username: &str) -> Self {
         self.username = username.to_owned();
-
-        self
-    }
-    pub fn moveup_url(mut self, moveup_url: &str) -> Self {
-        self.moveup_url = moveup_url.to_owned();
 
         self
     }

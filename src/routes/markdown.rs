@@ -101,10 +101,9 @@ pub async fn user_markdown_file(
 
         return HbpResponse::html(
             &markdown::render_markdown_list(
-                DefaultLayoutData::only_title(&file_path_str)
-                    .username(username)
-                    .moveup_url(moveup_url),
+                DefaultLayoutData::only_title(&file_path_str).username(username),
                 markdowns,
+                Some(moveup_url.to_owned()),
             ),
             None,
         );
@@ -134,6 +133,7 @@ pub async fn user_markdown_file(
                 &markdown::render_markdown_list(
                     DefaultLayoutData::only_title(&file_path_str).maybe_auth(Some(jwt)),
                     markdowns,
+                    None,
                 ),
                 None,
             )

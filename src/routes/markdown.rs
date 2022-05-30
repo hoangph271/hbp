@@ -97,9 +97,13 @@ pub async fn user_markdown_file(
         let markdowns: Vec<MarkdownOrMarkdownDir> =
             markdown::markdown_from_dir(&file_path).unwrap();
 
+        let moveup_url = file_path.parent().unwrap().to_str().unwrap();
+
         return HbpResponse::html(
             &markdown::render_markdown_list(
-                DefaultLayoutData::only_title(&file_path_str).username(username),
+                DefaultLayoutData::only_title(&file_path_str)
+                    .username(username)
+                    .moveup_url(moveup_url),
                 markdowns,
             ),
             None,

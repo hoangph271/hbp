@@ -1,3 +1,4 @@
+use crate::utils::string::url_encode_path;
 use crate::utils::types::{HbpError, HbpResult};
 use anyhow::Result;
 use chrono::{DateTime, Utc};
@@ -77,7 +78,7 @@ impl Markdown {
         let mut markdown = Markdown {
             content: fs::read_to_string(path)?,
             file_name: path.file_name().unwrap().to_string_lossy().into_owned(),
-            url: path.to_string_lossy().to_string(),
+            url: url_encode_path(&path.to_string_lossy().to_string()),
             ..Markdown::default()
         };
 

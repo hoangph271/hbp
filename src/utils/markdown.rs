@@ -1,5 +1,6 @@
 use crate::shared::entities::markdown::*;
 use crate::utils::marper;
+use crate::utils::string::url_encode_path;
 use crate::utils::template::{
     render_default_layout, simple_data_from, DefaultLayoutData, TemplateData,
 };
@@ -77,12 +78,12 @@ pub fn markdown_from_dir<P: AsRef<Path>>(path: &P) -> HbpResult<Vec<MarkdownOrMa
                         Some(file_name) => file_name.to_string_lossy().to_string(),
                         None => "Untitled".to_owned(),
                     },
-                    url: format!("{}", entry.path().to_string_lossy()),
+                    url: url_encode_path(&entry.path().to_string_lossy()),
                 }))
             } else if entry.path().to_string_lossy().ends_with(".md") {
-                Some(MarkdownOrMarkdownDir::Markdown(Markdown::from_markdown(
-                    &entry.path(),
-                ).ok()?))
+                Some(MarkdownOrMarkdownDir::Markdown(
+                    Markdown::from_markdown(&entry.path()).ok()?,
+                ))
             } else {
                 None
             }
@@ -95,7 +96,14 @@ pub fn markdown_from_dir<P: AsRef<Path>>(path: &P) -> HbpResult<Vec<MarkdownOrMa
 pub fn render_markdown_list(
     default_layout_data: DefaultLayoutData,
     markdowns: Vec<MarkdownOrMarkdownDir>,
+    moveup_url: Option<String>,
 ) -> String {
+    let moveup_url = if let Some(moveup_url) = moveup_url {
+        moveup_url
+    } else {
+        String::new()
+    };
+
     render_default_layout(
         "markdown/list.html",
         Some(default_layout_data),
@@ -117,6 +125,7 @@ pub fn render_markdown_list(
 
                     builder
                 })
+                .insert_str("moveup_url", moveup_url)
                 .build(),
         ),
     )

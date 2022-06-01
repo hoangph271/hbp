@@ -39,6 +39,7 @@ bonsaidb = { version = "0.3", features = ["local"] }
 futures = "*"
 glob = "0.3.0"
 regex = "1.5.5"
+urlencoding = "2.1.0"
 
 [profile.dev]
 overflow-checks = true

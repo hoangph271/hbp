@@ -3,15 +3,17 @@
     - [ ] List todo
     - [ ] Recreate on new day
 - [ ] Handle markdown sorting correctly
-- [ ] POST markdown
-- [ ] moveup_url
+- [ ] View other file types
+- [ ] Upload files
 
 ## > DONEs
+- [ ] ~~POST markdown~~
 - [ ] ~~Paging for blogs~~
 - [ ] ~~Learn `async` #Rust~~
 - [ ] ~~Async HbpResponse::respond_to()~~
 - [ ] ~~System information in index page~~  
 - [ ] ~~Download static folder  ****~~  
+- [x] moveup_url
 - [x] Directory view for user markdowns
 - [x] List markdown folder
 - [x] Invalid JWT cache

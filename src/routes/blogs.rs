@@ -21,6 +21,7 @@ pub fn index(jwt: Option<AuthPayload>) -> HbpResponse {
         &render_markdown_list(
             DefaultLayoutData::only_title("Blogs").maybe_auth(jwt),
             markdowns,
+            None,
         ),
         None,
     )

@@ -4,7 +4,7 @@
     - [ ] Recreate on new day
 - [ ] Handle markdown sorting correctly
 - [ ] POST markdown
-- [ ] moveup_url
+- [x] moveup_url
 
 ## > DONEs
 - [ ] ~~Paging for blogs~~

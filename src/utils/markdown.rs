@@ -1,5 +1,6 @@
 use crate::shared::entities::markdown::*;
 use crate::utils::marper;
+use crate::utils::string::url_encode_path;
 use crate::utils::template::{
     render_default_layout, simple_data_from, DefaultLayoutData, TemplateData,
 };
@@ -77,15 +78,7 @@ pub fn markdown_from_dir<P: AsRef<Path>>(path: &P) -> HbpResult<Vec<MarkdownOrMa
                         Some(file_name) => file_name.to_string_lossy().to_string(),
                         None => "Untitled".to_owned(),
                     },
-                    url: entry
-                        .path()
-                        .to_string_lossy()
-                        .split('/')
-                        .map(|part| {
-                            urlencoding::encode(part).to_string()
-                        })
-                        .collect::<Vec<String>>()
-                        .join("/"),
+                    url: url_encode_path(&entry.path().to_string_lossy()),
                 }))
             } else if entry.path().to_string_lossy().ends_with(".md") {
                 Some(MarkdownOrMarkdownDir::Markdown(

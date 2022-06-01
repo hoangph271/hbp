@@ -6,6 +6,7 @@ pub mod markdown;
 pub mod marper;
 pub mod responders;
 pub mod setup_logger;
+pub mod string;
 pub mod template;
 pub mod types;
 

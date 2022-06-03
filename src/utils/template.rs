@@ -39,6 +39,7 @@ pub fn render_from_template(template_path: &str, data: Option<Data>) -> HbpResul
 pub struct DefaultLayoutData {
     title: String,
     username: String,
+    moveup_url: String,
 }
 impl DefaultLayoutData {
     pub fn title(mut self, title: &str) -> Self {
@@ -68,6 +69,11 @@ impl DefaultLayoutData {
     pub fn only_title(title: &str) -> Self {
         Self::default().title(title)
     }
+    pub fn moveup_url(mut self, moveup_url: &str) -> Self {
+        self.moveup_url = moveup_url.to_owned();
+
+        self
+    }
 }
 pub fn render_default_layout(
     template_path: &str,
@@ -78,6 +84,7 @@ pub fn render_default_layout(
 
     if let Some(layout_data) = layout_data {
         template_data = template_data.insert_str("title", layout_data.title);
+        template_data = template_data.insert_str("moveup_url", layout_data.moveup_url);
         template_data = template_data.insert_str(
             "raw_content",
             render_from_template(template_path, data).unwrap(),

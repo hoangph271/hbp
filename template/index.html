@@ -41,6 +41,11 @@
       {{/username}}
     </ul>
   </nav>
+  {{#moveup_url}}
+    <div>
+      <a href="/{{ moveup_url }}">{{ moveup_url }}</a>
+    </div>
+  {{/moveup_url}}
   {{{ raw_content }}}
   <!-- SCRIPTS -->
 </body>

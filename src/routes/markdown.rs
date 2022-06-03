@@ -92,22 +92,29 @@ pub async fn user_markdown_file(
         return HbpResponse::not_found();
     }
 
+    let moveup_url = if let Some(parent_path) = file_path.parent() {
+        let parent_path = parent_path.to_string_lossy().to_string();
+        let is_user_root = parent_path.eq("markdown/users");
+
+        if is_user_root {
+            "".to_string()
+        } else {
+            parent_path.to_owned()
+        }
+    } else {
+        "".to_string()
+    };
+
     if file_path.is_dir() {
         let markdowns: Vec<MarkdownOrMarkdownDir> =
             markdown::markdown_from_dir(&file_path).unwrap();
 
-        let moveup_url = file_path.parent().unwrap().to_str().unwrap();
-        let is_user_root = moveup_url.eq("markdown/users");
-
         return HbpResponse::html(
             &markdown::render_markdown_list(
-                DefaultLayoutData::only_title(&file_path_str).username(username),
+                DefaultLayoutData::only_title(&file_path_str)
+                    .username(username)
+                    .moveup_url(&moveup_url),
                 markdowns,
-                if is_user_root {
-                    None
-                } else {
-                    Some(moveup_url.to_owned())
-                },
             ),
             None,
         );
@@ -135,9 +142,10 @@ pub async fn user_markdown_file(
 
             HbpResponse::html(
                 &markdown::render_markdown_list(
-                    DefaultLayoutData::only_title(&file_path_str).maybe_auth(Some(jwt)),
+                    DefaultLayoutData::only_title(&file_path_str)
+                        .maybe_auth(Some(jwt))
+                        .moveup_url(&moveup_url),
                     markdowns,
-                    None,
                 ),
                 None,
             )
@@ -153,7 +161,11 @@ pub async fn user_markdown_file(
             } else {
                 markdown::render_markdown(
                     &markdown_data,
-                    Some(DefaultLayoutData::only_title(&markdown_data.title).maybe_auth(Some(jwt))),
+                    Some(
+                        DefaultLayoutData::only_title(&markdown_data.title)
+                            .maybe_auth(Some(jwt))
+                            .moveup_url(&moveup_url),
+                    ),
                 )
                 .await
             }

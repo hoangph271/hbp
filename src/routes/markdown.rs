@@ -4,6 +4,7 @@ use crate::utils::{
     auth::{AuthPayload, UserPayload},
     markdown,
     responders::{HbpContent, HbpResponse},
+    string::url_encode_path,
 };
 use httpstatus::StatusCode;
 use mustache::Data;
@@ -104,6 +105,7 @@ pub async fn user_markdown_file(
     } else {
         "".to_string()
     };
+    let moveup_url = url_encode_path(&moveup_url);
 
     if file_path.is_dir() {
         let markdowns: Vec<MarkdownOrMarkdownDir> =

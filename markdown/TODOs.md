@@ -5,8 +5,8 @@
 - [ ] Handle markdown sorting correctly
 - [ ] View other file types
 - [ ] Upload files
-- [ ] Escape `moveup_url`, maybe rename it to `moveup_path` and escape at the final step
 - [ ] 
+
 ## > DONEs
 - [ ] ~~POST markdown~~
 - [ ] ~~Paging for blogs~~
@@ -14,6 +14,7 @@
 - [ ] ~~Async HbpResponse::respond_to()~~
 - [ ] ~~System information in index page~~  
 - [ ] ~~Download static folder  ****~~  
+- [x] Escape `moveup_url`, maybe rename it to `moveup_path` and escape at the final step
 - [x] moveup_url for file view
 - [x] moveup_url
 - [x] Directory view for user markdowns

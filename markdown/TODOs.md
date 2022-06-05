@@ -5,7 +5,6 @@
 - [ ] Handle markdown sorting correctly
 - [ ] View other file types
 - [ ] Upload files
-- [ ] 
 
 ## > DONEs
 - [ ] ~~POST markdown~~

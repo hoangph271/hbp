@@ -10,6 +10,7 @@ tags: youtube, rust, js, hbp
 > A bunch of YouTube videos I made...!  
 > Just me talking about stuffs that I think worth talking about...! :"}
 
+- [It is, my dudes](https://youtu.be/udIO4sScIVk)
 - [The #Burnout](https://youtu.be/_P7KJGBP6JQ)
 - [The only thing that blockchain brings us](https://youtu.be/qRWkcUMW3ec)
 - [Android is the most poorly executed open source project](https://youtu.be/PSGhBtjWq50)

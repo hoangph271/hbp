@@ -76,6 +76,23 @@ pub async fn user_markdown_editor(sub_path: PathBuf, _jwt: AuthPayload) -> HbpRe
     )
 }
 
+pub fn moveup_url_from(file_path: &Path) -> String {
+    let moveup_url = if let Some(parent_path) = file_path.parent() {
+        let parent_path = parent_path.to_string_lossy().to_string();
+        let is_user_root = parent_path.eq("markdown/users");
+
+        if is_user_root {
+            "".to_string()
+        } else {
+            parent_path.to_owned()
+        }
+    } else {
+        "".to_string()
+    };
+
+    url_encode_path(&moveup_url)
+}
+
 #[get("/users/<username>/<sub_path..>", rank = 1)]
 pub async fn user_markdown_file(
     username: &str,
@@ -93,19 +110,7 @@ pub async fn user_markdown_file(
         return HbpResponse::not_found();
     }
 
-    let moveup_url = if let Some(parent_path) = file_path.parent() {
-        let parent_path = parent_path.to_string_lossy().to_string();
-        let is_user_root = parent_path.eq("markdown/users");
-
-        if is_user_root {
-            "".to_string()
-        } else {
-            parent_path.to_owned()
-        }
-    } else {
-        "".to_string()
-    };
-    let moveup_url = url_encode_path(&moveup_url);
+    let moveup_url = moveup_url_from(&file_path);
 
     if file_path.is_dir() {
         let markdowns: Vec<MarkdownOrMarkdownDir> =

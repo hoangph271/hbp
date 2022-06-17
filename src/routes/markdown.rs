@@ -68,7 +68,7 @@ pub async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpRe
 
 #[get("/_edit/<sub_path..>")]
 pub async fn user_markdown_editor(sub_path: PathBuf, _jwt: AuthPayload) -> HbpResponse {
-    let _file_path_str = PathBuf::from("markdown").join(sub_path.clone());
+    let _file_path_str = PathBuf::from("markdown").join(sub_path);
 
     HbpResponse::html(
         &render_from_template("markdown/write-markdown.html", None).unwrap(),
@@ -84,7 +84,7 @@ pub fn moveup_url_from(file_path: &Path) -> String {
         if is_user_root {
             "".to_string()
         } else {
-            parent_path.to_owned()
+            parent_path
         }
     } else {
         "".to_string()

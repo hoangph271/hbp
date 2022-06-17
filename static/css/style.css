@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Ubuntu&family=Ubuntu+Mono&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
 :root {
   --bgr-icecream: #fff8e1;
@@ -21,6 +21,7 @@
   --radius-gentle: 0.4rem;
   --radius-tight: 0.2em;
   --monospace: 'Ubuntu Mono',  'Courier New', Courier, monospace;
+  --sans-serif: 'Nunito', sans-serif;
 }
 
 /* * Dark theme */
@@ -42,6 +43,7 @@ body {
   margin: 0;
   font-size: 16px;
   background-color: var(--bgr-icecream);
+  font-family: var(--sans-serif);
 }
 
 a { color: var(--grunt); }
@@ -50,7 +52,7 @@ a:active, a:focus { color: var(--tan); }
 /* #endregion */
 
 code {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'Ubuntu', Courier, monospace;
 }
 
 /* * nav-bar */
@@ -61,7 +63,7 @@ code {
   align-items: center;
   background-color: var(--bgr-breath);
   box-shadow: var(--equal-shadow-gentle);
-  font-family: var(--monospace);
+  font-family: var(--sans-serif);
 }
 
 .nav-bar .index-page button {
@@ -98,12 +100,13 @@ code {
   max-width: 100%;
 }
 
-.hbp-markdown {
+.hbp-markdown.markdown-body {
   width: calc(100vw - 2rem);
   max-width: var(--content-mw);
   padding: var(--padding-small);
   margin: 0.8rem auto!important;
   border-radius: var(--radius-gentle);
+  font-family: var(--sans-serif);
 }
 
 .hbp-markdown ul {
@@ -140,6 +143,6 @@ code {
   margin: 0;
 }
 div.marpit > svg > foreignObject > section {
-  font-family: 'Roboto', sans-serif !important;
+  font-family: 'Nunito', sans-serif !important;
 }
 /* #endregion */

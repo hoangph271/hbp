@@ -10,6 +10,8 @@ tags: youtube, rust, js, hbp
 > A bunch of YouTube videos I made...!  
 > Just me talking about stuffs that I think worth talking about...! :"}
 
+- [When cryptopunk world comes true](https://youtu.be/o9eQ8m0wl0k)
+- [In this Internet era](https://youtu.be/lomplAqZDcE)
 - [Captain Lynda Carter](https://youtu.be/BRNMQ4Tc5wU)
 - [It is, my dudes](https://youtu.be/udIO4sScIVk)
 - [The #Burnout](https://youtu.be/_P7KJGBP6JQ)

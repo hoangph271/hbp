@@ -12,6 +12,7 @@ tags: youtube, rust, js, hbp
 
 - [When cryptopunk world comes true](https://youtu.be/o9eQ8m0wl0k)
 - [In this Internet era](https://youtu.be/lomplAqZDcE)
+- [Love just does NOT make sense](https://youtu.be/whGJi-6d0v8)
 - [Captain Lynda Carter](https://youtu.be/BRNMQ4Tc5wU)
 - [It is, my dudes](https://youtu.be/udIO4sScIVk)
 - [The #Burnout](https://youtu.be/_P7KJGBP6JQ)

@@ -24,19 +24,6 @@
   --sans-serif: 'Nunito', sans-serif;
 }
 
-/* * Dark theme */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --orange: #e7dcda;
-    --bgr-breath: #A13333;
-    --grunt: #bf8d22;
-    --grungy: #494040;
-    --bgr-icecream: #461111;
-    --equal-shadow-gentle: rgba(155, 155, 155, 0.25) 0px 2px 4px;
-    --equal-shadow-big: rgba(155, 155, 155, 0.25) 0px 3px 6px;
-  }
-}
-
 /* * Tag restyles */
 /* #region */
 body {

@@ -26,20 +26,7 @@
 
 <body>
   <nav class="nav-bar">
-    <a href="/" class="index-page">
-      <button></button>
-    </a>
-    <ul class="other-urls">
-      <a href="/">Home</a>
-      <a href="/blogs">Blogs</a>
-      <a href="https://github.com/hoangph271/hbp" target="_blank">Source code</a>
-      {{#username}}
-        <a href="/markdown/users/{{username}}">About me</a>
-      {{/username}}
-      {{^username}}
-        <a href="/users/login">Sign in</a>
-      {{/username}}
-    </ul>
+    @hbp
   </nav>
   {{#moveup_url}}
     <div>

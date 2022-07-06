@@ -17,6 +17,3 @@ sudo apt-get install libsqlite3-dev -y
 ```
 diesel migration run
 ```
-
-### TODOs
-- [ ] 

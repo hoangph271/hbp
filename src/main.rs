@@ -2,8 +2,6 @@
 #[macro_use]
 extern crate rocket;
 #[macro_use]
-extern crate diesel;
-#[macro_use]
 extern crate dotenv_codegen;
 extern crate mustache;
 extern crate serde_derive;
@@ -29,7 +27,6 @@ async fn rocket() -> _ {
 
 fn launch() -> rocket::Rocket<rocket::Build> {
     rocket::build()
-        .attach(data::sqlite::DbConn::fairing())
         .mount("/", routes![routes::index::index, routes::index::readme_md])
         .mount(
             "/api/movies_and_tv",

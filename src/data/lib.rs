@@ -1,4 +1,3 @@
-use diesel::result::Error;
 use stargate_grpc::{
     result::{ColumnPositions, ResultSetMapper, TryFromRow},
     *,
@@ -8,14 +7,12 @@ use stargate_grpc::{
 #[allow(unused)]
 pub enum OrmError {
     NotFound,
-    DieselError(Error),
 }
 
 pub mod post_orm {
     use super::{build_stargate_client, execute_stargate_query_for_vec};
     use crate::data::lib::OrmError;
     use crate::data::models::posts_model::*;
-    use diesel::result::Error;
     use stargate_grpc::Query;
 
     pub fn get_one(_post_id: &str) -> Result<Post, OrmError> {
@@ -35,7 +32,7 @@ pub mod post_orm {
         todo!()
     }
 
-    pub fn create_post(_new_post: NewPost) -> Result<Post, Error> {
+    pub fn create_post(_new_post: NewPost) -> Result<Post, ()> {
         todo!()
     }
 

@@ -5,8 +5,6 @@
 - [ ] Handle markdown sorting correctly
 - [ ] View other file types
 - [ ] Upload files
-- [ ] Replace `sqlite` with `Cassandra`
-- [x] Use `stargate-grpc` for `Cassandra`
 
 ## > DONEs
 - [ ] ~~POST markdown~~
@@ -15,6 +13,8 @@
 - [ ] ~~Async HbpResponse::respond_to()~~
 - [ ] ~~System information in index page~~  
 - [ ] ~~Download static folder  ****~~  
+- [x] Replace `sqlite` with `Cassandra`
+- [x] Use `stargate-grpc` for `Cassandra`
 - [x] Escape `moveup_url`, maybe rename it to `moveup_path` and escape at the final step
 - [x] moveup_url for file view
 - [x] moveup_url

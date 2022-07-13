@@ -5,17 +5,8 @@ It's actually live [here](https://alpha-sneu.xyz/)
 
 ---
 
-## Linux setup:
-
-- You'll need this for SQLite:
-```
-sudo apt-get install libsqlite3-dev -y
-```
+Setup:
 
 - Initialize the `.env` file and the `Rocket.toml` file
-
-- Setup the `SQLite` DB:
-
-```
-diesel migration run
-```
+- Run `cargo run .`
+- You can get your `ASTRA_URI` & `ASTRA_BEARER_TOKEN` for free [here](https://astra.datastax.com/)

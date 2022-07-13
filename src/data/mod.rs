@@ -1,6 +1,5 @@
 pub mod lib;
 pub mod models;
-pub mod sqlite;
 
 pub async fn init_db() {
     info!("--- init_db()");

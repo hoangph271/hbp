@@ -1,7 +1,7 @@
 use nanoid::nanoid;
 use stargate_grpc_derive::{IntoValues, TryFromRow};
 
-#[derive(Queryable, Debug, serde::Serialize, TryFromRow)]
+#[derive(Debug, serde::Serialize, TryFromRow)]
 pub struct User {
     pub id: String,
     pub username: String,

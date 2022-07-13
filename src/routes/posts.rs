@@ -17,10 +17,6 @@ pub async fn find_one(post_id: String) -> HbpResponse {
         Ok(post) => HbpResponse::json(post, None),
         Err(e) => match e {
             OrmError::NotFound => HbpResponse::status(StatusCode::NotFound),
-            OrmError::DieselError(e) => {
-                error!("get_one failed: {:?}", e);
-                HbpResponse::internal_server_error()
-            }
         },
     }
 }
@@ -36,8 +32,8 @@ pub async fn delete_one(post_id: String) -> HbpResponse {
 pub async fn create(new_post: Json<posts_model::NewPost>) -> HbpResponse {
     match lib::post_orm::create_post(new_post.into_inner()) {
         Ok(post) => HbpResponse::json(post, None),
-        Err(e) => {
-            error!("create_post failed: {e}");
+        Err(_) => {
+            error!("create_post failed");
             HbpResponse::internal_server_error()
         }
     }
@@ -51,10 +47,6 @@ pub async fn update(updated_post: Json<posts_model::UpdatedPost>) -> HbpResponse
         Ok(_) => HbpResponse::status(StatusCode::Ok),
         Err(e) => match e {
             OrmError::NotFound => HbpResponse::status(StatusCode::NotFound),
-            OrmError::DieselError(e) => {
-                error!("update fail: {:?}", e);
-                HbpResponse::internal_server_error()
-            }
         },
     }
 }

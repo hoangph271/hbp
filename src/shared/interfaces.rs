@@ -28,6 +28,17 @@ where
         HbpResponse::json(api_item_response.item, api_item_response.status_code)
     }
 }
+impl<T> ApiItemResponse<T>
+where
+    T: Serialize,
+{
+    pub fn from_item(item: T) -> ApiItemResponse<T> {
+        ApiItemResponse {
+            status_code: None,
+            item,
+        }
+    }
+}
 
 pub struct ApiListResponse<T>
 where
@@ -42,5 +53,16 @@ where
 {
     fn from(api_item_response: ApiListResponse<T>) -> HbpResponse {
         HbpResponse::json(api_item_response.items, api_item_response.status_code)
+    }
+}
+impl<T> ApiListResponse<T>
+where
+    T: Serialize,
+{
+    pub fn from_items(items: Vec<T>) -> ApiListResponse<T> {
+        ApiListResponse {
+            status_code: None,
+            items,
+        }
     }
 }

@@ -1,7 +1,7 @@
-use crate::data::schema::tbl_posts;
 use nanoid::nanoid;
+use stargate_grpc_derive::TryFromRow;
 
-#[derive(Queryable, Debug, serde::Serialize)]
+#[derive(Queryable, Debug, serde::Serialize, TryFromRow)]
 pub struct Post {
     pub id: String,
     pub title: String,
@@ -21,8 +21,6 @@ pub struct UpdatedPost {
     pub body: String,
     pub published: bool,
 }
-#[derive(Insertable)]
-#[table_name = "tbl_posts"]
 pub struct InsertableNewPost {
     pub id: String,
     pub title: String,

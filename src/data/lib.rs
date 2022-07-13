@@ -5,76 +5,44 @@ use stargate_grpc::{
 };
 
 #[derive(Debug)]
+#[allow(unused)]
 pub enum OrmError {
     NotFound,
     DieselError(Error),
 }
 
 pub mod post_orm {
+    use super::{build_stargate_client, execute_stargate_query_for_vec};
     use crate::data::lib::OrmError;
     use crate::data::models::posts_model::*;
-    use crate::data::schema::tbl_posts;
-    use crate::data::schema::tbl_posts::dsl::*;
-    use diesel::prelude::*;
     use diesel::result::Error;
+    use stargate_grpc::Query;
 
-    pub fn get_one(conn: &SqliteConnection, post_id: &str) -> Result<Post, OrmError> {
-        match tbl_posts::table
-            .filter(tbl_posts::id.eq(post_id))
-            .first(conn)
-        {
-            Ok(post) => Ok(post),
-            Err(e) => Err(OrmError::DieselError(e)),
-        }
+    pub fn get_one(_post_id: &str) -> Result<Post, OrmError> {
+        todo!()
     }
 
-    pub fn get_posts(conn: &SqliteConnection) -> Vec<Post> {
-        tbl_posts.load(conn).expect("Error loading posts")
+    pub async fn get_posts() -> Vec<Post> {
+        let posts_query = Query::builder()
+            .keyspace("astra")
+            .query("SELECT * FROM posts")
+            .build();
+
+        execute_stargate_query_for_vec(posts_query).await.unwrap()
     }
 
-    pub fn delete_one(conn: &SqliteConnection, post_id: &str) -> usize {
-        diesel::delete(tbl_posts.filter(id.eq(post_id)))
-            .execute(conn)
-            .expect(&*format!("Error deleting post {}", post_id))
+    pub fn delete_one(_post_id: &str) -> usize {
+        todo!()
     }
 
-    pub fn create_post(conn: &SqliteConnection, new_post: NewPost) -> Result<Post, Error> {
-        diesel::insert_into(tbl_posts::table)
-            .values(InsertableNewPost::from(new_post))
-            .execute(conn)
-            .expect("insert new_post failed");
-
-        // FIXME: #Shame, I know
-        // * It's SQLite, and I'm an idiot, I don't know how to return the just inserted record
-        tbl_posts::table.order(tbl_posts::id.desc()).first(conn)
+    pub fn create_post(_new_post: NewPost) -> Result<Post, Error> {
+        todo!()
     }
 
-    pub fn update_one(
-        conn: &SqliteConnection,
-        updated_post: UpdatedPost,
-    ) -> Result<Post, OrmError> {
-        let update_result =
-            diesel::update(tbl_posts.filter(tbl_posts::id.eq(updated_post.id.clone())))
-                .set((
-                    tbl_posts::title.eq(updated_post.title),
-                    tbl_posts::body.eq(updated_post.body),
-                    tbl_posts::published.eq(updated_post.published),
-                ))
-                .execute(conn);
-
-        match update_result {
-            Ok(val) => {
-                if val == 1 {
-                    get_one(conn, &updated_post.id)
-                } else {
-                    Err(OrmError::NotFound)
-                }
-            }
-            Err(e) => Err(OrmError::DieselError(e)),
-        }
+    pub fn update_one(_updated_post: UpdatedPost) -> Result<Post, OrmError> {
+        todo!()
     }
 
-    use super::build_stargate_client;
     pub async fn init_posts_table() {
         let mut client = build_stargate_client().await;
 
@@ -167,9 +135,34 @@ pub async fn execute_stargate_query(query: stargate_grpc::Query) -> Option<Resul
 
     response.try_into().ok()
 }
-pub async fn execute_stargate_query_for_one<T: ColumnPositions + TryFromRow>(
-    query: stargate_grpc::Query,
-) -> Option<T> {
+pub async fn execute_stargate_query_for_vec<T>(query: stargate_grpc::Query) -> Option<Vec<T>>
+where
+    T: ColumnPositions + TryFromRow,
+{
+    let mut client = build_stargate_client().await;
+
+    let response = client.execute_query(query).await.unwrap();
+
+    let result_set: ResultSet = response.try_into().unwrap();
+
+    let mapper: ResultSetMapper<T> = result_set.mapper().unwrap();
+
+    let items: Vec<T> = result_set
+        .rows
+        .into_iter()
+        .map(|row| {
+            let item: T = mapper.try_unpack(row).unwrap();
+
+            item
+        })
+        .collect();
+
+    Some(items)
+}
+pub async fn execute_stargate_query_for_one<T>(query: stargate_grpc::Query) -> Option<T>
+where
+    T: ColumnPositions + TryFromRow,
+{
     let mut client = build_stargate_client().await;
 
     let response = client.execute_query(query).await.unwrap();

@@ -12,6 +12,8 @@ It's actually live [here](https://alpha-sneu.xyz/)
 sudo apt-get install libsqlite3-dev -y
 ```
 
+- Initialize the `.env` file and the `Rocket.toml` file
+
 - Setup the `SQLite` DB:
 
 ```

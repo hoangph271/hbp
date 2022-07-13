@@ -31,6 +31,13 @@ fn launch() -> rocket::Rocket<rocket::Build> {
         .attach(data::sqlite::DbConn::fairing())
         .mount("/", routes![routes::index::index, routes::index::readme_md])
         .mount(
+            "/api/movies_and_tv",
+            routes![
+                routes::movies_and_tv::get_all_shows,
+                routes::movies_and_tv::get_one_show
+            ],
+        )
+        .mount(
             "/dev/null",
             routes![
                 routes::index::get_dev_null,

@@ -5,6 +5,8 @@
 - [ ] Handle markdown sorting correctly
 - [ ] View other file types
 - [ ] Upload files
+- [ ] Replace `sqlite` with `Cassandra`
+- [x] Use `stargate-grpc` for `Cassandra`
 
 ## > DONEs
 - [ ] ~~POST markdown~~

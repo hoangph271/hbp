@@ -102,4 +102,38 @@ pub mod user_orm {
         // * It's SQLite, and I'm an idiot, I don't know how to return the just inserted record
         tbl_users::table.order(tbl_users::id.desc()).first(conn)
     }
+
+    use super::build_stargate_client;
+    pub async fn init_users_table() {
+        let mut client = build_stargate_client().await;
+
+        let create_users_table = stargate_grpc::Query::builder()
+            .query(
+                "CREATE TABLE IF NOT EXISTS astra.users \
+                    (username text, hashed_password text, title text, id int, PRIMARY KEY (id, username));",
+            )
+            .build();
+
+        client.execute_query(create_users_table).await.unwrap();
+
+        println!("created users table");
+    }
+}
+
+use crate::utils::env::{from_env, EnvKey};
+use stargate_grpc::*;
+
+pub async fn build_stargate_client() -> StargateClient {
+    let astra_uri = from_env(EnvKey::AstraUri);
+    let bearer_token = from_env(EnvKey::AstraBearerToken);
+    use std::str::FromStr;
+
+    StargateClient::builder()
+        .uri(astra_uri)
+        .unwrap()
+        .auth_token(AuthToken::from_str(bearer_token).unwrap())
+        .tls(Some(client::default_tls_config().unwrap()))
+        .connect()
+        .await
+        .unwrap()
 }

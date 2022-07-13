@@ -1,21 +1,6 @@
-use crate::utils::env::{from_env, EnvKey};
 use crate::utils::responders::HbpResponse;
+use crate::data::lib::build_stargate_client;
 use stargate_grpc::*;
-
-async fn build_stargate_client() -> StargateClient {
-    let astra_uri = from_env(EnvKey::AstraUri);
-    let bearer_token = from_env(EnvKey::AstraBearerToken);
-    use std::str::FromStr;
-
-    StargateClient::builder()
-        .uri(astra_uri)
-        .unwrap()
-        .auth_token(AuthToken::from_str(bearer_token).unwrap())
-        .tls(Some(client::default_tls_config().unwrap()))
-        .connect()
-        .await
-        .unwrap()
-}
 
 use serde::Serialize;
 use stargate_grpc_derive::TryFromRow;

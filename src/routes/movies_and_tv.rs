@@ -4,6 +4,7 @@ use stargate_grpc_derive::TryFromRow;
 
 use crate::{
     data::lib::{execute_stargate_query, execute_stargate_query_for_one},
+    shared::interfaces::{ApiItemResponse, ApiListResponse},
     utils::responders::HbpResponse,
 };
 
@@ -34,7 +35,7 @@ pub async fn get_all_shows() -> HbpResponse {
         })
         .collect();
 
-    HbpResponse::json(movies_and_tv, None)
+    ApiListResponse::from_items(movies_and_tv).into()
 }
 
 #[get("/<show_id>")]
@@ -48,7 +49,7 @@ pub async fn get_one_show(show_id: i64) -> HbpResponse {
     let maybe_show: Option<MovieOrTv> = execute_stargate_query_for_one(query).await;
 
     if let Some(show) = maybe_show {
-        HbpResponse::json(show, None)
+        ApiItemResponse::from_item(show).into()
     } else {
         HbpResponse::not_found()
     }

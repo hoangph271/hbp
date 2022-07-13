@@ -1,4 +1,8 @@
 use diesel::result::Error;
+use stargate_grpc::{
+    result::{ColumnPositions, ResultSetMapper, TryFromRow},
+    *,
+};
 
 #[derive(Debug)]
 pub enum OrmError {
@@ -69,48 +73,41 @@ pub mod post_orm {
             Err(e) => Err(OrmError::DieselError(e)),
         }
     }
+
+    use super::build_stargate_client;
+    pub async fn init_posts_table() {
+        let mut client = build_stargate_client().await;
+
+        let create_posts_table = stargate_grpc::Query::builder()
+            .query(
+                "CREATE TABLE IF NOT EXISTS astra.posts \
+                    (title text, body text, published Boolean, id int, PRIMARY KEY (id));",
+            )
+            .build();
+
+        client.execute_query(create_posts_table).await.unwrap();
+
+        println!("created posts table");
+    }
 }
 
 pub mod user_orm {
-    use crate::data::lib::OrmError;
+    use super::{build_stargate_client, execute_stargate_query, execute_stargate_query_for_one};
     use crate::data::models::users_model::*;
-    use crate::data::schema::tbl_users;
-    use diesel::prelude::*;
-    use diesel::result::Error;
-    use diesel::SqliteConnection;
+    use stargate_grpc::Query;
 
-    pub fn find_one_by_username(conn: &SqliteConnection, username: &str) -> Result<User, OrmError> {
-        match tbl_users::table
-            .filter(tbl_users::username.eq(username))
-            .first(conn)
-        {
-            Ok(post) => Ok(post),
-            Err(e) => {
-                error!("find_one_by_username failed: {:?}", e);
-                Err(OrmError::DieselError(e))
-            }
-        }
-    }
-
-    pub fn create_user(conn: &SqliteConnection, new_user: NewUser) -> Result<User, Error> {
-        diesel::insert_into(tbl_users::table)
-            .values(InsertableNewUser::from(new_user))
-            .execute(conn)
-            .expect("insert new_user failed");
-
-        // FIXME: This is a shame, I know
-        // * It's SQLite, and I'm an idiot, I don't know how to return the just inserted record
-        tbl_users::table.order(tbl_users::id.desc()).first(conn)
-    }
-
-    use super::build_stargate_client;
     pub async fn init_users_table() {
         let mut client = build_stargate_client().await;
 
         let create_users_table = stargate_grpc::Query::builder()
             .query(
-                "CREATE TABLE IF NOT EXISTS astra.users \
-                    (username text, hashed_password text, title text, id int, PRIMARY KEY (id, username));",
+                "CREATE TABLE IF NOT EXISTS astra.users (
+                    username text,
+                    hashed_password text,
+                    title text,
+                    id text,
+                    PRIMARY KEY (username, id)
+                )",
             )
             .build();
 
@@ -118,10 +115,36 @@ pub mod user_orm {
 
         println!("created users table");
     }
+
+    pub async fn find_one(username: &str) -> Option<User> {
+        let user_query = Query::builder()
+            .keyspace("astra")
+            .query("SELECT * FROM users WHERE username = :username")
+            .bind_name("username", username)
+            .build();
+
+        execute_stargate_query_for_one(user_query).await
+    }
+
+    pub async fn create_user(new_user: NewUser) -> Option<User> {
+        let new_user: InsertableNewUser = new_user.into();
+
+        let user_query = Query::builder()
+            .keyspace("astra")
+            .query(
+                "INSERT INTO users(id, username, hashed_password, title) \
+                    VALUES (:id, :username, :hashed_password, :title)",
+            )
+            .bind(new_user.clone())
+            .build();
+
+        execute_stargate_query(user_query).await;
+
+        Some(new_user.into())
+    }
 }
 
 use crate::utils::env::{from_env, EnvKey};
-use stargate_grpc::*;
 
 pub async fn build_stargate_client() -> StargateClient {
     let astra_uri = from_env(EnvKey::AstraUri);
@@ -136,4 +159,27 @@ pub async fn build_stargate_client() -> StargateClient {
         .connect()
         .await
         .unwrap()
+}
+pub async fn execute_stargate_query(query: stargate_grpc::Query) -> Option<ResultSet> {
+    let mut client = build_stargate_client().await;
+
+    let response = client.execute_query(query).await.unwrap();
+
+    response.try_into().ok()
+}
+pub async fn execute_stargate_query_for_one<T: ColumnPositions + TryFromRow>(
+    query: stargate_grpc::Query,
+) -> Option<T> {
+    let mut client = build_stargate_client().await;
+
+    let response = client.execute_query(query).await.unwrap();
+    let mut result_set: ResultSet = response.try_into().unwrap();
+
+    let mapper: ResultSetMapper<T> = result_set.mapper().unwrap();
+
+    if let Some(row) = result_set.rows.pop() {
+        mapper.try_unpack(row).ok()
+    } else {
+        None
+    }
 }

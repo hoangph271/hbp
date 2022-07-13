@@ -11,34 +11,34 @@ rocket = { version = "0.5.0-rc.2", default-features = true, features = [
   "secrets",
 ] }
 chrono = "0.4.19"
-log = "0.4"
-fern = "0.6"
+log = "0.4.17"
+fern = "0.6.1"
 httpstatus = "0.1.2"
-anyhow = "1.0.53"
+anyhow = "1.0.58"
 pulldown-cmark = { version = "0.9.1", default-features = false, features = [
   "simd",
 ] }
-serde_derive = "1.0.136"
-mustache = "*"
-jsonwebtoken = "8.0.1"
-serde = { version = "1.0.117", features = ["derive"] }
+serde_derive = "1.0.139"
+mustache = "0.9.0"
+jsonwebtoken = "8.1.1"
+serde = { version = "1.0.139", features = ["derive"] }
 walkdir = "2.3.2"
 zip = "0.6.2"
 tempfile = "3.3.0"
 diesel = { version = "1.4.8", features = ["sqlite"] }
 dotenv = "0.15.0"
 dotenv_codegen = "0.15.0"
-serde_json = "1.0.79"
+serde_json = "1.0.82"
 nanoid = "0.4.0"
 bcrypt = "0.13.0"
 rocket_sync_db_pools = { version = "0.1.0-rc.1", default-features = false, features = [
   "diesel_sqlite_pool",
 ] }
-reqwest = { version = "0.11.9", features = ["multipart", "json"] }
+reqwest = { version = "0.11.11", features = ["multipart", "json"] }
 bonsaidb = { version = "0.4.1", features = ["local"] }
-futures = "*"
+futures = "0.3.21"
 glob = "0.3.0"
-regex = "1.5.5"
+regex = "1.6.0"
 urlencoding = "2.1.0"
 stargate-grpc = "0.4.0"
 stargate-grpc-derive = "0.2.0"

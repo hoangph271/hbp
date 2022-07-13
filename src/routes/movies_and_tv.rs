@@ -1,9 +1,8 @@
-use crate::utils::responders::HbpResponse;
-use crate::data::lib::build_stargate_client;
-use stargate_grpc::*;
-
 use serde::Serialize;
+use stargate_grpc::{Query, ResultSet};
 use stargate_grpc_derive::TryFromRow;
+
+use crate::{data::lib::build_stargate_client, utils::responders::HbpResponse};
 
 #[derive(TryFromRow, Serialize)]
 struct MovieOrTv {

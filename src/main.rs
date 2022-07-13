@@ -2,8 +2,6 @@
 #[macro_use]
 extern crate rocket;
 #[macro_use]
-extern crate diesel;
-#[macro_use]
 extern crate dotenv_codegen;
 extern crate mustache;
 extern crate serde_derive;
@@ -15,8 +13,11 @@ mod utils;
 // #endregion
 
 #[launch]
-fn rocket() -> _ {
+async fn rocket() -> _ {
+    utils::setup_logger::setup_logger();
+
     dotenv::dotenv().ok();
+    data::init_db().await;
 
     let app_name = utils::env::from_env(utils::env::EnvKey::AppName);
     println!("{app_name} is starting, my dude...! 🍿🍿🍿");
@@ -25,10 +26,7 @@ fn rocket() -> _ {
 }
 
 fn launch() -> rocket::Rocket<rocket::Build> {
-    utils::setup_logger::setup_logger();
-
     rocket::build()
-        .attach(data::sqlite::DbConn::fairing())
         .mount("/", routes![routes::index::index, routes::index::readme_md])
         .mount(
             "/api/movies_and_tv",

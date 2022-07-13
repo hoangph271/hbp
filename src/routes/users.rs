@@ -1,4 +1,4 @@
-use crate::data::{lib::user_orm, sqlite::DbConn};
+use crate::data::lib::user_orm;
 use crate::utils::auth::{AuthPayload, UserPayload};
 use crate::utils::guards::auth_payload::USER_JWT_COOKIE;
 use crate::utils::responders::{HbpContent, HbpResponse};
@@ -54,38 +54,24 @@ pub struct LoginBody {
     password: String,
 }
 #[post("/login", data = "<login_body>")]
-pub async fn post_login(
-    login_body: Form<LoginBody>,
-    conn: DbConn,
-    jar: &CookieJar<'_>,
-) -> HbpResponse {
-    let res = conn
-        .run(move |conn| {
-            if let Ok(user) = user_orm::find_one_by_username(conn, &login_body.username) {
-                let is_password_matches =
-                    bcrypt::verify(&login_body.password, &user.hashed_password).unwrap_or(false);
+pub async fn post_login(login_body: Form<LoginBody>, jar: &CookieJar<'_>) -> HbpResponse {
+    if let Some(user) = user_orm::find_one(&login_body.username).await {
+        let is_password_matches =
+            bcrypt::verify(&login_body.password, &user.hashed_password).unwrap_or(false);
 
-                if is_password_matches {
-                    Some(user)
-                } else {
-                    None
-                }
-            } else {
-                None
-            }
-        })
-        .await;
+        if is_password_matches {
+            let jwt = UserPayload::sign_jwt(&UserPayload {
+                exp: timestamp_now(),
+                sub: user.username,
+                role: vec![],
+            });
 
-    if let Some(user) = res {
-        let jwt = UserPayload::sign_jwt(&UserPayload {
-            exp: timestamp_now(),
-            sub: user.username,
-            role: vec![],
-        });
+            jar.add_private(Cookie::new(USER_JWT_COOKIE, jwt));
 
-        jar.add_private(Cookie::new(USER_JWT_COOKIE, jwt));
-
-        HbpResponse::redirect(uri!("/users", index))
+            HbpResponse::redirect(uri!("/users", index))
+        } else {
+            HbpResponse::redirect(uri!("/users", login))
+        }
     } else {
         HbpResponse::redirect(uri!("/users", login))
     }
@@ -115,26 +101,23 @@ impl SignupBody {
 }
 
 #[post("/signup", data = "<signup_body>")]
-pub async fn post_signup(signup_body: Form<SignupBody>, conn: DbConn) -> HbpResponse {
+pub async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
     if let Err(e) = signup_body.validate() {
         error!("{}", e);
         return HbpResponse::redirect(uri!("/users", signup));
     }
 
-    conn.run(move |conn| {
-        use crate::data::models::users_model::NewUser;
-        let new_user = NewUser {
-            title: None,
-            username: &signup_body.username,
-            hashed_password: &bcrypt::hash(&signup_body.password, bcrypt::DEFAULT_COST)
-                .expect("Hashing password failed"),
-        };
+    use crate::data::models::users_model::NewUser;
+    let new_user = NewUser {
+        title: None,
+        username: signup_body.username.clone(),
+        hashed_password: bcrypt::hash(&signup_body.password, bcrypt::DEFAULT_COST)
+            .expect("Hashing password failed"),
+    };
 
-        if user_orm::create_user(conn, new_user).is_ok() {
-            HbpResponse::redirect(uri!("/users", login))
-        } else {
-            HbpResponse::redirect(uri!("/users", signup))
-        }
-    })
-    .await
+    if user_orm::create_user(new_user).await.is_some() {
+        HbpResponse::redirect(uri!("/users", login))
+    } else {
+        HbpResponse::redirect(uri!("/users", signup))
+    }
 }

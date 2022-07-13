@@ -1,7 +1,7 @@
-use crate::data::schema::tbl_users;
 use nanoid::nanoid;
+use stargate_grpc_derive::{IntoValues, TryFromRow};
 
-#[derive(Queryable, Debug, serde::Serialize)]
+#[derive(Debug, serde::Serialize, TryFromRow)]
 pub struct User {
     pub id: String,
     pub username: String,
@@ -10,14 +10,13 @@ pub struct User {
 }
 
 #[derive(serde::Deserialize)]
-pub struct NewUser<'a> {
-    pub username: &'a str,
-    pub hashed_password: &'a str,
-    pub title: Option<&'a str>,
+pub struct NewUser {
+    pub username: String,
+    pub hashed_password: String,
+    pub title: Option<String>,
 }
 
-#[derive(Insertable)]
-#[table_name = "tbl_users"]
+#[derive(IntoValues, Clone)]
 pub struct InsertableNewUser {
     pub id: String,
     pub username: String,
@@ -25,7 +24,7 @@ pub struct InsertableNewUser {
     pub title: Option<String>,
 }
 
-impl<'a> From<NewUser<'a>> for InsertableNewUser {
+impl From<NewUser> for InsertableNewUser {
     fn from(new_user: NewUser) -> InsertableNewUser {
         let id = nanoid!();
 
@@ -33,7 +32,18 @@ impl<'a> From<NewUser<'a>> for InsertableNewUser {
             id,
             username: new_user.username.to_owned(),
             hashed_password: new_user.hashed_password.to_owned(),
-            title: Some(new_user.username.to_owned()),
+            title: Some(new_user.username),
+        }
+    }
+}
+
+impl From<InsertableNewUser> for User {
+    fn from(new_user: InsertableNewUser) -> User {
+        User {
+            id: new_user.id.to_owned(),
+            username: new_user.username.to_owned(),
+            hashed_password: new_user.hashed_password.to_owned(),
+            title: Some(new_user.username),
         }
     }
 }

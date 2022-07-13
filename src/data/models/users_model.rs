@@ -32,7 +32,7 @@ impl From<NewUser> for InsertableNewUser {
             id,
             username: new_user.username.to_owned(),
             hashed_password: new_user.hashed_password.to_owned(),
-            title: Some(new_user.username.to_owned()),
+            title: Some(new_user.username),
         }
     }
 }
@@ -43,7 +43,7 @@ impl From<InsertableNewUser> for User {
             id: new_user.id.to_owned(),
             username: new_user.username.to_owned(),
             hashed_password: new_user.hashed_password.to_owned(),
-            title: Some(new_user.username.to_owned()),
+            title: Some(new_user.username),
         }
     }
 }

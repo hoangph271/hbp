@@ -67,11 +67,9 @@ pub mod user_orm {
         let create_users_table = stargate_grpc::Query::builder()
             .query(
                 "CREATE TABLE IF NOT EXISTS astra.users (
-                    username text,
+                    username text PRIMARY KEY,
                     hashed_password text,
                     title text,
-                    id text,
-                    PRIMARY KEY (username, id)
                 )",
             )
             .build();
@@ -97,8 +95,8 @@ pub mod user_orm {
         let user_query = Query::builder()
             .keyspace("astra")
             .query(
-                "INSERT INTO users(id, username, hashed_password, title) \
-                    VALUES (:id, :username, :hashed_password, :title)",
+                "INSERT INTO users(username, hashed_password, title) \
+                    VALUES (:username, :hashed_password, :title)",
             )
             .bind(new_user.clone())
             .build();

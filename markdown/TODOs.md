@@ -1,12 +1,12 @@
 ## > TODOs
-- [ ] Finish that `TODO` stuff:
-    - [ ] List todo
-    - [ ] Recreate on new day
-- [ ] Handle markdown sorting correctly
-- [ ] View other file types
-- [ ] Upload files
 
 ## > DONEs
+- [ ] ~~Finish that `TODO` stuff:~~
+    - [ ] ~~List todo~~
+    - [ ] ~~Recreate on new day~~
+- [ ] ~~Handle markdown sorting correctly~~
+- [ ] ~~View other file types~~
+- [ ] ~~Upload files~~
 - [ ] ~~POST markdown~~
 - [ ] ~~Paging for blogs~~
 - [ ] ~~Learn `async` #Rust~~

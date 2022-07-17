@@ -1,10 +1,17 @@
+use fern::{
+    colors::{Color, ColoredLevelConfig},
+    Dispatch,
+};
+
 pub fn setup_logger() {
-    fern::Dispatch::new()
-        .format(|out, message, record| {
+    let colors = ColoredLevelConfig::new().info(Color::Blue);
+
+    Dispatch::new()
+        .format(move |out, message, record| {
             out.finish(format_args!(
                 "[{}][{}][{}] {}",
                 record.target(),
-                record.level(),
+                colors.color(record.level()),
                 chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
                 message
             ))

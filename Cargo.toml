@@ -13,7 +13,7 @@ rocket = { version = "0.5.0-rc.2", default-features = true, features = [
 ] }
 chrono = "0.4.19"
 log = "0.4.17"
-fern = "0.6.1"
+fern = { version = "0.6.1", features = ["colored"] }
 httpstatus = "0.1.2"
 anyhow = "1.0.58"
 pulldown-cmark = { version = "0.9.1", default-features = false, features = [

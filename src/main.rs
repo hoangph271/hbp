@@ -17,7 +17,7 @@ async fn rocket() -> _ {
     utils::setup_logger::setup_logger();
 
     dotenv::dotenv().ok();
-    data::init_db().await;
+    data::init_db();
 
     let app_name = utils::env::from_env(utils::env::EnvKey::AppName);
     println!("{app_name} is starting, my dude...! 🍿🍿🍿");

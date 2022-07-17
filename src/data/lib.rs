@@ -1,3 +1,4 @@
+use serde::Serialize;
 use stargate_grpc::{
     result::{ColumnPositions, ResultSetMapper, TryFromRow},
     *,
@@ -10,7 +11,7 @@ pub enum OrmError {
 }
 
 pub mod post_orm {
-    use super::{build_stargate_client, execute_stargate_query_for_vec};
+    use super::{build_stargate_client, execute_stargate_query_for_vec, DbError};
     use crate::data::lib::OrmError;
     use crate::data::models::posts_model::*;
     use stargate_grpc::Query;
@@ -19,13 +20,15 @@ pub mod post_orm {
         todo!()
     }
 
-    pub async fn get_posts() -> Vec<Post> {
+    pub async fn get_posts() -> Result<Vec<Post>, DbError> {
         let posts_query = Query::builder()
             .keyspace("astra")
             .query("SELECT * FROM posts")
             .build();
 
-        execute_stargate_query_for_vec(posts_query).await.unwrap()
+        let val = execute_stargate_query_for_vec(posts_query).await?;
+
+        Ok(val.unwrap_or_default())
     }
 
     pub fn delete_one(_post_id: &str) -> usize {
@@ -40,8 +43,8 @@ pub mod post_orm {
         todo!()
     }
 
-    pub async fn init_posts_table() {
-        let mut client = build_stargate_client().await;
+    pub async fn init_posts_table() -> Result<(), DbError> {
+        let mut client = build_stargate_client().await?;
 
         let create_posts_table = stargate_grpc::Query::builder()
             .query(
@@ -53,16 +56,20 @@ pub mod post_orm {
         client.execute_query(create_posts_table).await.unwrap();
 
         println!("created posts table");
+
+        Ok(())
     }
 }
 
 pub mod user_orm {
-    use super::{build_stargate_client, execute_stargate_query, execute_stargate_query_for_one};
+    use super::{
+        build_stargate_client, execute_stargate_query, execute_stargate_query_for_one, DbError,
+    };
     use crate::data::models::users_model::*;
     use stargate_grpc::Query;
 
-    pub async fn init_users_table() {
-        let mut client = build_stargate_client().await;
+    pub async fn init_users_table() -> Result<(), DbError> {
+        let mut client = build_stargate_client().await?;
 
         let create_users_table = stargate_grpc::Query::builder()
             .query(
@@ -74,22 +81,28 @@ pub mod user_orm {
             )
             .build();
 
-        client.execute_query(create_users_table).await.unwrap();
+        client
+            .execute_query(create_users_table)
+            .await
+            .map_err(|_| DbError("init_users_table failed at .execute_query()".to_owned()))?;
 
         println!("created users table");
+        Ok(())
     }
 
-    pub async fn find_one(username: &str) -> Option<User> {
+    pub async fn find_one(username: &str) -> Result<Option<User>, DbError> {
         let user_query = Query::builder()
             .keyspace("astra")
             .query("SELECT * FROM users WHERE username = :username")
             .bind_name("username", username)
             .build();
 
-        execute_stargate_query_for_one(user_query).await
+        let maybe_user: Option<User> = execute_stargate_query_for_one(user_query).await?;
+
+        Ok(maybe_user)
     }
 
-    pub async fn create_user(new_user: NewUser) -> Option<User> {
+    pub async fn create_user(new_user: NewUser) -> Result<Option<User>, DbError> {
         let new_user: InsertableNewUser = new_user.into();
 
         let user_query = Query::builder()
@@ -101,40 +114,52 @@ pub mod user_orm {
             .bind(new_user.clone())
             .build();
 
-        execute_stargate_query(user_query).await;
+        execute_stargate_query(user_query).await?;
 
-        Some(new_user.into())
+        Ok(Some(new_user.into()))
     }
 }
 
 use crate::utils::env::{from_env, EnvKey};
 
-pub async fn build_stargate_client() -> StargateClient {
+#[derive(Debug, Serialize)]
+pub struct DbError(String);
+
+pub async fn build_stargate_client() -> Result<StargateClient, DbError> {
     let astra_uri = from_env(EnvKey::AstraUri);
     let bearer_token = from_env(EnvKey::AstraBearerToken);
     use std::str::FromStr;
 
-    StargateClient::builder()
+    let stargate_client = StargateClient::builder()
         .uri(astra_uri)
-        .unwrap()
+        .map_err(|_| DbError("build_stargate_client() failed at .uri()".to_owned()))?
         .auth_token(AuthToken::from_str(bearer_token).unwrap())
         .tls(Some(client::default_tls_config().unwrap()))
         .connect()
         .await
-        .unwrap()
-}
-pub async fn execute_stargate_query(query: stargate_grpc::Query) -> Option<ResultSet> {
-    let mut client = build_stargate_client().await;
+        .map_err(|_| DbError("build_stargate_client() failed at .connect()".to_owned()))?;
 
-    let response = client.execute_query(query).await.unwrap();
-
-    response.try_into().ok()
+    Ok(stargate_client)
 }
-pub async fn execute_stargate_query_for_vec<T>(query: stargate_grpc::Query) -> Option<Vec<T>>
+pub async fn execute_stargate_query(
+    query: stargate_grpc::Query,
+) -> Result<Option<ResultSet>, DbError> {
+    let mut client = build_stargate_client().await?;
+
+    let response = client
+        .execute_query(query)
+        .await
+        .map_err(|_| DbError("execute_stargate_query failed at .execute_query()".to_owned()))?;
+
+    Ok(response.try_into().ok())
+}
+pub async fn execute_stargate_query_for_vec<T>(
+    query: stargate_grpc::Query,
+) -> Result<Option<Vec<T>>, DbError>
 where
     T: ColumnPositions + TryFromRow,
 {
-    let mut client = build_stargate_client().await;
+    let mut client = build_stargate_client().await?;
 
     let response = client.execute_query(query).await.unwrap();
 
@@ -152,13 +177,15 @@ where
         })
         .collect();
 
-    Some(items)
+    Ok(Some(items))
 }
-pub async fn execute_stargate_query_for_one<T>(query: stargate_grpc::Query) -> Option<T>
+pub async fn execute_stargate_query_for_one<T>(
+    query: stargate_grpc::Query,
+) -> Result<Option<T>, DbError>
 where
     T: ColumnPositions + TryFromRow,
 {
-    let mut client = build_stargate_client().await;
+    let mut client = build_stargate_client().await?;
 
     let response = client.execute_query(query).await.unwrap();
     let mut result_set: ResultSet = response.try_into().unwrap();
@@ -166,8 +193,13 @@ where
     let mapper: ResultSetMapper<T> = result_set.mapper().unwrap();
 
     if let Some(row) = result_set.rows.pop() {
-        mapper.try_unpack(row).ok()
+        match mapper.try_unpack(row) {
+            Ok(val) => Ok(Some(val)),
+            Err(_) => Err(DbError(
+                "execute_stargate_query_for_one failed at .try_unpack()".to_owned(),
+            )),
+        }
     } else {
-        None
+        Ok(None)
     }
 }

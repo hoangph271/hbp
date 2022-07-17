@@ -21,7 +21,7 @@ pub async fn get_all_shows() -> HbpResponse {
         .query("SELECT title, show_id FROM movies_and_tv")
         .build();
 
-    let result_set: ResultSet = execute_stargate_query(query).await.unwrap();
+    let result_set: ResultSet = execute_stargate_query(query).await.unwrap().unwrap();
 
     let mapper = result_set.mapper().unwrap();
 
@@ -46,7 +46,7 @@ pub async fn get_one_show(show_id: i64) -> HbpResponse {
         .bind_name("show_id", show_id)
         .build();
 
-    let maybe_show: Option<MovieOrTv> = execute_stargate_query_for_one(query).await;
+    let maybe_show: Option<MovieOrTv> = execute_stargate_query_for_one(query).await.unwrap();
 
     if let Some(show) = maybe_show {
         ApiItemResponse::from_item(show).into()

@@ -55,7 +55,7 @@ pub struct LoginBody {
 }
 #[post("/login", data = "<login_body>")]
 pub async fn post_login(login_body: Form<LoginBody>, jar: &CookieJar<'_>) -> HbpResponse {
-    if let Some(user) = user_orm::find_one(&login_body.username).await {
+    if let Some(user) = user_orm::find_one(&login_body.username).await.unwrap() {
         let is_password_matches =
             bcrypt::verify(&login_body.password, &user.hashed_password).unwrap_or(false);
 
@@ -115,7 +115,7 @@ pub async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
             .expect("Hashing password failed"),
     };
 
-    if user_orm::create_user(new_user).await.is_some() {
+    if user_orm::create_user(new_user).await.unwrap().is_some() {
         HbpResponse::redirect(uri!("/users", login))
     } else {
         HbpResponse::redirect(uri!("/users", signup))

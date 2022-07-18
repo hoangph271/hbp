@@ -71,14 +71,22 @@ pub fn markdown_from_dir<P: AsRef<Path>>(path: &P) -> HbpResult<Vec<MarkdownOrMa
         .unwrap()
         .filter_map(|entry| {
             let entry = entry.ok()?;
+            let title = match entry.path().file_name() {
+                Some(file_name) => file_name.to_string_lossy().to_string(),
+                None => "Untitled".to_owned(),
+            };
+
+            if title.starts_with('.') {
+                return None
+            }
 
             if entry.path().is_dir() {
+                let path: String = entry.path().to_string_lossy().to_string();
+                let url = url_encode_path(&path);
+
                 Some(MarkdownOrMarkdownDir::MarkdownDir(MarkdownDir {
-                    title: match entry.path().file_name() {
-                        Some(file_name) => file_name.to_string_lossy().to_string(),
-                        None => "Untitled".to_owned(),
-                    },
-                    url: url_encode_path(&entry.path().to_string_lossy()),
+                    title,
+                    url,
                 }))
             } else if entry.path().to_string_lossy().ends_with(".md") {
                 Some(MarkdownOrMarkdownDir::Markdown(

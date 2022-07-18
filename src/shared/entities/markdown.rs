@@ -133,7 +133,6 @@ impl Markdown {
                     .date()
                     .format("%m/%d/%Y")
             );
-            info!("{}", markdown.dob);
         }
 
         Ok(markdown)

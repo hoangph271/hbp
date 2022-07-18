@@ -4,9 +4,11 @@ use crate::utils::guards::auth_payload::USER_JWT_COOKIE;
 use crate::utils::responders::{HbpContent, HbpResponse};
 use crate::utils::types::{HbpError, HbpResult};
 use crate::utils::{template, timestamp_now};
+
 use mustache::Data;
 use rocket::form::Form;
 use rocket::http::{Cookie, CookieJar};
+use rocket_okapi::openapi;
 
 #[get("/")]
 pub fn index(jwt: AuthPayload) -> HbpResponse {
@@ -53,6 +55,8 @@ pub struct LoginBody {
     username: String,
     password: String,
 }
+
+#[openapi]
 #[post("/login", data = "<login_body>")]
 pub async fn post_login(login_body: Form<LoginBody>, jar: &CookieJar<'_>) -> HbpResponse {
     if let Some(user) = user_orm::find_one(&login_body.username).await.unwrap() {
@@ -100,6 +104,7 @@ impl SignupBody {
     }
 }
 
+#[openapi]
 #[post("/signup", data = "<signup_body>")]
 pub async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
     if let Err(e) = signup_body.validate() {

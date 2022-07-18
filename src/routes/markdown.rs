@@ -10,7 +10,7 @@ use httpstatus::StatusCode;
 use mustache::Data;
 use std::path::{Path, PathBuf};
 
-fn asser_payload_access(payload: &UserPayload, path: &str) -> bool {
+fn assert_payload_access(payload: &UserPayload, path: &str) -> bool {
     let prefix = PathBuf::from("markdown")
         .join("users")
         .join(payload.sub.clone())
@@ -101,7 +101,7 @@ pub async fn user_markdown_file(
 ) -> HbpResponse {
     let (file_path_str, file_path) = markdown_path_from(username, &sub_path);
 
-    if !jwt.match_path(&file_path_str, Some(asser_payload_access)) {
+    if !jwt.match_path(&file_path_str, Some(assert_payload_access)) {
         return HbpResponse::forbidden();
     }
 

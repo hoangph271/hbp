@@ -9,11 +9,13 @@ use crate::utils::{template, timestamp_now};
 use httpstatus::StatusCode::BadRequest;
 use log::*;
 use mustache::Data;
+use okapi::openapi3::OpenApi;
 use rocket::form::Form;
 use rocket::http::{Cookie, CookieJar};
 use rocket::serde::json::{Error as JsonError, Json};
 use rocket::{get, post, routes, uri, FromForm, Route};
-use rocket_okapi::{openapi, openapi_get_routes};
+use rocket_okapi::settings::OpenApiSettings;
+use rocket_okapi::{openapi, openapi_get_routes_spec};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -208,6 +210,6 @@ pub fn users_routes() -> Vec<Route> {
     routes![index, login, signup, post_login, post_signup]
 }
 
-pub fn api_users_routes() -> Vec<Route> {
-    openapi_get_routes![api_post_signup, api_post_signin]
+pub fn get_routes_and_docs(settings: &OpenApiSettings) -> (Vec<Route>, OpenApi) {
+    openapi_get_routes_spec![settings: api_post_signup, api_post_signin]
 }

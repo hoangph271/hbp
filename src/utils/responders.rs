@@ -29,12 +29,14 @@ pub struct HbpResponse {
 
 impl OpenApiResponderInner for HbpResponse {
     fn responses(_gen: &mut OpenApiGenerator) -> rocket_okapi::Result<Responses> {
-        // use okapi::openapi3::RefOr;
+        use okapi::openapi3::{RefOr, Response};
 
-        // todo!()
         Ok(Responses {
             responses: okapi::map! {
-
+                "200".to_owned() => RefOr::Object(Response {
+                    
+                    ..Default::default()
+                })
             },
             ..Default::default()
         })

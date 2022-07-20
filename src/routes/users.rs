@@ -13,8 +13,9 @@ use rocket::form::Form;
 use rocket::http::{Cookie, CookieJar};
 use rocket::serde::json::{Error as JsonError, Json};
 use rocket::{get, post, routes, uri, FromForm, Route};
+use rocket_okapi::{openapi, openapi_get_routes};
+use schemars::JsonSchema;
 use serde::Deserialize;
-use rocket_okapi::openapi;
 
 #[get("/")]
 fn index(jwt: AuthPayload) -> HbpResponse {
@@ -56,7 +57,7 @@ fn signup() -> HbpResponse {
     )))
 }
 
-#[derive(FromForm, Deserialize)]
+#[derive(FromForm, Deserialize, JsonSchema)]
 struct LoginBody {
     username: String,
     password: String,
@@ -85,7 +86,7 @@ async fn post_login(login_body: Form<LoginBody>, jar: &CookieJar<'_>) -> HbpResp
     }
 }
 
-#[derive(FromForm, Deserialize)]
+#[derive(FromForm, Deserialize, JsonSchema)]
 struct SignupBody {
     username: String,
     password: String,
@@ -115,7 +116,6 @@ impl SignupBody {
     }
 }
 
-#[openapi]
 #[post("/signup", data = "<signup_body>")]
 async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
     if let Err(e) = signup_body.validate() {
@@ -138,6 +138,7 @@ async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
     }
 }
 
+#[openapi]
 #[post("/signup", data = "<signup_body>")]
 async fn api_post_signup(signup_body: Result<Json<SignupBody>, JsonError<'_>>) -> HbpResponse {
     use crate::data::models::users_model::NewUser;
@@ -179,6 +180,7 @@ async fn api_post_signup(signup_body: Result<Json<SignupBody>, JsonError<'_>>) -
     }
 }
 
+#[openapi]
 #[post("/signin", data = "<signin_body>")]
 async fn api_post_signin(signin_body: Json<LoginBody>) -> HbpResponse {
     async fn attemp_signin(username: &str, password: &str) -> Option<User> {
@@ -207,5 +209,5 @@ pub fn users_routes() -> Vec<Route> {
 }
 
 pub fn api_users_routes() -> Vec<Route> {
-    routes![api_post_signup, api_post_signin]
+    openapi_get_routes![api_post_signup, api_post_signin]
 }

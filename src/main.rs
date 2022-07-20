@@ -2,9 +2,11 @@
 #[macro_use]
 extern crate dotenv_codegen;
 extern crate mustache;
+extern crate rocket_okapi;
 extern crate serde_derive;
 
 use rocket::{launch, routes};
+use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
 
 mod data;
 mod routes;
@@ -40,6 +42,11 @@ fn launch() -> rocket::Rocket<rocket::Build> {
             routes::movies_and_tv::api_movies_and_tv_routes(),
         )
         .mount("/api/users", routes::users::api_users_routes())
+        // * Swagger UI routes
+        .mount("/swagger", make_swagger_ui(&SwaggerUIConfig {
+            url: "../openapi.json".to_owned(),
+            ..Default::default()
+        }))
         // * catchers
         .register("/", routes::catchers::catchers())
 }

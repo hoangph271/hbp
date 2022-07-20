@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use stargate_grpc_derive::{IntoValues, TryFromRow};
 
 #[derive(Debug, serde::Serialize, TryFromRow)]
@@ -7,9 +8,10 @@ pub struct User {
     pub title: Option<String>,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct NewUser {
     pub username: String,
+    #[serde(skip_serializing)]
     pub hashed_password: String,
     pub title: Option<String>,
 }

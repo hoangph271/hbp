@@ -4,6 +4,8 @@ use std::fmt;
 use httpstatus::StatusCode::{self};
 use rocket::response::Responder;
 
+use super::responders::HbpResponse;
+
 #[derive(Debug)]
 pub struct HbpError {
     pub msg: String,
@@ -29,15 +31,9 @@ impl From<StatusCode> for HbpError {
     }
 }
 
-// impl From<anyhow::Error> for HbpError {
-//     fn from(anyhow_error: anyhow::Error) -> HbpError {
-//         error!("{}", anyhow_error);
-//         HbpError::from_message("anyhow Error")
-//     }
-// }
-impl<'r, 'o> Responder<'r, 'static> for HbpError {
+impl<'r> Responder<'r, 'static> for HbpError {
     fn respond_to(self, _: &'r rocket::Request<'_>) -> rocket::response::Result<'static> {
-        todo!()
+        Ok(HbpResponse::json(self.msg, Some(self.status_code)).into())
     }
 }
 

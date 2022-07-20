@@ -5,7 +5,7 @@ use stargate_grpc_derive::TryFromRow;
 
 use crate::{
     data::lib::{execute_stargate_query, execute_stargate_query_for_one},
-    shared::interfaces::{ApiItemResponse, ApiListResponse},
+    shared::interfaces::{ApiErrorResponse, ApiItemResponse, ApiListResponse},
     utils::responders::HbpResponse,
 };
 
@@ -50,9 +50,9 @@ async fn get_one_show(show_id: i64) -> HbpResponse {
     let maybe_show: Option<MovieOrTv> = execute_stargate_query_for_one(query).await.unwrap();
 
     if let Some(show) = maybe_show {
-        ApiItemResponse::from_item(show).into()
+        ApiItemResponse::ok(show).into()
     } else {
-        HbpResponse::not_found()
+        ApiErrorResponse::bad_request(vec![]).into()
     }
 }
 

@@ -130,3 +130,14 @@ impl<'r> Responder<'r, 'r> for HbpResponse {
         Ok(response_builder.finalize())
     }
 }
+
+impl Into<Response<'_>> for HbpResponse {
+    fn into(self) -> Response<'static> {
+        let mut response_builder = Response::build();
+
+        let status = Status::from_code(self.status_code.as_u16()).unwrap();
+        response_builder.status(status);
+
+        response_builder.finalize()
+    }
+}

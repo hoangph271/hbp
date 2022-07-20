@@ -1,5 +1,5 @@
 use crate::data::lib::user_orm;
-use crate::shared::interfaces::ApiErrorResponse;
+use crate::shared::interfaces::{ApiErrorResponse, ApiItemResponse};
 use crate::utils::auth::{AuthPayload, UserPayload};
 use crate::utils::guards::auth_payload::USER_JWT_COOKIE;
 use crate::utils::responders::{HbpContent, HbpResponse};
@@ -136,25 +136,42 @@ async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
 
 #[post("/signup", data = "<signup_body>")]
 async fn api_post_signup(signup_body: Result<Json<SignupBody>, JsonError<'_>>) -> HbpResponse {
-    let signup_body = signup_body.unwrap();
-
-    if let Err(e) = signup_body.validate() {
-        let errors = vec![e.msg];
-        return ApiErrorResponse::bad_request(errors).into();
-    }
-
     use crate::data::models::users_model::NewUser;
-    let new_user = NewUser {
-        title: None,
-        username: signup_body.username.clone(),
-        hashed_password: bcrypt::hash(&signup_body.password, bcrypt::DEFAULT_COST)
-            .expect("Hashing password failed"),
-    };
 
-    if user_orm::create_user(new_user).await.unwrap().is_some() {
-        HbpResponse::redirect(uri!("/users", login))
-    } else {
-        HbpResponse::redirect(uri!("/users", signup))
+    match signup_body {
+        Err(e) => {
+            let error = match e {
+                JsonError::Io(_) => "Can not read JSON".to_owned(),
+                JsonError::Parse(_, e) => e.to_string(),
+            };
+
+            let errors = vec![error];
+            ApiErrorResponse::bad_request(errors).into()
+        }
+        Ok(signup_body) => {
+            if let Err(e) = signup_body.validate() {
+                let errors = vec![e.msg];
+                return ApiErrorResponse::bad_request(errors).into();
+            }
+
+            let new_user = NewUser {
+                title: None,
+                username: signup_body.username.clone(),
+                hashed_password: bcrypt::hash(&signup_body.password, bcrypt::DEFAULT_COST)
+                    .expect("Hashing password failed"),
+            };
+
+            if user_orm::create_user(new_user.clone())
+                .await
+                .unwrap()
+                .is_some()
+            {
+                ApiItemResponse::ok(new_user).into()
+            } else {
+                // FIXME: Not sure which status code here...!
+                ApiErrorResponse::bad_request(vec![]).into()
+            }
+        }
     }
 }
 

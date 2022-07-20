@@ -127,7 +127,7 @@ async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
             .expect("Hashing password failed"),
     };
 
-    if user_orm::create_user(new_user).await.unwrap().is_some() {
+    if user_orm::create_user(new_user).await.is_ok() {
         HbpResponse::redirect(uri!("/users", login))
     } else {
         HbpResponse::redirect(uri!("/users", signup))
@@ -164,15 +164,12 @@ async fn api_post_signup(signup_body: Result<Json<SignupBody>, JsonError<'_>>) -
                     .expect("Hashing password failed"),
             };
 
-            if user_orm::create_user(new_user.clone())
-                .await
-                .unwrap()
-                .is_some()
-            {
-                ApiItemResponse::ok(new_user).into()
-            } else {
-                // FIXME: Not sure which status code here...!
-                ApiErrorResponse::bad_request(vec![]).into()
+            match user_orm::create_user(new_user).await {
+                Ok(new_user) => ApiItemResponse::ok(new_user).into(),
+                Err(e) => {
+                    let e: ApiErrorResponse = e.into();
+                    e.into()
+                }
             }
         }
     }
@@ -182,9 +179,7 @@ async fn api_post_signup(signup_body: Result<Json<SignupBody>, JsonError<'_>>) -
 #[post("/signin", data = "<signin_body>")]
 async fn api_post_signin(signin_body: Json<LoginBody>) -> HbpResponse {
     match attemp_signin(&signin_body.username, &signin_body.password).await {
-        Some(user) => {
-            ApiItemResponse::ok(user).into()
-        },
+        Some(user) => ApiItemResponse::ok(user).into(),
         None => ApiErrorResponse::unauthorized().into(),
     }
 }

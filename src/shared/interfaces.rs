@@ -13,8 +13,8 @@ where
 #[derive(Serialize)]
 pub struct ApiErrorResponse {
     #[serde(serialize_with = "status_code_serialize")]
-    status_code: StatusCode,
-    errors: Vec<String>,
+    pub status_code: StatusCode,
+    pub errors: Vec<String>,
 }
 
 impl From<ApiErrorResponse> for HbpResponse {

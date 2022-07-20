@@ -1,3 +1,6 @@
+use std::vec;
+
+use httpstatus::StatusCode;
 use serde::Serialize;
 use stargate_grpc::{
     result::{ColumnPositions, ResultSetMapper, TryFromRow},
@@ -66,6 +69,7 @@ pub mod user_orm {
         build_stargate_client, execute_stargate_query, execute_stargate_query_for_one, DbError,
     };
     use crate::data::models::users_model::*;
+    use httpstatus::StatusCode;
     use stargate_grpc::Query;
 
     pub async fn init_users_table() -> Result<(), DbError> {
@@ -84,7 +88,11 @@ pub mod user_orm {
         client
             .execute_query(create_users_table)
             .await
-            .map_err(|_| DbError("init_users_table failed at .execute_query()".to_owned()))?;
+            .map_err(|_| {
+                DbError::internal_server_error(
+                    "init_users_table failed at .execute_query()".to_owned(),
+                )
+            })?;
 
         println!("created users table");
         Ok(())
@@ -102,28 +110,60 @@ pub mod user_orm {
         Ok(maybe_user)
     }
 
-    pub async fn create_user(new_user: NewUser) -> Result<Option<User>, DbError> {
+    pub async fn create_user(new_user: NewUser) -> Result<User, DbError> {
         let new_user: InsertableNewUser = new_user.into();
 
         let user_query = Query::builder()
             .keyspace("astra")
             .query(
                 "INSERT INTO users(username, hashed_password, title) \
-                    VALUES (:username, :hashed_password, :title)",
+                    VALUES (:username, :hashed_password, :title) \
+                    IF NOT EXISTS",
             )
             .bind(new_user.clone())
             .build();
 
-        execute_stargate_query(user_query).await?;
+        let mut result_set = execute_stargate_query(user_query).await?.unwrap();
+        let mut row = result_set.rows.pop().unwrap();
+        let inserted: bool = row.try_take(0).unwrap();
 
-        Ok(Some(new_user.into()))
+        if inserted {
+            Ok(new_user.into())
+        } else {
+            Err(DbError {
+                status_code: StatusCode::Conflict,
+                message: format!("{} existed", new_user.username),
+            })
+        }
     }
 }
 
-use crate::utils::env::{from_env, EnvKey};
+use crate::{
+    shared::interfaces::ApiErrorResponse,
+    utils::env::{from_env, EnvKey},
+};
 
 #[derive(Debug, Serialize)]
-pub struct DbError(String);
+pub struct DbError {
+    pub status_code: StatusCode,
+    pub message: String,
+}
+impl DbError {
+    fn internal_server_error(message: String) -> DbError {
+        DbError {
+            status_code: StatusCode::InternalServerError,
+            message,
+        }
+    }
+}
+impl From<DbError> for ApiErrorResponse {
+    fn from(db_error: DbError) -> Self {
+        ApiErrorResponse {
+            status_code: db_error.status_code,
+            errors: vec![db_error.message],
+        }
+    }
+}
 
 pub async fn build_stargate_client() -> Result<StargateClient, DbError> {
     let astra_uri = from_env(EnvKey::AstraUri);
@@ -132,12 +172,18 @@ pub async fn build_stargate_client() -> Result<StargateClient, DbError> {
 
     let stargate_client = StargateClient::builder()
         .uri(astra_uri)
-        .map_err(|_| DbError("build_stargate_client() failed at .uri()".to_owned()))?
+        .map_err(|_| {
+            DbError::internal_server_error("build_stargate_client() failed at .uri()".to_owned())
+        })?
         .auth_token(AuthToken::from_str(bearer_token).unwrap())
         .tls(Some(client::default_tls_config().unwrap()))
         .connect()
         .await
-        .map_err(|_| DbError("build_stargate_client() failed at .connect()".to_owned()))?;
+        .map_err(|_| {
+            DbError::internal_server_error(
+                "build_stargate_client() failed at .connect()".to_owned(),
+            )
+        })?;
 
     Ok(stargate_client)
 }
@@ -146,10 +192,11 @@ pub async fn execute_stargate_query(
 ) -> Result<Option<ResultSet>, DbError> {
     let mut client = build_stargate_client().await?;
 
-    let response = client
-        .execute_query(query)
-        .await
-        .map_err(|_| DbError("execute_stargate_query failed at .execute_query()".to_owned()))?;
+    let response = client.execute_query(query).await.map_err(|_| {
+        DbError::internal_server_error(
+            "execute_stargate_query failed at .execute_query()".to_owned(),
+        )
+    })?;
 
     Ok(response.try_into().ok())
 }
@@ -195,7 +242,7 @@ where
     if let Some(row) = result_set.rows.pop() {
         match mapper.try_unpack(row) {
             Ok(val) => Ok(Some(val)),
-            Err(_) => Err(DbError(
+            Err(_) => Err(DbError::internal_server_error(
                 "execute_stargate_query_for_one failed at .try_unpack()".to_owned(),
             )),
         }

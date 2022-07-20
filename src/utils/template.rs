@@ -1,6 +1,7 @@
 use crate::utils::auth::AuthPayload;
 use crate::utils::types::{HbpError, HbpResult};
 use httpstatus::StatusCode;
+use log::*;
 use mustache::{Data, MapBuilder, Template};
 use std::collections::hash_map::HashMap;
 use std::path::{Path, PathBuf};
@@ -103,9 +104,10 @@ pub fn render_default_layout(
         Ok(html) => HbpResult::Ok(html),
         Err(e) => {
             debug!("{e}");
-            HbpResult::Err(HbpError::from_message(&format!(
-                "Failed render_default_layout(), {template_path}"
-            ), StatusCode::InternalServerError))
+            HbpResult::Err(HbpError::from_message(
+                &format!("Failed render_default_layout(), {template_path}"),
+                StatusCode::InternalServerError,
+            ))
         }
     }
 }

@@ -1,9 +1,10 @@
 pub mod lib;
 pub mod models;
 
+use async_std::task;
+use log::*;
 use std::thread::{sleep, spawn};
 use std::time::Duration;
-use async_std::task;
 
 pub fn init_db() {
     spawn(|| {

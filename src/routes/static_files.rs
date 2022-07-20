@@ -1,4 +1,4 @@
-use rocket::fs::NamedFile;
+use rocket::{fs::NamedFile, get};
 use std::path::{Path, PathBuf};
 
 #[get("/<file..>")]

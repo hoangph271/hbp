@@ -8,6 +8,7 @@ extern crate serde_derive;
 use rocket::{launch, routes};
 use rocket_okapi::{
     mount_endpoints_and_merged_docs,
+    settings::OpenApiSettings,
     swagger_ui::{make_swagger_ui, SwaggerUIConfig},
 };
 
@@ -50,8 +51,7 @@ fn launch() -> rocket::Rocket<rocket::Build> {
         // * catchers
         .register("/", routes::catchers::catchers());
 
-    let openapi_settings = rocket_okapi::settings::OpenApiSettings::default();
-
+    let openapi_settings = OpenApiSettings::default();
     mount_endpoints_and_merged_docs! {
         rocket,
         "/api/v1",

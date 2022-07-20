@@ -66,11 +66,8 @@ struct LoginBody {
 }
 #[post("/login", data = "<login_body>")]
 async fn post_login(login_body: Form<LoginBody>, jar: &CookieJar<'_>) -> HbpResponse {
-    if let Some(user) = user_orm::find_one(&login_body.username).await.unwrap() {
-        let is_password_matches =
-            bcrypt::verify(&login_body.password, &user.hashed_password).unwrap_or(false);
-
-        if is_password_matches {
+    match attemp_signin(&login_body.username, &login_body.password).await {
+        Some(user) => {
             let jwt = UserPayload::sign_jwt(&UserPayload {
                 exp: timestamp_now(),
                 sub: user.username,
@@ -80,11 +77,8 @@ async fn post_login(login_body: Form<LoginBody>, jar: &CookieJar<'_>) -> HbpResp
             jar.add_private(Cookie::new(USER_JWT_COOKIE, jwt));
 
             HbpResponse::redirect(uri!("/users", index))
-        } else {
-            HbpResponse::redirect(uri!("/users", login))
         }
-    } else {
-        HbpResponse::redirect(uri!("/users", login))
+        None => HbpResponse::redirect(uri!("/users", login)),
     }
 }
 
@@ -140,6 +134,8 @@ async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
     }
 }
 
+// * APIs
+
 #[openapi]
 #[post("/signup", data = "<signup_body>")]
 async fn api_post_signup(signup_body: Result<Json<SignupBody>, JsonError<'_>>) -> HbpResponse {
@@ -185,23 +181,10 @@ async fn api_post_signup(signup_body: Result<Json<SignupBody>, JsonError<'_>>) -
 #[openapi]
 #[post("/signin", data = "<signin_body>")]
 async fn api_post_signin(signin_body: Json<LoginBody>) -> HbpResponse {
-    async fn attemp_signin(username: &str, password: &str) -> Option<User> {
-        if let Some(user) = user_orm::find_one(username).await.unwrap() {
-            let is_password_matches =
-                bcrypt::verify(password, &user.hashed_password).unwrap_or(false);
-
-            if is_password_matches {
-                Some(user)
-            } else {
-                None
-            }
-        } else {
-            None
-        }
-    }
-
     match attemp_signin(&signin_body.username, &signin_body.password).await {
-        Some(user) => ApiItemResponse::ok(user).into(),
+        Some(user) => {
+            ApiItemResponse::ok(user).into()
+        },
         None => ApiErrorResponse::unauthorized().into(),
     }
 }
@@ -212,4 +195,18 @@ pub fn users_routes() -> Vec<Route> {
 
 pub fn get_routes_and_docs(settings: &OpenApiSettings) -> (Vec<Route>, OpenApi) {
     openapi_get_routes_spec![settings: api_post_signup, api_post_signin]
+}
+
+async fn attemp_signin(username: &str, password: &str) -> Option<User> {
+    if let Some(user) = user_orm::find_one(username).await.unwrap() {
+        let is_password_matches = bcrypt::verify(password, &user.hashed_password).unwrap_or(false);
+
+        if is_password_matches {
+            Some(user)
+        } else {
+            None
+        }
+    } else {
+        None
+    }
 }

@@ -7,11 +7,12 @@ use crate::utils::responders::{HbpContent, HbpResponse};
 use crate::utils::types::{HbpError, HbpResult};
 use crate::utils::{template, timestamp_now};
 use httpstatus::StatusCode::BadRequest;
+use log::*;
 use mustache::Data;
 use rocket::form::Form;
 use rocket::http::{Cookie, CookieJar};
 use rocket::serde::json::{Error as JsonError, Json};
-use rocket::Route;
+use rocket::{get, post, routes, uri, FromForm, Route};
 use serde::Deserialize;
 
 #[get("/")]

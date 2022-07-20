@@ -1,9 +1,10 @@
 use std::path::PathBuf;
 
 use httpstatus::StatusCode;
+use log::*;
 use rocket::http::Status;
 use rocket::response::Redirect;
-use rocket::Route;
+use rocket::{delete, get, post, put, routes, Route};
 
 use crate::shared::entities::markdown::Markdown;
 use crate::utils::markdown;

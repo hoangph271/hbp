@@ -6,6 +6,7 @@ pub mod jwt {
     use httpstatus::StatusCode;
     use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
     use serde::Serialize;
+    use log::*;
 
     fn jwt_secret() -> String {
         use crate::utils::env::{from_env, EnvKey};

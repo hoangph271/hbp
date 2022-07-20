@@ -1,10 +1,10 @@
 // #region imports
 #[macro_use]
-extern crate rocket;
-#[macro_use]
 extern crate dotenv_codegen;
 extern crate mustache;
 extern crate serde_derive;
+
+use rocket::{launch, routes};
 
 mod data;
 mod routes;

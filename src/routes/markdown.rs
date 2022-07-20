@@ -7,8 +7,9 @@ use crate::utils::{
     string::url_encode_path,
 };
 use httpstatus::StatusCode;
+use log::*;
 use mustache::Data;
-use rocket::Route;
+use rocket::{get, routes, Route};
 use std::path::{Path, PathBuf};
 
 fn assert_payload_access(payload: &UserPayload, path: &str) -> bool {

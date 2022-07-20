@@ -1,9 +1,10 @@
+use rocket::get;
+
 use crate::shared::entities::markdown::*;
 use crate::utils::auth::AuthPayload;
 use crate::utils::markdown::{markdown_from_dir, render_markdown_list};
 use crate::utils::responders::HbpResponse;
 use crate::utils::template::DefaultLayoutData;
-// use chrono::NaiveDate;
 
 #[get("/")]
 pub fn index(jwt: Option<AuthPayload>) -> HbpResponse {

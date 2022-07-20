@@ -1,4 +1,5 @@
 use crate::data::lib::user_orm;
+use crate::data::models::users_model::User;
 use crate::shared::interfaces::{ApiErrorResponse, ApiItemResponse};
 use crate::utils::auth::{AuthPayload, UserPayload};
 use crate::utils::guards::auth_payload::USER_JWT_COOKIE;
@@ -53,11 +54,12 @@ fn signup() -> HbpResponse {
     )))
 }
 
-#[derive(FromForm)]
+#[derive(FromForm, Deserialize)]
 struct LoginBody {
     username: String,
     password: String,
 }
+
 #[post("/login", data = "<login_body>")]
 async fn post_login(login_body: Form<LoginBody>, jar: &CookieJar<'_>) -> HbpResponse {
     if let Some(user) = user_orm::find_one(&login_body.username).await.unwrap() {
@@ -175,10 +177,33 @@ async fn api_post_signup(signup_body: Result<Json<SignupBody>, JsonError<'_>>) -
     }
 }
 
+#[post("/signin", data = "<signin_body>")]
+async fn api_post_signin(signin_body: Json<LoginBody>) -> HbpResponse {
+    async fn attemp_signin(username: &str, password: &str) -> Option<User> {
+        if let Some(user) = user_orm::find_one(username).await.unwrap() {
+            let is_password_matches =
+                bcrypt::verify(password, &user.hashed_password).unwrap_or(false);
+
+            if is_password_matches {
+                Some(user)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
+    match attemp_signin(&signin_body.username, &signin_body.password).await {
+        Some(user) => ApiItemResponse::ok(user).into(),
+        None => ApiErrorResponse::unauthorized().into(),
+    }
+}
+
 pub fn users_routes() -> Vec<Route> {
     routes![index, login, signup, post_login, post_signup]
 }
 
 pub fn api_users_routes() -> Vec<Route> {
-    routes![api_post_signup]
+    routes![api_post_signup, api_post_signin]
 }

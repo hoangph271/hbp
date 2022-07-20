@@ -30,6 +30,16 @@ impl ApiErrorResponse {
             errors,
         }
     }
+
+    pub fn unauthorized() -> ApiErrorResponse {
+        let status_code = StatusCode::Unauthorized;
+        let errors = vec![status_code.reason_phrase().to_string()];
+
+        ApiErrorResponse {
+            status_code,
+            errors,
+        }
+    }
 }
 
 #[derive(Serialize)]

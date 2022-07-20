@@ -5,6 +5,7 @@ use crate::utils::template::{
     render_default_layout, simple_data_from, DefaultLayoutData, TemplateData,
 };
 use crate::utils::types::{HbpError, HbpResult};
+use httpstatus::StatusCode::{BadRequest};
 use mustache::Data;
 use mustache::MapBuilder;
 use pulldown_cmark::{html, Options, Parser};
@@ -42,7 +43,7 @@ pub async fn render_marp(
         return Err(HbpError::from_message(&format!(
             "NOT a marp: {}",
             markdown.file_name
-        )));
+        ), BadRequest));
     }
 
     marper::render_marp(&markdown.content, extra_data).await
@@ -71,14 +72,22 @@ pub fn markdown_from_dir<P: AsRef<Path>>(path: &P) -> HbpResult<Vec<MarkdownOrMa
         .unwrap()
         .filter_map(|entry| {
             let entry = entry.ok()?;
+            let title = match entry.path().file_name() {
+                Some(file_name) => file_name.to_string_lossy().to_string(),
+                None => "Untitled".to_owned(),
+            };
+
+            if title.starts_with('.') {
+                return None
+            }
 
             if entry.path().is_dir() {
+                let path: String = entry.path().to_string_lossy().to_string();
+                let url = url_encode_path(&path);
+
                 Some(MarkdownOrMarkdownDir::MarkdownDir(MarkdownDir {
-                    title: match entry.path().file_name() {
-                        Some(file_name) => file_name.to_string_lossy().to_string(),
-                        None => "Untitled".to_owned(),
-                    },
-                    url: url_encode_path(&entry.path().to_string_lossy()),
+                    title,
+                    url,
                 }))
             } else if entry.path().to_string_lossy().ends_with(".md") {
                 Some(MarkdownOrMarkdownDir::Markdown(

@@ -2,6 +2,7 @@ use crate::utils::string::url_encode_path;
 use crate::utils::types::{HbpError, HbpResult};
 use anyhow::Result;
 use chrono::{DateTime, Utc};
+use httpstatus::StatusCode;
 use mustache::{Data, EncoderError, MapBuilder};
 use regex::Regex;
 use serde::Serialize;
@@ -69,14 +70,14 @@ fn extract_markdown_header_content(content: &str) -> Option<String> {
 impl Markdown {
     pub fn from_markdown(path: &Path) -> HbpResult<Markdown> {
         if !path.exists() {
-            return Err(HbpError::from_message(&format!(
-                "{} NOT exists",
-                path.to_string_lossy()
-            )));
+            let msg = format!("{} NOT exists", path.to_string_lossy());
+            return Err(HbpError::from_message(&msg, StatusCode::BadRequest));
         }
 
         let mut markdown = Markdown {
-            content: fs::read_to_string(path)?,
+            // TODO: Abstract this map_err
+            content: fs::read_to_string(path)
+                .map_err(|e| HbpError::from_std_error(e, StatusCode::InternalServerError))?,
             file_name: path.file_name().unwrap().to_string_lossy().into_owned(),
             url: url_encode_path(&path.to_string_lossy()),
             ..Markdown::default()
@@ -129,11 +130,21 @@ impl Markdown {
         if markdown.dob.is_empty() {
             markdown.dob = format!(
                 "{}",
-                DateTime::<Utc>::from(path.metadata()?.created()?)
-                    .date()
-                    .format("%m/%d/%Y")
+                DateTime::<Utc>::from(
+                    path.metadata()
+                        // TODO: Abstract this map_err
+                        .map_err(|e| {
+                            HbpError::from_std_error(e, StatusCode::InternalServerError)
+                        })?
+                        .created()
+                        // TODO: Abstract this map_err
+                        .map_err(|e| {
+                            HbpError::from_std_error(e, StatusCode::InternalServerError)
+                        })?
+                )
+                .date()
+                .format("%m/%d/%Y")
             );
-            info!("{}", markdown.dob);
         }
 
         Ok(markdown)

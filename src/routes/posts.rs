@@ -2,6 +2,7 @@ use crate::data::{lib, models::posts_model};
 use crate::utils::responders::HbpResponse;
 use httpstatus::StatusCode;
 use rocket::serde::json::Json;
+use rocket::Route;
 
 #[get("/")]
 pub async fn index() -> HbpResponse {
@@ -49,4 +50,8 @@ pub async fn update(updated_post: Json<posts_model::UpdatedPost>) -> HbpResponse
             OrmError::NotFound => HbpResponse::status(StatusCode::NotFound),
         },
     }
+}
+
+pub fn posts_routes() -> Vec<Route> {
+    routes![index, find_one, delete_one, create, update]
 }

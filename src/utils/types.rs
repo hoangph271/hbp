@@ -1,10 +1,17 @@
 use std::error::Error;
 use std::fmt;
 
+use httpstatus::StatusCode::{self};
+use rocket::response::Responder;
+
+use super::responders::HbpResponse;
+
 #[derive(Debug)]
 pub struct HbpError {
-    msg: String,
+    pub msg: String,
+    pub status_code: StatusCode,
 }
+
 impl fmt::Display for HbpError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self.msg)
@@ -15,39 +22,45 @@ impl Error for HbpError {
         &self.msg
     }
 }
-impl From<httpstatus::StatusCode> for HbpError {
-    fn from(status_code: httpstatus::StatusCode) -> HbpError {
-        HbpError::from_message(&format!("StatusCode: {}", status_code.as_u16()))
+impl From<StatusCode> for HbpError {
+    fn from(status_code: StatusCode) -> HbpError {
+        HbpError::from_message(
+            &format!("StatusCode: {}", status_code.as_u16()),
+            status_code,
+        )
     }
 }
-impl From<std::io::Error> for HbpError {
-    fn from(std_error: std::io::Error) -> HbpError {
-        error!("{}", std_error);
-        HbpError::from_message("IO Error")
-    }
-}
-impl From<regex::Error> for HbpError {
-    fn from(regex_error: regex::Error) -> HbpError {
-        error!("{}", regex_error);
-        HbpError::from_message("Regex Error")
-    }
-}
-impl From<anyhow::Error> for HbpError {
-    fn from(anyhow_error: anyhow::Error) -> HbpError {
-        error!("{}", anyhow_error);
-        HbpError::from_message("anyhow Error")
+
+impl<'r> Responder<'r, 'static> for HbpError {
+    fn respond_to(self, _: &'r rocket::Request<'_>) -> rocket::response::Result<'static> {
+        Ok(HbpResponse::json(self.msg, Some(self.status_code)).into())
     }
 }
 
 impl HbpError {
-    pub fn from_message(msg: &str) -> HbpError {
+    pub fn from_message(msg: &str, status_code: StatusCode) -> HbpError {
         HbpError {
-            msg: String::from(msg),
+            status_code,
+            msg: msg.to_owned(),
         }
     }
+
+    pub fn from_std_error(std_error: std::io::Error, status_code: StatusCode) -> HbpError {
+        error!("{}", std_error);
+        HbpError::from_message("IO Error", status_code)
+    }
+
+    // impl From<regex::Error> for HbpError {
+    //     fn from(regex_error: regex::Error) -> HbpError {
+    //         error!("{}", regex_error);
+    //         HbpError::from_message("Regex Error")
+    //     }
+    // }
+
     pub fn unimplemented() -> HbpError {
         HbpError {
             msg: String::from("unimplemented"),
+            status_code: StatusCode::InternalServerError,
         }
     }
 }

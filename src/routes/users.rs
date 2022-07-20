@@ -7,6 +7,7 @@ use crate::utils::{template, timestamp_now};
 use mustache::Data;
 use rocket::form::Form;
 use rocket::http::{Cookie, CookieJar};
+use rocket::Route;
 
 #[get("/")]
 pub fn index(jwt: AuthPayload) -> HbpResponse {
@@ -120,4 +121,8 @@ pub async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
     } else {
         HbpResponse::redirect(uri!("/users", signup))
     }
+}
+
+pub fn users_routes() -> Vec<Route> {
+    routes![index, login, signup, post_login, post_signup]
 }

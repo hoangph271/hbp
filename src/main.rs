@@ -27,52 +27,16 @@ async fn rocket() -> _ {
 
 fn launch() -> rocket::Rocket<rocket::Build> {
     rocket::build()
-        .mount("/", routes![routes::index::index, routes::index::readme_md])
+        .mount("/", routes::index::base_routes())
         .mount(
             "/api/movies_and_tv",
-            routes![
-                routes::movies_and_tv::get_all_shows,
-                routes::movies_and_tv::get_one_show
-            ],
+            routes::movies_and_tv::api_movies_and_tv_routes(),
         )
-        .mount(
-            "/dev/null",
-            routes![
-                routes::index::get_dev_null,
-                routes::index::post_dev_null,
-                routes::index::put_dev_null,
-                routes::index::delete_dev_null
-            ],
-        )
-        .mount(
-            "/markdown",
-            routes![
-                routes::markdown::markdown_file,
-                routes::markdown::user_markdown_file,
-                routes::markdown::user_markdown_editor,
-            ],
-        )
+        .mount("/dev/null", routes::index::dev_null_routes())
+        .mount("/markdown", routes::markdown::markdown_routes())
         .mount("/static", routes![routes::static_files::serve])
-        .mount(
-            "/posts",
-            routes![
-                routes::posts::index,
-                routes::posts::find_one,
-                routes::posts::delete_one,
-                routes::posts::create,
-                routes::posts::update
-            ],
-        )
-        .mount(
-            "/users",
-            routes![
-                routes::users::index,
-                routes::users::login,
-                routes::users::signup,
-                routes::users::post_login,
-                routes::users::post_signup,
-            ],
-        )
+        .mount("/posts", routes::posts::posts_routes())
+        .mount("/users", routes::users::users_routes())
         .mount("/blogs", routes![routes::blogs::index])
         .register("/", catchers![default_catcher])
 }

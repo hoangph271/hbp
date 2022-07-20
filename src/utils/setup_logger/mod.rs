@@ -16,7 +16,7 @@ pub fn setup_logger() {
                 message
             ))
         })
-        .level(log::LevelFilter::Debug)
+        .level(log::LevelFilter::Info)
         .chain(std::io::stdout())
         // ? Use this if you need an output.log file, skip for now
         // .chain(fern::log_file("output.log"))

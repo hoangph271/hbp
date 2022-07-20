@@ -132,7 +132,7 @@ pub mod user_orm {
         } else {
             Err(DbError {
                 status_code: StatusCode::Conflict,
-                message: format!("{} existed", new_user.username),
+                message: format!("username `{}` existed", new_user.username),
             })
         }
     }

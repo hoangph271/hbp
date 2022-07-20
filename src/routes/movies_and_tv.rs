@@ -1,4 +1,4 @@
-use rocket::Route;
+use rocket::{get, routes, Route};
 use serde::Serialize;
 use stargate_grpc::{Query, ResultSet};
 use stargate_grpc_derive::TryFromRow;

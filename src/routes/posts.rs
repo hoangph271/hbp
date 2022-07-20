@@ -1,8 +1,9 @@
 use crate::data::{lib, models::posts_model};
 use crate::utils::responders::HbpResponse;
 use httpstatus::StatusCode;
+use log::*;
 use rocket::serde::json::Json;
-use rocket::Route;
+use rocket::{delete, get, post, put, routes, Route};
 
 #[get("/")]
 pub async fn index() -> HbpResponse {

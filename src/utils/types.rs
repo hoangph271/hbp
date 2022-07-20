@@ -1,3 +1,4 @@
+use log::*;
 use std::error::Error;
 use std::fmt;
 
@@ -49,13 +50,6 @@ impl HbpError {
         error!("{}", std_error);
         HbpError::from_message("IO Error", status_code)
     }
-
-    // impl From<regex::Error> for HbpError {
-    //     fn from(regex_error: regex::Error) -> HbpError {
-    //         error!("{}", regex_error);
-    //         HbpError::from_message("Regex Error")
-    //     }
-    // }
 
     pub fn unimplemented() -> HbpError {
         HbpError {

@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use httpstatus::StatusCode;
 use rocket::http::Status;
 use rocket::response::Redirect;
+use rocket::Route;
 
 use crate::shared::entities::markdown::Markdown;
 use crate::utils::markdown;
@@ -10,7 +11,7 @@ use crate::utils::responders::HbpResponse;
 use crate::utils::template::DefaultLayoutData;
 
 #[get("/README.md")]
-pub async fn readme_md() -> HbpResponse {
+async fn readme_md() -> HbpResponse {
     let file_path = PathBuf::from("README.md");
 
     match Markdown::from_markdown(&file_path) {
@@ -44,23 +45,31 @@ pub async fn readme_md() -> HbpResponse {
 }
 
 #[get("/")]
-pub fn index() -> Redirect {
+fn index() -> Redirect {
     Redirect::moved("/README.md")
 }
 
 #[get("/")]
-pub fn get_dev_null() -> Status {
+fn get_dev_null() -> Status {
     Status::Ok
 }
 #[post("/")]
-pub fn post_dev_null() -> Status {
+fn post_dev_null() -> Status {
     Status::Ok
 }
 #[put("/")]
-pub fn put_dev_null() -> Status {
+fn put_dev_null() -> Status {
     Status::Ok
 }
 #[delete("/")]
-pub fn delete_dev_null() -> Status {
+fn delete_dev_null() -> Status {
     Status::Ok
+}
+
+pub fn dev_null_routes() -> Vec<Route> {
+    routes![get_dev_null, post_dev_null, put_dev_null, delete_dev_null]
+}
+
+pub fn base_routes() -> Vec<Route> {
+    routes![index, readme_md]
 }

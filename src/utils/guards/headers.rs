@@ -15,7 +15,7 @@ impl<'r> FromRequest<'r> for Referer {
             Some(token) => Outcome::Success(Referer(token.to_string())),
             None => Outcome::Failure((
                 Status::from_code(StatusCode::Unauthorized.as_u16()).unwrap(),
-                HbpError::from_message("No valid jwt found"),
+                HbpError::from_message("No valid jwt found", StatusCode::Unauthorized),
             )),
         }
     }

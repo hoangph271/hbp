@@ -8,6 +8,7 @@ use crate::utils::{
 };
 use httpstatus::StatusCode;
 use mustache::Data;
+use rocket::Route;
 use std::path::{Path, PathBuf};
 
 fn assert_payload_access(payload: &UserPayload, path: &str) -> bool {
@@ -29,7 +30,7 @@ fn markdown_path_from(username: &str, sub_path: &Path) -> (String, PathBuf) {
 }
 
 #[get("/<sub_path..>", rank = 2)]
-pub async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpResponse {
+async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpResponse {
     let file_path = PathBuf::from("markdown").join(sub_path.clone());
 
     if !markdown::is_markdown(&sub_path) {
@@ -67,7 +68,7 @@ pub async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpRe
 }
 
 #[get("/_edit/<sub_path..>")]
-pub async fn user_markdown_editor(sub_path: PathBuf, _jwt: AuthPayload) -> HbpResponse {
+async fn user_markdown_editor(sub_path: PathBuf, _jwt: AuthPayload) -> HbpResponse {
     let _file_path_str = PathBuf::from("markdown").join(sub_path);
 
     HbpResponse::html(
@@ -76,7 +77,7 @@ pub async fn user_markdown_editor(sub_path: PathBuf, _jwt: AuthPayload) -> HbpRe
     )
 }
 
-pub fn moveup_url_from(file_path: &Path) -> String {
+fn moveup_url_from(file_path: &Path) -> String {
     let moveup_url = if let Some(parent_path) = file_path.parent() {
         let parent_path = parent_path.to_string_lossy().to_string();
         let is_user_root = parent_path.eq("markdown/users");
@@ -94,11 +95,7 @@ pub fn moveup_url_from(file_path: &Path) -> String {
 }
 
 #[get("/users/<username>/<sub_path..>", rank = 1)]
-pub async fn user_markdown_file(
-    username: &str,
-    sub_path: PathBuf,
-    jwt: AuthPayload,
-) -> HbpResponse {
+async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: AuthPayload) -> HbpResponse {
     let (file_path_str, file_path) = markdown_path_from(username, &sub_path);
 
     if !jwt.match_path(&file_path_str, Some(assert_payload_access)) {
@@ -201,4 +198,8 @@ fn markdown_extra_data(file_path: &Path) -> Option<Vec<(String, Data)>> {
     } else {
         None
     }
+}
+
+pub fn markdown_routes() -> Vec<Route> {
+    routes![markdown_file, user_markdown_file, user_markdown_editor,]
 }

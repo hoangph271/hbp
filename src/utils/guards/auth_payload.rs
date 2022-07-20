@@ -66,7 +66,7 @@ impl<'r> FromRequest<'r> for AuthPayload {
         } else {
             Outcome::Failure((
                 Status::from_code(StatusCode::Unauthorized.as_u16()).unwrap(),
-                HbpError::from_message("No valid jwt found"),
+                HbpError::from_message("No valid jwt found", StatusCode::Unauthorized),
             ))
         }
     }

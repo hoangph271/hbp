@@ -1,40 +1,72 @@
 use httpstatus::StatusCode;
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 
 use crate::utils::responders::HbpResponse;
 
+fn status_code_serialize<S>(val: &StatusCode, s: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    s.serialize_u16(val.as_u16())
+}
+
+#[derive(Serialize)]
 pub struct ApiErrorResponse {
-    status_code: Option<StatusCode>,
+    // TODO: Should be number
+    #[serde(serialize_with = "status_code_serialize")]
+    status_code: StatusCode,
     errors: Vec<String>,
 }
 impl From<ApiErrorResponse> for HbpResponse {
     fn from(api_error_response: ApiErrorResponse) -> HbpResponse {
-        HbpResponse::json(api_error_response.errors, api_error_response.status_code)
+        let status_code = api_error_response.status_code.clone();
+        HbpResponse::json(api_error_response, Some(status_code))
+    }
+}
+impl ApiErrorResponse {
+    pub fn bad_request(errors: Vec<String>) -> ApiErrorResponse {
+        ApiErrorResponse {
+            status_code: StatusCode::BadRequest,
+            errors,
+        }
+    }
+
+    pub fn unauthorized() -> ApiErrorResponse {
+        let status_code = StatusCode::Unauthorized;
+        let errors = vec![status_code.reason_phrase().to_string()];
+
+        ApiErrorResponse {
+            status_code,
+            errors,
+        }
     }
 }
 
+#[derive(Serialize)]
 pub struct ApiItemResponse<T>
 where
     T: Serialize,
 {
-    status_code: Option<StatusCode>,
+    status_code: StatusCode,
     item: T,
 }
+
 impl<T> From<ApiItemResponse<T>> for HbpResponse
 where
     T: Serialize,
 {
     fn from(api_item_response: ApiItemResponse<T>) -> HbpResponse {
-        HbpResponse::json(api_item_response.item, api_item_response.status_code)
+        let status_code = api_item_response.status_code.clone();
+        HbpResponse::json(api_item_response, Some(status_code))
     }
 }
 impl<T> ApiItemResponse<T>
 where
     T: Serialize,
 {
-    pub fn from_item(item: T) -> ApiItemResponse<T> {
+    pub fn ok(item: T) -> ApiItemResponse<T> {
         ApiItemResponse {
-            status_code: None,
+            status_code: StatusCode::Ok,
             item,
         }
     }

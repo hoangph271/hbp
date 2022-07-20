@@ -1,13 +1,19 @@
 use crate::utils::template::{render_default_layout, DefaultLayoutData};
 use httpstatus::StatusCode;
 use mustache::MapBuilder;
+use okapi::openapi3::Responses;
 use rocket::fs::NamedFile;
 use rocket::http::{ContentType, Header, Status};
 use rocket::response::{Responder, Response, Result};
+use rocket_okapi::gen::OpenApiGenerator;
+use rocket_okapi::response::OpenApiResponderInner;
+use rocket_okapi::JsonSchema;
+use serde::{Deserialize, Serialize};
 use std::io::Cursor;
 use std::path::PathBuf;
 
 #[allow(dead_code)]
+#[derive(Serialize, Deserialize, JsonSchema)]
 pub enum HbpContent {
     Plain(String),
     Html(String),
@@ -19,6 +25,22 @@ pub enum HbpContent {
 pub struct HbpResponse {
     pub status_code: StatusCode,
     pub content: HbpContent,
+}
+
+impl OpenApiResponderInner for HbpResponse {
+    fn responses(_gen: &mut OpenApiGenerator) -> rocket_okapi::Result<Responses> {
+        use okapi::openapi3::{RefOr, Response};
+
+        Ok(Responses {
+            responses: okapi::map! {
+                "200".to_owned() => RefOr::Object(Response {
+                    
+                    ..Default::default()
+                })
+            },
+            ..Default::default()
+        })
+    }
 }
 
 impl HbpResponse {

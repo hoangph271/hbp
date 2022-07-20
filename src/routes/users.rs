@@ -9,10 +9,14 @@ use crate::utils::{template, timestamp_now};
 use httpstatus::StatusCode::BadRequest;
 use log::*;
 use mustache::Data;
+use okapi::openapi3::OpenApi;
 use rocket::form::Form;
 use rocket::http::{Cookie, CookieJar};
 use rocket::serde::json::{Error as JsonError, Json};
 use rocket::{get, post, routes, uri, FromForm, Route};
+use rocket_okapi::settings::OpenApiSettings;
+use rocket_okapi::{openapi, openapi_get_routes_spec};
+use schemars::JsonSchema;
 use serde::Deserialize;
 
 #[get("/")]
@@ -55,12 +59,11 @@ fn signup() -> HbpResponse {
     )))
 }
 
-#[derive(FromForm, Deserialize)]
+#[derive(FromForm, Deserialize, JsonSchema)]
 struct LoginBody {
     username: String,
     password: String,
 }
-
 #[post("/login", data = "<login_body>")]
 async fn post_login(login_body: Form<LoginBody>, jar: &CookieJar<'_>) -> HbpResponse {
     if let Some(user) = user_orm::find_one(&login_body.username).await.unwrap() {
@@ -85,7 +88,7 @@ async fn post_login(login_body: Form<LoginBody>, jar: &CookieJar<'_>) -> HbpResp
     }
 }
 
-#[derive(FromForm, Deserialize)]
+#[derive(FromForm, Deserialize, JsonSchema)]
 struct SignupBody {
     username: String,
     password: String,
@@ -137,6 +140,7 @@ async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
     }
 }
 
+#[openapi]
 #[post("/signup", data = "<signup_body>")]
 async fn api_post_signup(signup_body: Result<Json<SignupBody>, JsonError<'_>>) -> HbpResponse {
     use crate::data::models::users_model::NewUser;
@@ -178,6 +182,7 @@ async fn api_post_signup(signup_body: Result<Json<SignupBody>, JsonError<'_>>) -
     }
 }
 
+#[openapi]
 #[post("/signin", data = "<signin_body>")]
 async fn api_post_signin(signin_body: Json<LoginBody>) -> HbpResponse {
     async fn attemp_signin(username: &str, password: &str) -> Option<User> {
@@ -205,6 +210,6 @@ pub fn users_routes() -> Vec<Route> {
     routes![index, login, signup, post_login, post_signup]
 }
 
-pub fn api_users_routes() -> Vec<Route> {
-    routes![api_post_signup, api_post_signin]
+pub fn get_routes_and_docs(settings: &OpenApiSettings) -> (Vec<Route>, OpenApi) {
+    openapi_get_routes_spec![settings: api_post_signup, api_post_signin]
 }

@@ -1,4 +1,6 @@
-use rocket::{get, routes, Route};
+use okapi::openapi3::OpenApi;
+use rocket::{get, Route};
+use rocket_okapi::{openapi, openapi_get_routes_spec, settings::OpenApiSettings};
 use serde::Serialize;
 use stargate_grpc::{Query, ResultSet};
 use stargate_grpc_derive::TryFromRow;
@@ -15,8 +17,9 @@ struct MovieOrTv {
     show_id: i64,
 }
 
+#[openapi]
 #[get("/")]
-async fn get_all_shows() -> HbpResponse {
+async fn api_get_shows() -> HbpResponse {
     let query = Query::builder()
         .keyspace("astra")
         .query("SELECT title, show_id FROM movies_and_tv")
@@ -36,11 +39,12 @@ async fn get_all_shows() -> HbpResponse {
         })
         .collect();
 
-    ApiListResponse::from_items(movies_and_tv).into()
+    ApiListResponse::ok(movies_and_tv).into()
 }
 
+#[openapi]
 #[get("/<show_id>")]
-async fn get_one_show(show_id: i64) -> HbpResponse {
+async fn api_get_one(show_id: i64) -> HbpResponse {
     let query = Query::builder()
         .keyspace("astra")
         .query("SELECT title, show_id FROM movies_and_tv WHERE show_id = :show_id")
@@ -56,6 +60,6 @@ async fn get_one_show(show_id: i64) -> HbpResponse {
     }
 }
 
-pub fn api_movies_and_tv_routes() -> Vec<Route> {
-    routes![get_all_shows, get_one_show]
+pub fn get_routes_and_docs(settings: &OpenApiSettings) -> (Vec<Route>, OpenApi) {
+    openapi_get_routes_spec![settings: api_get_one, api_get_shows]
 }

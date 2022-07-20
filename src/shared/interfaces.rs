@@ -12,11 +12,11 @@ where
 
 #[derive(Serialize)]
 pub struct ApiErrorResponse {
-    // TODO: Should be number
     #[serde(serialize_with = "status_code_serialize")]
     status_code: StatusCode,
     errors: Vec<String>,
 }
+
 impl From<ApiErrorResponse> for HbpResponse {
     fn from(api_error_response: ApiErrorResponse) -> HbpResponse {
         let status_code = api_error_response.status_code.clone();
@@ -47,6 +47,7 @@ pub struct ApiItemResponse<T>
 where
     T: Serialize,
 {
+    #[serde(serialize_with = "status_code_serialize")]
     status_code: StatusCode,
     item: T,
 }
@@ -72,28 +73,32 @@ where
     }
 }
 
+#[derive(Serialize)]
 pub struct ApiListResponse<T>
 where
     T: Serialize,
 {
-    status_code: Option<StatusCode>,
+    #[serde(serialize_with = "status_code_serialize")]
+    status_code: StatusCode,
     items: Vec<T>,
 }
+
 impl<T> From<ApiListResponse<T>> for HbpResponse
 where
     T: Serialize,
 {
     fn from(api_item_response: ApiListResponse<T>) -> HbpResponse {
-        HbpResponse::json(api_item_response.items, api_item_response.status_code)
+        let status_code = api_item_response.status_code.clone();
+        HbpResponse::json(api_item_response, Some(status_code))
     }
 }
 impl<T> ApiListResponse<T>
 where
     T: Serialize,
 {
-    pub fn from_items(items: Vec<T>) -> ApiListResponse<T> {
+    pub fn ok(items: Vec<T>) -> ApiListResponse<T> {
         ApiListResponse {
-            status_code: None,
+            status_code: StatusCode::Ok,
             items,
         }
     }

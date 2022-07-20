@@ -32,12 +32,6 @@ impl OpenApiResponderInner for HbpResponse {
         use okapi::openapi3::{RefOr, Response};
 
         Ok(Responses {
-            responses: okapi::map! {
-                "200".to_owned() => RefOr::Object(Response {
-                    
-                    ..Default::default()
-                })
-            },
             ..Default::default()
         })
     }

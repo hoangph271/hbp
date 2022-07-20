@@ -12,6 +12,14 @@ impl From<ApiErrorResponse> for HbpResponse {
         HbpResponse::json(api_error_response.errors, api_error_response.status_code)
     }
 }
+impl ApiErrorResponse {
+    pub fn bad_request(errors: Vec<String>) -> ApiErrorResponse {
+        ApiErrorResponse {
+            status_code: Some(StatusCode::BadRequest),
+            errors,
+        }
+    }
+}
 
 pub struct ApiItemResponse<T>
 where

@@ -28,25 +28,18 @@ async fn rocket() -> _ {
 fn launch() -> rocket::Rocket<rocket::Build> {
     rocket::build()
         .mount("/", routes::index::base_routes())
-        .mount(
-            "/api/movies_and_tv",
-            routes::movies_and_tv::api_movies_and_tv_routes(),
-        )
         .mount("/dev/null", routes::index::dev_null_routes())
         .mount("/markdown", routes::markdown::markdown_routes())
         .mount("/static", routes![routes::static_files::serve])
         .mount("/posts", routes::posts::posts_routes())
         .mount("/users", routes::users::users_routes())
         .mount("/blogs", routes![routes::blogs::index])
-        .register("/", catchers![default_catcher])
-}
-
-#[catch(default)]
-fn default_catcher(
-    status: rocket::http::Status,
-    _req: &rocket::Request,
-) -> utils::responders::HbpResponse {
-    use httpstatus::StatusCode;
-
-    utils::responders::HbpResponse::status(StatusCode::from(status.code))
+        // * API routes
+        .mount(
+            "/api/movies_and_tv",
+            routes::movies_and_tv::api_movies_and_tv_routes(),
+        )
+        .mount("/api/users", routes::users::api_users_routes())
+        // * catchers
+        .register("/", routes::catchers::catchers())
 }

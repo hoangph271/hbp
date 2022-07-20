@@ -1,5 +1,6 @@
 use crate::utils::auth::AuthPayload;
 use crate::utils::types::{HbpError, HbpResult};
+use httpstatus::StatusCode;
 use mustache::{Data, MapBuilder, Template};
 use std::collections::hash_map::HashMap;
 use std::path::{Path, PathBuf};
@@ -28,9 +29,10 @@ pub fn render_from_template(template_path: &str, data: Option<Data>) -> HbpResul
         Ok(data) => HbpResult::Ok(data),
         Err(e) => {
             error!("{e}");
-            HbpResult::Err(HbpError::from_message(&format!(
-                "Failed render_from_template(), {template_path}"
-            )))
+            HbpResult::Err(HbpError::from_message(
+                &format!("Failed render_from_template(), {template_path}"),
+                StatusCode::InternalServerError,
+            ))
         }
     }
 }
@@ -103,7 +105,7 @@ pub fn render_default_layout(
             debug!("{e}");
             HbpResult::Err(HbpError::from_message(&format!(
                 "Failed render_default_layout(), {template_path}"
-            )))
+            ), StatusCode::InternalServerError))
         }
     }
 }

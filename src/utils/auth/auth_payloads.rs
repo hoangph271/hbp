@@ -3,6 +3,7 @@ use rocket::serde::{Deserialize, Serialize};
 pub mod jwt {
     use crate::utils::auth::{AuthPayload, UserPayload, UserResoucePayload};
     use crate::utils::types::HbpError;
+    use httpstatus::StatusCode;
     use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
     use serde::Serialize;
 
@@ -35,9 +36,10 @@ pub mod jwt {
             }
         }
 
-        Err(HbpError::from_message(&format!(
-            "verify_jwt failed for {token_str}"
-        )))
+        Err(HbpError::from_message(
+            &format!("verify_jwt failed for {token_str}"),
+            StatusCode::BadRequest,
+        ))
     }
     pub fn sign_jwt<T: Serialize>(payload: T) -> String {
         encode(

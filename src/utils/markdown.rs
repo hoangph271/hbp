@@ -5,6 +5,7 @@ use crate::utils::template::{
     render_default_layout, simple_data_from, DefaultLayoutData, TemplateData,
 };
 use crate::utils::types::{HbpError, HbpResult};
+use httpstatus::StatusCode::{BadRequest};
 use mustache::Data;
 use mustache::MapBuilder;
 use pulldown_cmark::{html, Options, Parser};
@@ -42,7 +43,7 @@ pub async fn render_marp(
         return Err(HbpError::from_message(&format!(
             "NOT a marp: {}",
             markdown.file_name
-        )));
+        ), BadRequest));
     }
 
     marper::render_marp(&markdown.content, extra_data).await

@@ -1,16 +1,20 @@
 use crate::data::lib::user_orm;
+use crate::shared::interfaces::ApiErrorResponse;
 use crate::utils::auth::{AuthPayload, UserPayload};
 use crate::utils::guards::auth_payload::USER_JWT_COOKIE;
 use crate::utils::responders::{HbpContent, HbpResponse};
 use crate::utils::types::{HbpError, HbpResult};
 use crate::utils::{template, timestamp_now};
+use httpstatus::StatusCode::BadRequest;
 use mustache::Data;
 use rocket::form::Form;
 use rocket::http::{Cookie, CookieJar};
+use rocket::serde::json::{Error as JsonError, Json};
 use rocket::Route;
+use serde::Deserialize;
 
 #[get("/")]
-pub fn index(jwt: AuthPayload) -> HbpResponse {
+fn index(jwt: AuthPayload) -> HbpResponse {
     HbpResponse::html(
         &template::render_default_layout(
             "users/profile.html",
@@ -26,7 +30,7 @@ pub fn index(jwt: AuthPayload) -> HbpResponse {
 }
 
 #[get("/login")]
-pub fn login() -> HbpResponse {
+fn login() -> HbpResponse {
     HbpResponse::html(
         &template::render_default_layout(
             "users/login.html",
@@ -38,7 +42,7 @@ pub fn login() -> HbpResponse {
     )
 }
 #[get("/signup")]
-pub fn signup() -> HbpResponse {
+fn signup() -> HbpResponse {
     HbpResponse::ok(Some(HbpContent::Html(
         template::render_default_layout(
             "users/signup.html",
@@ -50,12 +54,12 @@ pub fn signup() -> HbpResponse {
 }
 
 #[derive(FromForm)]
-pub struct LoginBody {
+struct LoginBody {
     username: String,
     password: String,
 }
 #[post("/login", data = "<login_body>")]
-pub async fn post_login(login_body: Form<LoginBody>, jar: &CookieJar<'_>) -> HbpResponse {
+async fn post_login(login_body: Form<LoginBody>, jar: &CookieJar<'_>) -> HbpResponse {
     if let Some(user) = user_orm::find_one(&login_body.username).await.unwrap() {
         let is_password_matches =
             bcrypt::verify(&login_body.password, &user.hashed_password).unwrap_or(false);
@@ -78,8 +82,8 @@ pub async fn post_login(login_body: Form<LoginBody>, jar: &CookieJar<'_>) -> Hbp
     }
 }
 
-#[derive(FromForm)]
-pub struct SignupBody {
+#[derive(FromForm, Deserialize)]
+struct SignupBody {
     username: String,
     password: String,
     #[field(name = "password-confirm")]
@@ -88,12 +92,19 @@ pub struct SignupBody {
 impl SignupBody {
     fn validate(&self) -> HbpResult<()> {
         if self.username.is_empty() {
-            HbpResult::Err(HbpError::from_message("username can NOT be empty"))
+            HbpResult::Err(HbpError::from_message(
+                "username can NOT be empty",
+                BadRequest,
+            ))
         } else if self.password.is_empty() {
-            HbpResult::Err(HbpError::from_message("password can NOT be empty"))
+            HbpResult::Err(HbpError::from_message(
+                "password can NOT be empty",
+                BadRequest,
+            ))
         } else if self.password.ne(&self.password_confirm) {
             HbpResult::Err(HbpError::from_message(
                 "password & password_confirm does NOT mactch",
+                BadRequest,
             ))
         } else {
             Ok(())
@@ -102,7 +113,7 @@ impl SignupBody {
 }
 
 #[post("/signup", data = "<signup_body>")]
-pub async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
+async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
     if let Err(e) = signup_body.validate() {
         error!("{}", e);
         return HbpResponse::redirect(uri!("/users", signup));
@@ -123,6 +134,34 @@ pub async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
     }
 }
 
+#[post("/signup", data = "<signup_body>")]
+async fn api_post_signup(signup_body: Result<Json<SignupBody>, JsonError<'_>>) -> HbpResponse {
+    let signup_body = signup_body.unwrap();
+
+    if let Err(e) = signup_body.validate() {
+        let errors = vec![e.msg];
+        return ApiErrorResponse::bad_request(errors).into();
+    }
+
+    use crate::data::models::users_model::NewUser;
+    let new_user = NewUser {
+        title: None,
+        username: signup_body.username.clone(),
+        hashed_password: bcrypt::hash(&signup_body.password, bcrypt::DEFAULT_COST)
+            .expect("Hashing password failed"),
+    };
+
+    if user_orm::create_user(new_user).await.unwrap().is_some() {
+        HbpResponse::redirect(uri!("/users", login))
+    } else {
+        HbpResponse::redirect(uri!("/users", signup))
+    }
+}
+
 pub fn users_routes() -> Vec<Route> {
     routes![index, login, signup, post_login, post_signup]
+}
+
+pub fn api_users_routes() -> Vec<Route> {
+    routes![api_post_signup]
 }

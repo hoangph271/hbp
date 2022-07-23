@@ -49,7 +49,8 @@ fn launch() -> rocket::Rocket<rocket::Build> {
             }),
         )
         // * catchers
-        .register("/", routes::catchers::catchers());
+        .register("/", routes::catchers::catchers())
+        .attach(utils::cors::CORS);
 
     let openapi_settings = OpenApiSettings::default();
     mount_endpoints_and_merged_docs! {

@@ -40,6 +40,16 @@ impl ApiErrorResponse {
             errors,
         }
     }
+
+    pub fn internal_server_error() -> ApiErrorResponse {
+        let status_code = StatusCode::InternalServerError;
+        let errors = vec![status_code.reason_phrase().to_string()];
+
+        ApiErrorResponse {
+            status_code,
+            errors,
+        }
+    }
 }
 
 #[derive(Serialize)]

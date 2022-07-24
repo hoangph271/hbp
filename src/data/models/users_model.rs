@@ -4,6 +4,7 @@ use stargate_grpc_derive::{IntoValues, TryFromRow};
 #[derive(Debug, Serialize, TryFromRow, Deserialize)]
 pub struct User {
     pub username: String,
+    #[serde(skip_serializing)]
     pub hashed_password: String,
     pub title: Option<String>,
 }

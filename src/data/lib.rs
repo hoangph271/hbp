@@ -1,6 +1,7 @@
 use std::vec;
 
 use httpstatus::StatusCode;
+use log::*;
 use serde::Serialize;
 use stargate_grpc::{
     result::{ColumnPositions, ResultSetMapper, TryFromRow},
@@ -148,6 +149,9 @@ pub struct DbError {
     pub status_code: StatusCode,
     pub message: String,
 }
+
+pub type DbResult<T> = Result<T, DbError>;
+
 impl DbError {
     fn internal_server_error(message: String) -> DbError {
         DbError {
@@ -179,7 +183,8 @@ pub async fn build_stargate_client() -> Result<StargateClient, DbError> {
         .tls(Some(client::default_tls_config().unwrap()))
         .connect()
         .await
-        .map_err(|_| {
+        .map_err(|e| {
+            error!("{:?}", e);
             DbError::internal_server_error(
                 "build_stargate_client() failed at .connect()".to_owned(),
             )

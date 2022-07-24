@@ -1,4 +1,4 @@
-use crate::data::lib::user_orm;
+use crate::data::lib::{user_orm, DbResult};
 use crate::data::models::users_model::User;
 use crate::shared::interfaces::{ApiErrorResponse, ApiItemResponse};
 use crate::utils::auth::{AuthPayload, UserPayload};
@@ -66,7 +66,10 @@ struct LoginBody {
 }
 #[post("/login", data = "<login_body>")]
 async fn post_login(login_body: Form<LoginBody>, jar: &CookieJar<'_>) -> HbpResponse {
-    match attemp_signin(&login_body.username, &login_body.password).await {
+    match attemp_signin(&login_body.username, &login_body.password)
+        .await
+        .unwrap()
+    {
         Some(user) => {
             let jwt = UserPayload::sign_jwt(&UserPayload {
                 exp: timestamp_now(),
@@ -178,9 +181,17 @@ async fn api_post_signup(signup_body: Result<Json<SignupBody>, JsonError<'_>>) -
 #[openapi]
 #[post("/signin", data = "<signin_body>")]
 async fn api_post_signin(signin_body: Json<LoginBody>) -> HbpResponse {
-    match attemp_signin(&signin_body.username, &signin_body.password).await {
-        Some(user) => ApiItemResponse::ok(user).into(),
-        None => ApiErrorResponse::unauthorized().into(),
+    let user_result = attemp_signin(&signin_body.username, &signin_body.password).await;
+
+    match user_result {
+        Ok(maybe_user) => match maybe_user {
+            Some(user) => ApiItemResponse::ok(user).into(),
+            None => ApiErrorResponse::unauthorized().into(),
+        },
+        Err(e) => {
+            error!("{:?}", e);
+            ApiErrorResponse::internal_server_error().into()
+        }
     }
 }
 
@@ -192,16 +203,16 @@ pub fn get_routes_and_docs(settings: &OpenApiSettings) -> (Vec<Route>, OpenApi) 
     openapi_get_routes_spec![settings: api_post_signup, api_post_signin]
 }
 
-async fn attemp_signin(username: &str, password: &str) -> Option<User> {
-    if let Some(user) = user_orm::find_one(username).await.unwrap() {
+async fn attemp_signin(username: &str, password: &str) -> DbResult<Option<User>> {
+    if let Some(user) = user_orm::find_one(username).await? {
         let is_password_matches = bcrypt::verify(password, &user.hashed_password).unwrap_or(false);
 
         if is_password_matches {
-            Some(user)
+            Ok(Some(user))
         } else {
-            None
+            Ok(None)
         }
     } else {
-        None
+        Ok(None)
     }
 }

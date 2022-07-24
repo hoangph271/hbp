@@ -33,6 +33,7 @@ async fn rocket() -> _ {
 
 fn launch() -> rocket::Rocket<rocket::Build> {
     let mut rocket = rocket::build()
+        .mount("/", utils::cors::options_routes())
         .mount("/", routes::index::base_routes())
         .mount("/dev/null", routes::index::dev_null_routes())
         .mount("/markdown", routes::markdown::markdown_routes())
@@ -49,7 +50,8 @@ fn launch() -> rocket::Rocket<rocket::Build> {
             }),
         )
         // * catchers
-        .register("/", routes::catchers::catchers());
+        .register("/", routes::catchers::catchers())
+        .attach(utils::cors::CORS);
 
     let openapi_settings = OpenApiSettings::default();
     mount_endpoints_and_merged_docs! {

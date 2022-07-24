@@ -9,6 +9,7 @@ pub mod setup_logger;
 pub mod string;
 pub mod template;
 pub mod types;
+pub mod cors;
 
 pub fn timestamp_now() -> i64 {
     chrono::Utc::now()

@@ -139,9 +139,32 @@ async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
 
 // * APIs
 
+#[derive(Deserialize, JsonSchema)]
+struct SignupApiBody {
+    username: String,
+    password: String,
+}
+impl SignupApiBody {
+    fn validate(&self) -> HbpResult<()> {
+        if self.username.is_empty() {
+            HbpResult::Err(HbpError::from_message(
+                "username can NOT be empty",
+                BadRequest,
+            ))
+        } else if self.password.is_empty() {
+            HbpResult::Err(HbpError::from_message(
+                "password can NOT be empty",
+                BadRequest,
+            ))
+        } else {
+            Ok(())
+        }
+    }
+}
+
 #[openapi]
 #[post("/signup", data = "<signup_body>")]
-async fn api_post_signup(signup_body: Result<Json<SignupBody>, JsonError<'_>>) -> HbpResponse {
+async fn api_post_signup(signup_body: Result<Json<SignupApiBody>, JsonError<'_>>) -> HbpResponse {
     use crate::data::models::users_model::NewUser;
 
     match signup_body {

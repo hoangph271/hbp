@@ -12,7 +12,7 @@ pub fn setup_logger() {
                 "[{}][{}][{}] {}",
                 record.target(),
                 colors.color(record.level()),
-                chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+                chrono::Local::now().format("[%Y-%m-%d %H:%M:%S]"),
                 message
             ))
         })

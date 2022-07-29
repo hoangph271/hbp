@@ -8,6 +8,6 @@ tags: rust, code, hbp
 
 # I made a snake game in Rust
 
-![snake-game](snake-game.png)
-
 It's [here](https://github.com/hoangph271/snake_game)
+
+![snake-game](snake-game.png)

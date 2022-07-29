@@ -1,26 +1,15 @@
+@import url('https://unpkg.com/@primer/css@^20.2.4/dist/primer.css');
 @import url('https://fonts.googleapis.com/css2?family=Ubuntu&family=Ubuntu+Mono&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
 :root {
-  --bgr-icecream: #fff8e1;
-  --bgr-breath: #eee8d5;
-  --bgr-bold: #c0b396;
-  --bgr-bold-opacity: rgba(192, 179, 150, 0.35);
   --icon-size: 3rem;
-  --cream: #F8F5EC;
-  --grunt: #424242;
-  --tan: #a39f75;
-  --grungy: #bf8d22;
-  --yolk: #D0E890;
-  --orange: #BF4634;
-  --equal-shadow-gentle: rgba(0, 0, 0, 0.25) 0px 2px 4px;
-  --equal-shadow-big: rgba(0, 0, 0, 0.25) 0px 3px 6px;
   --content-mw: 36rem;
   --content-margin: 1rem auto;
   --padding-small: 0.4rem;
   --radius-gentle: 0.4rem;
   --radius-tight: 0.2em;
-  --monospace: 'Ubuntu Mono',  'Courier New', Courier, monospace;
+  --monospace: 'Ubuntu Mono', 'Courier New', Courier, monospace;
   --sans-serif: 'Nunito', sans-serif;
 }
 
@@ -29,57 +18,19 @@
 body {
   margin: 0;
   font-size: 16px;
-  background-color: var(--bgr-icecream);
+  min-height: 100vh;
   font-family: var(--sans-serif);
 }
-
-a { color: var(--grunt); }
-a:hover { color: var(--grungy); }
-a:active, a:focus { color: var(--tan); }
 /* #endregion */
 
 code {
   font-family: 'Ubuntu', Courier, monospace;
 }
 
-/* * nav-bar */
+/* * Header */
 /* #region */
-.nav-bar {
-  display: flex;
-  padding: var(--padding-small);
-  align-items: center;
-  background-color: var(--bgr-breath);
-  box-shadow: var(--equal-shadow-gentle);
-  font-family: var(--sans-serif);
-}
-
-.nav-bar .index-page button {
-  width: var(--icon-size);
-  height: var(--icon-size);
-  background-image: url('/static/svg/sneu.svg');
-  background-size: 85%;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-color: transparent;
-  box-shadow: 1px 1px 1px 1px rgba(0, 0, 0, 0.25);
-  cursor: pointer;
-  border-radius: 50%;
-  border: none;
-}
-
-.nav-bar .index-page button:hover {
-  box-shadow: 1px 0px 0px 1px rgba(0, 0, 0, 0.35);
-  background-color: var(--bgr-bold);
-}
-
-.nav-bar .other-urls {
-  list-style: none;
-  padding: 0;
-  flex-grow: 1;
-  display: flex;
-  justify-content: space-around;
-  max-width: var(--content-mw);
-  margin: auto;
+.Header {
+  gap: var(--radius-gentle);
 }
 /* #endregion */
 

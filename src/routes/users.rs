@@ -3,12 +3,12 @@ use crate::data::models::users_model::User;
 use crate::shared::interfaces::{ApiErrorResponse, ApiItemResponse};
 use crate::utils::auth::{AuthPayload, UserPayload};
 use crate::utils::guards::auth_payload::USER_JWT_COOKIE;
-use crate::utils::responders::{HbpContent, HbpResponse};
+use crate::utils::responders::HbpResponse;
+use crate::utils::template::{IndexLayoutData, TemplateRenderer};
 use crate::utils::types::{HbpError, HbpResult};
 use crate::utils::{template, timestamp_now};
 use httpstatus::StatusCode::BadRequest;
 use log::*;
-use mustache::Data;
 use okapi::openapi3::OpenApi;
 use rocket::form::Form;
 use rocket::http::{Cookie, CookieJar};
@@ -17,46 +17,42 @@ use rocket::{get, post, routes, uri, FromForm, Route};
 use rocket_okapi::settings::OpenApiSettings;
 use rocket_okapi::{openapi, openapi_get_routes_spec};
 use schemars::JsonSchema;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 #[get("/")]
 fn index(jwt: AuthPayload) -> HbpResponse {
-    HbpResponse::html(
-        &template::render_default_layout(
-            "users/profile.html",
-            Some(template::DefaultLayoutData::only_title(jwt.username()).username(jwt.username())),
-            Some(template::simple_data_from(vec![(
-                "username".to_owned(),
-                Data::String(jwt.username().to_owned()),
-            )])),
-        )
-        .unwrap(),
-        None,
-    )
+    #[derive(Serialize)]
+    struct RenderData {
+        username: String,
+    }
+
+    match TemplateRenderer::new("users/profile.html".into()).to_html_page(
+        RenderData {
+            username: jwt.username().to_owned(),
+        },
+        IndexLayoutData::only_title(jwt.username()).username(jwt.username()),
+    ) {
+        Ok(html) => HbpResponse::html(&html, None),
+        Err(e) => e.into(),
+    }
 }
 
 #[get("/login")]
 fn login() -> HbpResponse {
-    HbpResponse::html(
-        &template::render_default_layout(
-            "users/login.html",
-            Some(template::DefaultLayoutData::only_title("Login")),
-            None,
-        )
-        .expect("render users/login.html failed"),
-        None,
-    )
+    let html = TemplateRenderer::new("users/login.html".into())
+        .to_html_page((), template::IndexLayoutData::only_title("Login"))
+        .expect("render users/login.html failed");
+
+    HbpResponse::html(&html, None)
 }
 #[get("/signup")]
 fn signup() -> HbpResponse {
-    HbpResponse::ok(Some(HbpContent::Html(
-        template::render_default_layout(
-            "users/signup.html",
-            Some(template::DefaultLayoutData::only_title("Signup")),
-            None,
-        )
-        .expect("render users/signup.html failed"),
-    )))
+    match TemplateRenderer::new("users/signup.html".into())
+        .to_html_page((), template::IndexLayoutData::only_title("Signup"))
+    {
+        Ok(html) => HbpResponse::html(&html, None),
+        Err(e) => e.into(),
+    }
 }
 
 #[derive(FromForm, Deserialize, JsonSchema)]

@@ -1,5 +1,6 @@
 use crate::shared::entities::markdown::*;
-use crate::utils::template::{render_from_template, DefaultLayoutData};
+use crate::utils::markdown::render_markdown_list;
+use crate::utils::template::{IndexLayoutData, TemplateRenderer};
 use crate::utils::{
     auth::{AuthPayload, UserPayload},
     markdown,
@@ -8,8 +9,8 @@ use crate::utils::{
 };
 use httpstatus::StatusCode;
 use log::*;
-use mustache::Data;
 use rocket::{get, routes, Route};
+use serde::Serialize;
 use std::path::{Path, PathBuf};
 
 fn assert_payload_access(payload: &UserPayload, path: &str) -> bool {
@@ -42,11 +43,15 @@ async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpRespon
         Ok(markdown_data) => {
             let html_result = async {
                 if markdown::is_marp(&markdown_data.content) {
-                    markdown::render_marp(&markdown_data, markdown_extra_data(&file_path)).await
+                    markdown::render_marp(
+                        &markdown_data,
+                        MarkdownExtraData::from_path(&file_path).unwrap_or_default(),
+                    )
+                    .await
                 } else {
                     let html = markdown::render_markdown(
                         &markdown_data,
-                        Some(DefaultLayoutData::only_title(&markdown_data.title).maybe_auth(jwt)),
+                        IndexLayoutData::only_title(&markdown_data.title).maybe_auth(jwt),
                     )
                     .await;
                     html
@@ -72,10 +77,10 @@ async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpRespon
 async fn user_markdown_editor(sub_path: PathBuf, _jwt: AuthPayload) -> HbpResponse {
     let _file_path_str = PathBuf::from("markdown").join(sub_path);
 
-    HbpResponse::html(
-        &render_from_template("markdown/write-markdown.html", None).unwrap(),
-        None,
-    )
+    match TemplateRenderer::new("markdown/write-markdown.html".into()).to_html(()) {
+        Ok(_) => todo!(),
+        Err(_) => todo!(),
+    }
 }
 
 fn moveup_url_from(file_path: &Path) -> String {
@@ -114,15 +119,15 @@ async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: AuthPayload)
         let markdowns: Vec<MarkdownOrMarkdownDir> =
             markdown::markdown_from_dir(&file_path).unwrap();
 
-        return HbpResponse::html(
-            &markdown::render_markdown_list(
-                DefaultLayoutData::only_title(&file_path_str)
-                    .username(username)
-                    .moveup_url(&moveup_url),
-                markdowns,
-            ),
-            None,
-        );
+        return match render_markdown_list(
+            IndexLayoutData::only_title(&file_path_str)
+                .username(username)
+                .moveup_url(&moveup_url),
+            markdowns,
+        ) {
+            Ok(html) => HbpResponse::html(&html, None),
+            Err(e) => e.into(),
+        };
     }
 
     if !markdown::is_markdown(&file_path) {
@@ -145,15 +150,15 @@ async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: AuthPayload)
             //         .cmp(&NaiveDate::parse_from_str(&m1.dob, DATE_FORMAT).unwrap())
             // });
 
-            HbpResponse::html(
-                &markdown::render_markdown_list(
-                    DefaultLayoutData::only_title(&file_path_str)
-                        .maybe_auth(Some(jwt))
-                        .moveup_url(&moveup_url),
-                    markdowns,
-                ),
-                None,
-            )
+            match render_markdown_list(
+                IndexLayoutData::only_title(&file_path_str)
+                    .maybe_auth(Some(jwt))
+                    .moveup_url(&moveup_url),
+                markdowns,
+            ) {
+                Ok(html) => HbpResponse::html(&html, None),
+                Err(e) => e.into(),
+            }
         } else {
             HbpResponse::file(file_path)
         };
@@ -162,15 +167,17 @@ async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: AuthPayload)
     if let Ok(markdown_data) = Markdown::from_markdown(&file_path) {
         let html_result = async {
             if markdown::is_marp(&markdown_data.content) {
-                markdown::render_marp(&markdown_data, markdown_extra_data(&file_path)).await
+                markdown::render_marp(
+                    &markdown_data,
+                    MarkdownExtraData::from_path(&file_path).unwrap_or_default(),
+                )
+                .await
             } else {
                 markdown::render_markdown(
                     &markdown_data,
-                    Some(
-                        DefaultLayoutData::only_title(&markdown_data.title)
-                            .maybe_auth(Some(jwt))
-                            .moveup_url(&moveup_url),
-                    ),
+                    IndexLayoutData::only_title(&markdown_data.title)
+                        .maybe_auth(Some(jwt))
+                        .moveup_url(&moveup_url),
                 )
                 .await
             }
@@ -189,15 +196,23 @@ async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: AuthPayload)
     }
 }
 
-fn markdown_extra_data(file_path: &Path) -> Option<Vec<(String, Data)>> {
-    if let Ok(markdown) = Markdown::from_markdown(file_path) {
-        Some(vec![
-            ("title".to_owned(), Data::String(markdown.title.clone())),
-            ("og_title".to_owned(), Data::String(markdown.title)),
-            ("og_image".to_owned(), Data::String(markdown.cover_image)),
-        ])
-    } else {
-        None
+#[derive(Serialize, Default)]
+pub struct MarkdownExtraData {
+    title: String,
+    og_title: String,
+    og_image: String,
+}
+impl MarkdownExtraData {
+    fn from_path(file_path: &Path) -> Option<Self> {
+        if let Ok(markdown) = Markdown::from_markdown(file_path) {
+            Some(MarkdownExtraData {
+                title: markdown.title.clone(),
+                og_title: markdown.title,
+                og_image: markdown.cover_image,
+            })
+        } else {
+            None
+        }
     }
 }
 

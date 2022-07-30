@@ -1,6 +1,5 @@
-use crate::utils::template::{render_default_layout, DefaultLayoutData};
+use crate::utils::template::IndexLayoutData;
 use httpstatus::StatusCode;
-use mustache::MapBuilder;
 use okapi::openapi3::Responses;
 use rocket::fs::NamedFile;
 use rocket::http::{ContentType, Header, Status};
@@ -9,8 +8,12 @@ use rocket_okapi::gen::OpenApiGenerator;
 use rocket_okapi::response::OpenApiResponderInner;
 use rocket_okapi::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::io::Cursor;
 use std::path::PathBuf;
+
+use super::template::TemplateRenderer;
+use super::types::{HbpError};
 
 #[allow(dead_code)]
 #[derive(Serialize, Deserialize, JsonSchema)]
@@ -54,17 +57,15 @@ impl HbpResponse {
     pub fn status(status_code: StatusCode) -> HbpResponse {
         let status_code = StatusCode::from(status_code.as_u16());
 
-        let error_text = format!("{} | {}", status_code.as_u16(), status_code.reason_phrase());
-        let html = render_default_layout(
-            "static/error.html",
-            Some(DefaultLayoutData::only_title("Error")),
-            Some(
-                MapBuilder::new()
-                    .insert_str("error_text", error_text)
-                    .build(),
-            ),
-        )
-        .unwrap();
+        let mut data = HashMap::new();
+        data.insert(
+            "error_text".to_owned(),
+            format!("{} | {}", status_code.as_u16(), status_code.reason_phrase()),
+        );
+
+        let html = TemplateRenderer::new("static/error.html".into())
+            .to_html_page(data, IndexLayoutData::only_title("Error"))
+            .unwrap();
 
         HbpResponse {
             status_code,
@@ -153,5 +154,14 @@ impl From<HbpResponse> for Response<'_> {
         response_builder.status(status);
 
         response_builder.finalize()
+    }
+}
+
+impl From<HbpError> for HbpResponse {
+    fn from(e: HbpError) -> Self {
+        HbpResponse {
+            status_code: e.status_code,
+            content: HbpContent::Plain(e.msg),
+        }
     }
 }

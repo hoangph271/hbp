@@ -1,50 +1,64 @@
-use crate::utils::auth::AuthPayload;
-use crate::utils::types::{HbpError, HbpResult};
-use httpstatus::StatusCode;
-use log::*;
-use mustache::{Data, MapBuilder, Template};
-use std::collections::hash_map::HashMap;
+use crate::utils::types::HbpResult;
+use mustache::Template;
+use serde::Serialize;
 use std::path::{Path, PathBuf};
+use std::vec;
 
-pub fn compile_template(path: PathBuf) -> Template {
-    mustache::compile_path(Path::new("template").join(path.clone())).unwrap_or_else(|e| {
-        error!("{e}");
+use super::auth::AuthPayload;
 
-        panic!(
-            "compile template from {} failed...!",
-            path.to_string_lossy()
-        )
-    })
+fn compile_template(path: &PathBuf) -> HbpResult<Template> {
+    mustache::compile_path(Path::new("template").join(path)).map_err(|e| e.into())
 }
 
-pub fn render_from_template(template_path: &str, data: Option<Data>) -> HbpResult<String> {
-    let template = compile_template(PathBuf::from(template_path));
+#[derive(Serialize)]
+pub struct TemplateRenderer {
+    template_path: PathBuf,
+}
 
-    let render_result = if let Some(data) = data {
-        template.render_data_to_string(&data)
-    } else {
-        template.render_data_to_string(&MapBuilder::new().build())
-    };
+impl TemplateRenderer {
+    pub fn new(template_path: PathBuf) -> Self {
+        TemplateRenderer { template_path }
+    }
 
-    match render_result {
-        Ok(data) => HbpResult::Ok(data),
-        Err(e) => {
-            error!("{e}");
-            HbpResult::Err(HbpError::from_message(
-                &format!("Failed render_from_template(), {template_path}"),
-                StatusCode::InternalServerError,
-            ))
+    pub fn to_html(&self, data: impl Serialize) -> HbpResult<String> {
+        let template = compile_template(&self.template_path)?;
+
+        let mut bytes = vec![];
+        template.render(&mut bytes, &data)?;
+
+        Ok(std::str::from_utf8(&bytes)?.to_owned())
+    }
+
+    pub fn to_html_page(
+        &self,
+        data: impl Serialize,
+        layout_data: IndexLayoutData,
+    ) -> HbpResult<String> {
+        #[derive(Serialize)]
+        struct RenderData {
+            raw_content: String,
+            title: String,
+            moveup_url: String,
+            username: String,
         }
+
+        TemplateRenderer::new("index.html".into()).to_html(RenderData {
+            raw_content: self.to_html(data)?,
+            title: layout_data.title,
+            moveup_url: layout_data.moveup_url,
+            username: layout_data.username,
+        })
     }
 }
 
-#[derive(Default)]
-pub struct DefaultLayoutData {
+#[derive(Default, Serialize)]
+pub struct IndexLayoutData {
     title: String,
     username: String,
     moveup_url: String,
+    raw_content: String,
 }
-impl DefaultLayoutData {
+impl IndexLayoutData {
     pub fn title(mut self, title: &str) -> Self {
         self.title = title.to_owned();
 
@@ -78,64 +92,3 @@ impl DefaultLayoutData {
         self
     }
 }
-pub fn render_default_layout(
-    template_path: &str,
-    layout_data: Option<DefaultLayoutData>,
-    data: Option<Data>,
-) -> HbpResult<String> {
-    let mut template_data = MapBuilder::new();
-
-    if let Some(layout_data) = layout_data {
-        template_data = template_data.insert_str("title", layout_data.title);
-        template_data = template_data.insert_str("moveup_url", layout_data.moveup_url);
-        template_data = template_data.insert_str(
-            "raw_content",
-            render_from_template(template_path, data).unwrap(),
-        );
-
-        if !layout_data.username.is_empty() {
-            template_data = template_data.insert_str("username", layout_data.username);
-        }
-    }
-
-    let html = render_from_template("index.html", Some(template_data.build()));
-
-    match html {
-        Ok(html) => HbpResult::Ok(html),
-        Err(e) => {
-            debug!("{e}");
-            HbpResult::Err(HbpError::from_message(
-                &format!("Failed render_default_layout(), {template_path}"),
-                StatusCode::InternalServerError,
-            ))
-        }
-    }
-}
-
-pub fn simple_data_from(fields: TemplateData) -> Data {
-    let mut builder = MapBuilder::new();
-
-    fn insert_map(mut builder: MapBuilder, values: &HashMap<String, Data>) -> MapBuilder {
-        for (key, value) in values {
-            builder = match value {
-                Data::String(value) => builder.insert_str(key, value),
-                Data::Map(values) => insert_map(builder, values),
-                _ => panic!(),
-            }
-        }
-
-        builder
-    }
-
-    for (key, value) in fields {
-        builder = match value {
-            Data::String(value) => builder.insert_str(key, value),
-            Data::Map(values) => builder.insert_map(key, |builder| insert_map(builder, &values)),
-            _ => builder,
-        }
-    }
-
-    builder.build()
-}
-
-pub type TemplateData = Vec<(String, Data)>;

@@ -31,6 +31,45 @@ impl From<StatusCode> for HbpError {
         )
     }
 }
+impl From<reqwest::Error> for HbpError {
+    fn from(e: reqwest::Error) -> Self {
+        error!("[reqwest::Error]: {e}");
+
+        let msg = match e.source() {
+            Some(source) => format!("{:?}", source),
+            None => "Unknown error".to_owned(),
+        };
+
+        HbpError::from_message(
+            &msg,
+            if let Some(status_code) = e.status() {
+                status_code.as_u16().into()
+            } else {
+                StatusCode::InternalServerError
+            },
+        )
+    }
+}
+impl From<mustache::Error> for HbpError {
+    fn from(e: mustache::Error) -> Self {
+        HbpError {
+            msg: e.to_string(),
+            status_code: match e {
+                mustache::Error::InvalidStr => StatusCode::UnprocessableEntity,
+                mustache::Error::NoFilename => StatusCode::NotFound,
+                _ => StatusCode::InternalServerError,
+            },
+        }
+    }
+}
+impl From<std::str::Utf8Error> for HbpError {
+    fn from(e: std::str::Utf8Error) -> Self {
+        HbpError::from_message(
+            &format!("UTF8 Issue: , {e}"),
+            StatusCode::InternalServerError,
+        )
+    }
+}
 
 impl<'r> Responder<'r, 'static> for HbpError {
     fn respond_to(self, _: &'r rocket::Request<'_>) -> rocket::response::Result<'static> {

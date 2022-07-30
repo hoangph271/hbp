@@ -1,0 +1,12 @@
+<ul class="collections-list">
+  {{#collections}}
+    <li class="collection-item">
+      <a href="/gallery/{{ slug }}" class="collection-name">
+        {{ name }}
+      </a>
+      {{#image_url}}
+        <img src="{{ image_url }}" width="200">
+      {{/image_url}}
+    </li>
+  {{/collections}}
+  </ul>

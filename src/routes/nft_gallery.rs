@@ -37,5 +37,5 @@ async fn all_galleries() -> HbpResult<HbpResponse> {
 }
 
 pub fn nfs_gallery_routes() -> Vec<Route> {
-    routes![gallery]
+    routes![all_galleries]
 }

@@ -9,7 +9,9 @@ use rocket::{delete, get, post, put, routes, Route};
 use crate::shared::entities::markdown::Markdown;
 use crate::utils::markdown;
 use crate::utils::responders::HbpResponse;
-use crate::utils::template::DefaultLayoutData;
+use crate::utils::template::IndexLayoutData;
+
+use super::markdown::MarkdownExtraData;
 
 #[get("/README.md")]
 async fn readme_md() -> HbpResponse {
@@ -19,11 +21,11 @@ async fn readme_md() -> HbpResponse {
         Ok(markdown_data) => {
             let html_result = async {
                 if markdown::is_marp(&markdown_data.content) {
-                    markdown::render_marp(&markdown_data, None).await
+                    markdown::render_marp(&markdown_data, MarkdownExtraData::default()).await
                 } else {
                     let html = markdown::render_markdown(
                         &markdown_data,
-                        Some(DefaultLayoutData::only_title(&markdown_data.title)),
+                        IndexLayoutData::only_title(&markdown_data.title),
                     )
                     .await;
                     html

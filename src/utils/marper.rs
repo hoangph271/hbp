@@ -1,10 +1,11 @@
+use crate::routes::markdown::MarkdownExtraData;
 use crate::utils::env::{from_env, EnvKey};
 use crate::utils::marper;
-use crate::utils::template;
 use crate::utils::types::HbpResult;
-use mustache::Data;
 use reqwest::{multipart, Client};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+
+use super::template::TemplateRenderer;
 
 #[derive(Deserialize, Debug)]
 pub struct MarpContent {
@@ -37,10 +38,7 @@ pub async fn marp_from_markdown(markdown: String) -> MarpContent {
     res.json::<MarpContent>().await.unwrap()
 }
 
-pub async fn render_marp(
-    markdown: &str,
-    extra_data: Option<template::TemplateData>,
-) -> HbpResult<String> {
+pub async fn render_marp(markdown: &str, extra_data: MarkdownExtraData) -> HbpResult<String> {
     let marp_content = marper::marp_from_markdown(markdown.to_owned()).await;
 
     let raw_content = [
@@ -57,11 +55,14 @@ pub async fn render_marp(
     ]
     .join("\n");
 
-    let mut data = vec![("raw_content".to_owned(), Data::String(raw_content))];
-
-    if let Some(extra_data) = extra_data {
-        data.extend(extra_data);
+    #[derive(Serialize)]
+    struct RenderData {
+        raw_content: String,
+        extra_data: MarkdownExtraData,
     }
 
-    template::render_from_template("index.html", Some(template::simple_data_from(data)))
+    TemplateRenderer::new("index.html".into()).to_html(RenderData {
+        raw_content,
+        extra_data,
+    })
 }

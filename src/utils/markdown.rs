@@ -1,16 +1,17 @@
+use crate::routes::markdown::MarkdownExtraData;
 use crate::shared::entities::markdown::*;
 use crate::utils::marper;
 use crate::utils::string::url_encode_path;
-use crate::utils::template::{
-    render_default_layout, simple_data_from, DefaultLayoutData, TemplateData,
-};
+use crate::utils::template::TemplateRenderer;
 use crate::utils::types::{HbpError, HbpResult};
-use httpstatus::StatusCode::{BadRequest};
-use mustache::Data;
-use mustache::MapBuilder;
+use httpstatus::StatusCode::BadRequest;
 use pulldown_cmark::{html, Options, Parser};
+use serde::Serialize;
+use std::collections::HashMap;
 use std::fs::read_dir;
 use std::path::Path;
+
+use super::template::IndexLayoutData;
 
 pub fn markdown_to_html(markdown: &str) -> String {
     let mut options = Options::empty();
@@ -35,15 +36,12 @@ pub fn is_markdown(file_path: &Path) -> bool {
     }
 }
 
-pub async fn render_marp(
-    markdown: &Markdown,
-    extra_data: Option<TemplateData>,
-) -> HbpResult<String> {
+pub async fn render_marp(markdown: &Markdown, extra_data: MarkdownExtraData) -> HbpResult<String> {
     if !marper::is_marp(&markdown.content) {
-        return Err(HbpError::from_message(&format!(
-            "NOT a marp: {}",
-            markdown.file_name
-        ), BadRequest));
+        return Err(HbpError::from_message(
+            &format!("NOT a marp: {}", markdown.file_name),
+            BadRequest,
+        ));
     }
 
     marper::render_marp(&markdown.content, extra_data).await
@@ -53,17 +51,18 @@ pub fn is_marp(content: &str) -> bool {
 }
 pub async fn render_markdown(
     markdown: &Markdown,
-    layout_data: Option<DefaultLayoutData>,
+    layout_data: IndexLayoutData,
 ) -> HbpResult<String> {
-    let markdown_html = markdown_to_html(&markdown.content);
+    #[derive(Serialize)]
+    struct RenderData {
+        markdown_html: String,
+    }
 
-    render_default_layout(
-        "markdown/markdown.html",
+    TemplateRenderer::new("markdown/markdown.html".into()).to_html_page(
+        RenderData {
+            markdown_html: markdown_to_html(&markdown.content),
+        },
         layout_data,
-        Some(simple_data_from(vec![(
-            "markdown_html".to_owned(),
-            Data::String(markdown_html),
-        )])),
     )
 }
 
@@ -78,7 +77,7 @@ pub fn markdown_from_dir<P: AsRef<Path>>(path: &P) -> HbpResult<Vec<MarkdownOrMa
             };
 
             if title.starts_with('.') {
-                return None
+                return None;
             }
 
             if entry.path().is_dir() {
@@ -103,32 +102,12 @@ pub fn markdown_from_dir<P: AsRef<Path>>(path: &P) -> HbpResult<Vec<MarkdownOrMa
 }
 
 pub fn render_markdown_list(
-    default_layout_data: DefaultLayoutData,
+    layout_data: IndexLayoutData,
     markdowns: Vec<MarkdownOrMarkdownDir>,
-) -> String {
-    render_default_layout(
-        "markdown/list.html",
-        Some(default_layout_data),
-        Some(
-            MapBuilder::new()
-                .insert_vec("markdowns", |builder| {
-                    let mut builder = builder;
+) -> HbpResult<String> {
+    let mut render_data = HashMap::new();
+    render_data.insert("markdowns", markdowns);
 
-                    for markdown in &markdowns {
-                        builder = match markdown {
-                            MarkdownOrMarkdownDir::Markdown(markdown) => {
-                                builder.push(&markdown).unwrap()
-                            }
-                            MarkdownOrMarkdownDir::MarkdownDir(markdown_dir) => {
-                                builder.push(&markdown_dir).unwrap()
-                            }
-                        };
-                    }
-
-                    builder
-                })
-                .build(),
-        ),
-    )
-    .unwrap()
+    TemplateRenderer::new("markdown/list.html".into())
+        .to_html_page(render_data, layout_data)
 }

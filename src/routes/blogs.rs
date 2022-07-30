@@ -4,7 +4,7 @@ use crate::shared::entities::markdown::*;
 use crate::utils::auth::AuthPayload;
 use crate::utils::markdown::{markdown_from_dir, render_markdown_list};
 use crate::utils::responders::HbpResponse;
-use crate::utils::template::DefaultLayoutData;
+use crate::utils::template::IndexLayoutData;
 
 #[get("/")]
 pub fn index(jwt: Option<AuthPayload>) -> HbpResponse {
@@ -18,11 +18,11 @@ pub fn index(jwt: Option<AuthPayload>) -> HbpResponse {
     //         .cmp(&NaiveDate::parse_from_str(&m1.dob, DATE_FORMAT).unwrap())
     // });
 
-    HbpResponse::html(
-        &render_markdown_list(
-            DefaultLayoutData::only_title("Blogs").maybe_auth(jwt),
-            markdowns,
-        ),
-        None,
-    )
+    match render_markdown_list(
+        IndexLayoutData::only_title("Blogs").maybe_auth(jwt),
+        markdowns,
+    ) {
+    Ok(html) => HbpResponse::html(&html, None),
+    Err(e) => e.into(),
+}
 }

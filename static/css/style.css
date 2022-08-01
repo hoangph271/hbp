@@ -57,30 +57,3 @@ code {
   padding: 0.2rem;
   border-radius: var(--radius-tight);
 }
-
-/* ? Custom CSS for MarpIt */
-/* #region */
-.marpit {
-  height: 100vh;
-  scroll-snap-type: y mandatory;
-  overflow: auto;
-}
-.marpit > svg {
-  scroll-snap-align: end;
-  min-height: 100vh;
-  max-height: 100vh;
-  display: block;
-  margin: auto;
-}
-.marpit .contains-task-list {
-  list-style: none;
-}
-.marpit .task-list-item .task-list-item-checkbox {
-  width: 1.6rem;
-  height: 1.6rem;
-  margin: 0;
-}
-div.marpit > svg > foreignObject > section {
-  font-family: 'Nunito', sans-serif !important;
-}
-/* #endregion */

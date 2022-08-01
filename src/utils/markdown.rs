@@ -1,4 +1,3 @@
-use crate::routes::markdown::MarkdownExtraData;
 use crate::shared::entities::markdown::*;
 use crate::utils::marper;
 use crate::utils::string::url_encode_path;
@@ -36,7 +35,7 @@ pub fn is_markdown(file_path: &Path) -> bool {
     }
 }
 
-pub async fn render_marp(markdown: &Markdown, extra_data: MarkdownExtraData) -> HbpResult<String> {
+pub async fn render_marp(markdown: &Markdown) -> HbpResult<String> {
     if !marper::is_marp(&markdown.content) {
         return Err(HbpError::from_message(
             &format!("NOT a marp: {}", markdown.file_name),
@@ -44,7 +43,7 @@ pub async fn render_marp(markdown: &Markdown, extra_data: MarkdownExtraData) -> 
         ));
     }
 
-    marper::render_marp(&markdown.content, extra_data).await
+    marper::render_marp(&markdown.content).await
 }
 pub fn is_marp(content: &str) -> bool {
     marper::is_marp(content)
@@ -108,6 +107,5 @@ pub fn render_markdown_list(
     let mut render_data = HashMap::new();
     render_data.insert("markdowns", markdowns);
 
-    TemplateRenderer::new("markdown/list.html".into())
-        .to_html_page(render_data, layout_data)
+    TemplateRenderer::new("markdown/list.html".into()).to_html_page(render_data, layout_data)
 }

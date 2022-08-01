@@ -43,18 +43,13 @@ async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpRespon
         Ok(markdown_data) => {
             let html_result = async {
                 if markdown::is_marp(&markdown_data.content) {
-                    markdown::render_marp(
-                        &markdown_data,
-                        MarkdownExtraData::from_path(&file_path).unwrap_or_default(),
-                    )
-                    .await
+                    markdown::render_marp(&markdown_data).await
                 } else {
-                    let html = markdown::render_markdown(
+                    markdown::render_markdown(
                         &markdown_data,
                         IndexLayoutData::only_title(&markdown_data.title).maybe_auth(jwt),
                     )
-                    .await;
-                    html
+                    .await
                 }
             };
 
@@ -167,11 +162,7 @@ async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: AuthPayload)
     if let Ok(markdown_data) = Markdown::from_markdown(&file_path) {
         let html_result = async {
             if markdown::is_marp(&markdown_data.content) {
-                markdown::render_marp(
-                    &markdown_data,
-                    MarkdownExtraData::from_path(&file_path).unwrap_or_default(),
-                )
-                .await
+                markdown::render_marp(&markdown_data).await
             } else {
                 markdown::render_markdown(
                     &markdown_data,
@@ -202,20 +193,7 @@ pub struct MarkdownExtraData {
     og_title: String,
     og_image: String,
 }
-impl MarkdownExtraData {
-    fn from_path(file_path: &Path) -> Option<Self> {
-        if let Ok(markdown) = Markdown::from_markdown(file_path) {
-            Some(MarkdownExtraData {
-                title: markdown.title.clone(),
-                og_title: markdown.title,
-                og_image: markdown.cover_image,
-            })
-        } else {
-            None
-        }
-    }
-}
 
 pub fn markdown_routes() -> Vec<Route> {
-    routes![markdown_file, user_markdown_file, user_markdown_editor,]
+    routes![markdown_file, user_markdown_file, user_markdown_editor]
 }

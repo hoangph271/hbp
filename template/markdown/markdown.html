@@ -2,6 +2,42 @@
   {{{ markdown_html }}}
 </div>
 
+<style>
+  body {
+    margin: 0;
+  }
+
+  /* #region Custom CSS for MarpIt */
+  .marpit {
+    height: 100vh;
+    scroll-snap-type: y mandatory;
+    overflow: auto;
+  }
+
+  .marpit>svg {
+    scroll-snap-align: end;
+    min-height: 100vh;
+    max-height: 100vh;
+    display: block;
+    margin: auto;
+  }
+
+  .marpit .contains-task-list {
+    list-style: none;
+  }
+
+  .marpit .task-list-item .task-list-item-checkbox {
+    width: 1.6rem;
+    height: 1.6rem;
+    margin: 0;
+  }
+
+  div.marpit>svg>foreignObject>section {
+    font-family: 'Nunito', sans-serif !important;
+  }
+  /* #endregion */
+</style>
+
 <script>
   setTimeout(() => {
     // ? workarounds for `pulldown-cmark` until it works better

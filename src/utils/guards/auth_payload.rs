@@ -1,8 +1,8 @@
 use crate::utils::auth::{jwt, AuthPayload};
 use crate::utils::constants;
-use crate::utils::types::HbpError;
+use crate::utils::types::{HbpError, HbpResult};
 use httpstatus::StatusCode;
-use rocket::http::{Cookie, Status};
+use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
 
 fn jwt_str_from_query_params(req: &Request) -> Option<String> {
@@ -18,56 +18,29 @@ fn jwt_str_from_query_params(req: &Request) -> Option<String> {
 pub const RESOURCE_JWT_COOKIE: &str = "resource-jwt";
 pub const USER_JWT_COOKIE: &str = "user-jwt";
 
+fn get_jwt(req: &Request) -> HbpResult<AuthPayload> {
+    let jwt_str = jwt_str_from_query_params(req).or_else(|| {
+        let jwt_from_cookies = req
+            .cookies()
+            .get_private(USER_JWT_COOKIE)
+            .or_else(|| req.cookies().get_private(RESOURCE_JWT_COOKIE));
+
+        jwt_from_cookies.map(|cookies| cookies.value().to_owned())
+    });
+
+    jwt_str
+        .map(|jwt_str| jwt::verify_jwt(&jwt_str))
+        .ok_or_else(|| HbpError::from_message("No valid jwt found", StatusCode::Unauthorized))?
+}
+
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for AuthPayload {
     type Error = HbpError;
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        let jwt_str = jwt_str_from_query_params(req);
-
-        let jwt = if let Some(jwt_str) = jwt_str {
-            let jwt = jwt::verify_jwt(&jwt_str).ok();
-
-            if let Some(jwt) = jwt.clone() {
-                match jwt {
-                    AuthPayload::User(_) => {
-                        req.cookies()
-                            .add_private(Cookie::new(USER_JWT_COOKIE, jwt_str));
-                    }
-                    AuthPayload::UserResource(_) => {
-                        req.cookies()
-                            .add_private(Cookie::new(RESOURCE_JWT_COOKIE, jwt_str));
-                    }
-                }
-            }
-
-            jwt
-        } else {
-            let user_jwt_cookie = req.cookies().get_private(USER_JWT_COOKIE);
-            let resource_jwt_cookie = req.cookies().get_private(RESOURCE_JWT_COOKIE);
-
-            let jwt_from_cookies = if user_jwt_cookie.is_some() {
-                user_jwt_cookie
-            } else if resource_jwt_cookie.is_some() {
-                resource_jwt_cookie
-            } else {
-                None
-            };
-
-            if let Some(jwt_str) = jwt_from_cookies {
-                jwt::verify_jwt(jwt_str.value()).ok()
-            } else {
-                None
-            }
-        };
-
-        if let Some(jwt) = jwt {
-            Outcome::Success(jwt)
-        } else {
-            Outcome::Failure((
-                Status::from_code(StatusCode::Unauthorized.as_u16()).unwrap(),
-                HbpError::from_message("No valid jwt found", StatusCode::Unauthorized),
-            ))
+        match get_jwt(req) {
+            Ok(jwt) => Outcome::Success(jwt),
+            Err(e) => Outcome::Failure((Status::from_code(e.status_code.as_u16()).unwrap(), e)),
         }
     }
 }

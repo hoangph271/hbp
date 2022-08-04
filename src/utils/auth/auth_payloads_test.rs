@@ -1,3 +1,5 @@
+use crate::utils::timestamp_now;
+
 use super::{AuthPayload, UserPayload};
 
 #[test]
@@ -6,7 +8,7 @@ fn parse_jwt_from_str() {
 
     if let AuthPayload::UserResource(claims) = AuthPayload::decode(jwt_str).unwrap() {
         assert_eq!(claims.sub, "hbp");
-        assert!(claims.expires_in.is_empty() == false);
+        assert!(claims.exp > timestamp_now());
     } else {
         panic!("Must be parsed into AuthPayload::UserResource");
     }

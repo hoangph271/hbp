@@ -28,11 +28,19 @@ pub mod jwt {
     }
 }
 
+fn jwt_expires_in_ms() -> i64 {
+    const MS_PER_HOUR: i64 = 60 * 60 * 1000;
+    let jwt_expires_in_hours: i64 = env::from_env(env::EnvKey::JwtExpiresInHours)
+        .parse()
+        .unwrap();
+    let jwt_expires_in_ms = jwt_expires_in_hours * MS_PER_HOUR;
+
+    jwt_expires_in_ms
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct UserPayload {
     pub exp: i64,
-    #[serde(rename = "expiresIn")]
-    pub expires_in: String,
     pub sub: String,
     pub roles: Vec<String>,
 }
@@ -49,13 +57,9 @@ impl UserPayload {
 impl Default for UserPayload {
     fn default() -> Self {
         Self {
-            expires_in: format!(
-                "{}h",
-                env::from_env(env::EnvKey::JwtExpiresInHours).to_owned()
-            ),
             sub: Default::default(),
             roles: Default::default(),
-            exp: timestamp_now(),
+            exp: timestamp_now() + jwt_expires_in_ms(),
         }
     }
 }
@@ -63,21 +67,15 @@ impl Default for UserPayload {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct UserResoucePayload {
     pub exp: i64,
-    #[serde(rename = "expiresIn")]
-    pub expires_in: String,
     pub sub: String,
     pub path: String,
 }
 impl Default for UserResoucePayload {
     fn default() -> Self {
         Self {
-            expires_in: format!(
-                "{}h",
-                env::from_env(env::EnvKey::JwtExpiresInHours).to_owned()
-            ),
             sub: Default::default(),
             path: Default::default(),
-            exp: timestamp_now(),
+            exp: timestamp_now() + jwt_expires_in_ms(),
         }
     }
 }

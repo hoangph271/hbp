@@ -1,11 +1,9 @@
-<div class="error-text">
-  <div class="content">
-    <h3>
+<div class="position-relative text-center error-box">
+  <div class="Popover-message p-2 mx-auto Box color-shadow-large">
+    <h3 class="mb-2">
       {{ error_text }}
     </h3>
-    <p>
-      Click <a href="/">here</a> to get home...!
-    </p>
+    {{{ action_html }}}
   </div>
 </div>
 
@@ -20,22 +18,11 @@
     background-repeat: no-repeat;
   }
 
-  div.error-text {
-    font-family: 'Ubuntu Mono', 'Courier New', Courier, monospace;
-    display: flex;
-    flex-direction: column;
+  .error-box {
+    flex-grow: 1;
     justify-content: center;
     align-items: center;
-    flex-grow: 1;
+    display: flex;
   }
 
-  div.error-text .content {
-    max-width: calc(100vw - 4rem);
-    margin: auto;
-    background: rgba(255, 255, 255, 0.85);
-    border-radius: var(--radius-gentle);
-    text-align: center;
-    padding: var(--padding-small);
-    box-shadow: var(--equal-shadow-gentle);
-  }
 </style>

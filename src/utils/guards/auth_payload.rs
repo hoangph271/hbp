@@ -1,4 +1,4 @@
-use crate::utils::auth::{AuthPayload};
+use crate::utils::auth::AuthPayload;
 use crate::utils::constants;
 use crate::utils::types::{HbpError, HbpResult};
 use rocket::http::Status;
@@ -14,18 +14,18 @@ fn jwt_str_from_query_params(req: &Request) -> Option<String> {
     }
 }
 
-pub const RESOURCE_JWT_COOKIE: &str = "resource-jwt";
-pub const USER_JWT_COOKIE: &str = "user-jwt";
-
 fn get_jwt(req: &Request) -> HbpResult<AuthPayload> {
-    let jwt_str = jwt_str_from_query_params(req).or_else(|| {
-        let jwt_from_cookies = req
-            .cookies()
-            .get_private(USER_JWT_COOKIE)
-            .or_else(|| req.cookies().get_private(RESOURCE_JWT_COOKIE));
-
-        jwt_from_cookies.map(|cookies| cookies.value().to_owned())
-    });
+    let jwt_str = jwt_str_from_query_params(req)
+        .or_else(|| {
+            req.cookies()
+                .get_private(constants::cookies::USER_JWT)
+                .map(|val| val.value().to_owned())
+        })
+        .or_else(|| {
+            req.cookies()
+                .get_private(constants::cookies::RESOURCE_JWT)
+                .map(|val| val.value().to_owned())
+        });
 
     match jwt_str {
         Some(token) => AuthPayload::decode(&token),

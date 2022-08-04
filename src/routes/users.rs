@@ -2,8 +2,8 @@ use crate::data::lib::{user_orm, DbResult};
 use crate::data::models::users_model::User;
 use crate::shared::interfaces::{ApiErrorResponse, ApiItemResponse};
 use crate::utils::auth::{AuthPayload, UserPayload};
+use crate::utils::constants::cookies;
 use crate::utils::env::{from_env, EnvKey};
-use crate::utils::guards::auth_payload::USER_JWT_COOKIE;
 use crate::utils::responders::HbpResponse;
 use crate::utils::template;
 use crate::utils::template::{IndexLayoutData, TemplateRenderer};
@@ -76,7 +76,7 @@ async fn post_login(login_body: Form<LoginBody>, jar: &CookieJar<'_>) -> HbpResp
                     let jwt_expires_in: i64 = from_env(EnvKey::JwtExpiresInHours).parse().unwrap();
                     let expries_in = OffsetDateTime::now_utc() + Duration::hours(jwt_expires_in);
 
-                    let mut cookie = Cookie::new(USER_JWT_COOKIE, jwt);
+                    let mut cookie = Cookie::new(cookies::USER_JWT, jwt);
                     cookie.set_expires(expries_in);
 
                     jar.add_private(cookie);

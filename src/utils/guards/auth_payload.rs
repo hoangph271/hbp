@@ -1,7 +1,6 @@
-use crate::utils::auth::{jwt, AuthPayload};
+use crate::utils::auth::{AuthPayload};
 use crate::utils::constants;
 use crate::utils::types::{HbpError, HbpResult};
-use httpstatus::StatusCode;
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
 
@@ -28,9 +27,10 @@ fn get_jwt(req: &Request) -> HbpResult<AuthPayload> {
         jwt_from_cookies.map(|cookies| cookies.value().to_owned())
     });
 
-    jwt_str
-        .map(|jwt_str| jwt::verify_jwt(&jwt_str))
-        .ok_or_else(|| HbpError::from_message("No valid jwt found", StatusCode::Unauthorized))?
+    match jwt_str {
+        Some(token) => AuthPayload::decode(&token),
+        None => Err(HbpError::unauthorized()),
+    }
 }
 
 #[rocket::async_trait]

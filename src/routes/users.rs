@@ -2,17 +2,19 @@ use crate::data::lib::{user_orm, DbResult};
 use crate::data::models::users_model::User;
 use crate::shared::interfaces::{ApiErrorResponse, ApiItemResponse};
 use crate::utils::auth::{AuthPayload, UserPayload};
+use crate::utils::env::{from_env, EnvKey};
 use crate::utils::guards::auth_payload::USER_JWT_COOKIE;
 use crate::utils::responders::HbpResponse;
+use crate::utils::template;
 use crate::utils::template::{IndexLayoutData, TemplateRenderer};
 use crate::utils::types::{HbpError, HbpResult};
-use crate::utils::{template, timestamp_now};
 use httpstatus::StatusCode::BadRequest;
 use log::*;
 use okapi::openapi3::OpenApi;
 use rocket::form::Form;
 use rocket::http::{Cookie, CookieJar};
 use rocket::serde::json::{Error as JsonError, Json};
+use rocket::time::{Duration, OffsetDateTime};
 use rocket::{get, post, routes, uri, FromForm, Route};
 use rocket_okapi::settings::OpenApiSettings;
 use rocket_okapi::{openapi, openapi_get_routes_spec};
@@ -67,15 +69,22 @@ async fn post_login(login_body: Form<LoginBody>, jar: &CookieJar<'_>) -> HbpResp
         .unwrap()
     {
         Some(user) => {
-            let jwt = UserPayload::sign_jwt(&UserPayload {
-                exp: timestamp_now(),
-                sub: user.username,
-                role: vec![],
-            });
+            let jwt = UserPayload::default().set_sub(user.username).sign_jwt();
 
-            jar.add_private(Cookie::new(USER_JWT_COOKIE, jwt));
+            match jwt {
+                Ok(jwt) => {
+                    let jwt_expires_in: i64 = from_env(EnvKey::JwtExpiresInHours).parse().unwrap();
+                    let expries_in = OffsetDateTime::now_utc() + Duration::hours(jwt_expires_in);
 
-            HbpResponse::redirect(uri!("/users", index))
+                    let mut cookie = Cookie::new(USER_JWT_COOKIE, jwt);
+                    cookie.set_expires(expries_in);
+
+                    jar.add_private(cookie);
+
+                    HbpResponse::redirect(uri!("/users", index))
+                }
+                Err(e) => e.into(),
+            }
         }
         None => HbpResponse::redirect(uri!("/users", login)),
     }

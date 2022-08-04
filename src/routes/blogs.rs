@@ -1,3 +1,4 @@
+use log::error;
 use rocket::get;
 
 use crate::shared::entities::markdown::*;
@@ -8,7 +9,14 @@ use crate::utils::template::IndexLayoutData;
 
 #[get("/")]
 pub fn index(jwt: Option<AuthPayload>) -> HbpResponse {
-    let markdowns: Vec<MarkdownOrMarkdownDir> = markdown_from_dir(&"markdown/blogs").unwrap();
+    let markdowns: Vec<MarkdownOrMarkdownDir> = match markdown_from_dir(&"markdown/blogs") {
+        Ok(markdowns) => markdowns,
+        Err(e) => {
+            error!("markdown_from_dir failed: {:?}", e);
+
+            return e.into();
+        }
+    };
 
     // FIXME: Now with dir, how to sort...?
     // markdowns.sort_by(|m1, m2| {
@@ -22,7 +30,7 @@ pub fn index(jwt: Option<AuthPayload>) -> HbpResponse {
         IndexLayoutData::only_title("Blogs").maybe_auth(jwt),
         markdowns,
     ) {
-    Ok(html) => HbpResponse::html(&html, None),
-    Err(e) => e.into(),
-}
+        Ok(html) => HbpResponse::html(&html, None),
+        Err(e) => e.into(),
+    }
 }

@@ -1,25 +1,113 @@
+use httpstatus::StatusCode;
+use jsonwebtoken::{decode, DecodingKey, Validation};
+use log::error;
 use rocket::serde::{Deserialize, Serialize};
 
+use crate::utils::{env, timestamp_now, types::HbpError};
+
 pub mod jwt {
-    use crate::utils::auth::{AuthPayload, UserPayload, UserResoucePayload};
-    use crate::utils::types::HbpError;
+    use crate::utils::types::{HbpError, HbpResult};
     use httpstatus::StatusCode;
-    use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+    use jsonwebtoken::{encode, EncodingKey, Header};
     use serde::Serialize;
-    use log::*;
 
-    fn jwt_secret() -> String {
-        use crate::utils::env::{from_env, EnvKey};
-        let key = from_env(EnvKey::JwtSecret);
+    use super::jwt_secret;
 
-        key.to_owned()
+    pub fn sign_jwt<T: Serialize>(payload: &T) -> HbpResult<String> {
+        encode(
+            &Header::default(),
+            &payload,
+            &EncodingKey::from_secret(&jwt_secret()),
+        )
+        .map_err(|e| {
+            HbpError::from_message(
+                &format!("sign_jwt failed: {e}"),
+                StatusCode::InternalServerError,
+            )
+        })
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct UserPayload {
+    pub exp: i64,
+    #[serde(rename = "expiresIn")]
+    pub expires_in: String,
+    pub sub: String,
+    pub roles: Vec<String>,
+}
+impl UserPayload {
+    pub fn sign_jwt(&self) -> Result<String, HbpError> {
+        jwt::sign_jwt(&self)
     }
 
-    pub fn verify_jwt(token_str: &str) -> Result<AuthPayload, HbpError> {
-        let key = &DecodingKey::from_secret(jwt_secret().as_bytes());
+    pub fn set_sub(&mut self, sub: String) -> &UserPayload {
+        self.sub = sub;
+        self
+    }
+}
+impl Default for UserPayload {
+    fn default() -> Self {
+        Self {
+            expires_in: format!(
+                "{}h",
+                env::from_env(env::EnvKey::JwtExpiresInHours).to_owned()
+            ),
+            sub: Default::default(),
+            roles: Default::default(),
+            exp: timestamp_now(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct UserResoucePayload {
+    pub exp: i64,
+    #[serde(rename = "expiresIn")]
+    pub expires_in: String,
+    pub sub: String,
+    pub path: String,
+}
+impl Default for UserResoucePayload {
+    fn default() -> Self {
+        Self {
+            expires_in: format!(
+                "{}h",
+                env::from_env(env::EnvKey::JwtExpiresInHours).to_owned()
+            ),
+            sub: Default::default(),
+            path: Default::default(),
+            exp: timestamp_now(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub enum AuthPayload {
+    User(UserPayload),
+    UserResource(UserResoucePayload),
+}
+
+fn jwt_secret() -> Vec<u8> {
+    use crate::utils::env::{from_env, EnvKey};
+    let key = from_env(EnvKey::JwtSecret);
+
+    key.as_bytes().into()
+}
+
+impl AuthPayload {
+    pub fn username(&self) -> &str {
+        match self {
+            AuthPayload::User(jwt) => &jwt.sub,
+            AuthPayload::UserResource(jwt) => &jwt.sub,
+        }
+    }
+
+    pub fn decode(token: &str) -> Result<AuthPayload, HbpError> {
+        let key = &DecodingKey::from_secret(&jwt_secret());
         let validation = &Validation::default();
 
-        match decode::<UserPayload>(token_str, key, validation) {
+        match decode::<UserPayload>(token, key, validation) {
             Ok(result) => {
                 return Ok(AuthPayload::User(result.claims));
             }
@@ -28,7 +116,7 @@ pub mod jwt {
             }
         }
 
-        match decode::<UserResoucePayload>(token_str, key, validation) {
+        match decode::<UserResoucePayload>(token, key, validation) {
             Ok(result) => {
                 return Ok(AuthPayload::UserResource(result.claims));
             }
@@ -38,51 +126,9 @@ pub mod jwt {
         }
 
         Err(HbpError::from_message(
-            &format!("verify_jwt failed for {token_str}"),
-            StatusCode::BadRequest,
+            &format!("verify_jwt failed for {token}"),
+            StatusCode::Unauthorized,
         ))
-    }
-    pub fn sign_jwt<T: Serialize>(payload: T) -> String {
-        encode(
-            &Header::default(),
-            &payload,
-            &EncodingKey::from_secret(jwt_secret().as_bytes()),
-        )
-        .unwrap()
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct UserPayload {
-    pub exp: i64,
-    pub sub: String,
-    pub role: Vec<String>,
-}
-impl UserPayload {
-    pub fn sign_jwt(&self) -> String {
-        jwt::sign_jwt(&self)
-    }
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct UserResoucePayload {
-    pub exp: i64,
-    pub sub: String,
-    pub path: String,
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub enum AuthPayload {
-    User(UserPayload),
-    UserResource(UserResoucePayload),
-}
-
-impl AuthPayload {
-    pub fn username(&self) -> &str {
-        match self {
-            AuthPayload::User(jwt) => &jwt.sub,
-            AuthPayload::UserResource(jwt) => &jwt.sub,
-        }
     }
 
     pub fn match_path<F>(&self, path: &str, user_assert: Option<F>) -> bool

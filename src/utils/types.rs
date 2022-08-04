@@ -90,10 +90,17 @@ impl HbpError {
         HbpError::from_message("IO Error", status_code)
     }
 
-    pub fn unimplemented() -> HbpError {
+    pub fn not_implemented() -> HbpError {
         HbpError {
-            msg: String::from("unimplemented"),
-            status_code: StatusCode::InternalServerError,
+            msg: StatusCode::NotImplemented.reason_phrase().to_owned(),
+            status_code: StatusCode::NotImplemented,
+        }
+    }
+
+    pub fn unauthorized() -> HbpError {
+        HbpError {
+            msg: StatusCode::Unauthorized.reason_phrase().to_owned(),
+            status_code: StatusCode::Unauthorized,
         }
     }
 }

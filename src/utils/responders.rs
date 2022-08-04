@@ -8,12 +8,11 @@ use rocket_okapi::gen::OpenApiGenerator;
 use rocket_okapi::response::OpenApiResponderInner;
 use rocket_okapi::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::io::Cursor;
 use std::path::PathBuf;
 
 use super::template::TemplateRenderer;
-use super::types::{HbpError};
+use super::types::HbpError;
 
 #[allow(dead_code)]
 #[derive(Serialize, Deserialize, JsonSchema)]
@@ -45,6 +44,7 @@ impl HbpResponse {
             content: HbpContent::Html(html.to_owned()),
         }
     }
+
     pub fn ok(content: Option<HbpContent>) -> HbpResponse {
         HbpResponse {
             status_code: StatusCode::Ok,
@@ -54,17 +54,28 @@ impl HbpResponse {
             },
         }
     }
+
     pub fn status(status_code: StatusCode) -> HbpResponse {
         let status_code = StatusCode::from(status_code.as_u16());
 
-        let mut data = HashMap::new();
-        data.insert(
-            "error_text".to_owned(),
-            format!("{} | {}", status_code.as_u16(), status_code.reason_phrase()),
-        );
+        #[derive(Serialize)]
+        struct RenderData {
+            error_text: String,
+            action_html: String,
+        }
 
         let html = TemplateRenderer::new("static/error.html".into())
-            .to_html_page(data, IndexLayoutData::only_title("Error"))
+            .to_html_page(
+                RenderData {
+                    error_text: format!(
+                        "{} | {}",
+                        status_code.as_u16(),
+                        status_code.reason_phrase()
+                    ),
+                    action_html: action_html_for(&status_code),
+                },
+                IndexLayoutData::only_title("Error"),
+            )
             .unwrap();
 
         HbpResponse {
@@ -72,9 +83,11 @@ impl HbpResponse {
             content: HbpContent::Html(html),
         }
     }
+
     pub fn forbidden() -> HbpResponse {
         HbpResponse::status(StatusCode::Forbidden)
     }
+
     pub fn json<T: serde::Serialize>(content: T, status_code: Option<StatusCode>) -> HbpResponse {
         let json = serde_json::to_string(&content).expect("Stringify JSON failed");
 
@@ -88,12 +101,15 @@ impl HbpResponse {
             content: HbpContent::Json(json),
         }
     }
+
     pub fn internal_server_error() -> HbpResponse {
         HbpResponse::status(StatusCode::InternalServerError)
     }
+
     pub fn not_found() -> HbpResponse {
         HbpResponse::status(StatusCode::NotFound)
     }
+
     #[allow(dead_code)]
     pub fn redirect(uri: rocket::http::uri::Origin) -> HbpResponse {
         HbpResponse {
@@ -101,6 +117,7 @@ impl HbpResponse {
             content: HbpContent::Redirect(uri.into_normalized().to_string()),
         }
     }
+
     pub fn file(path: PathBuf) -> HbpResponse {
         HbpResponse::ok(Some(HbpContent::File(Box::new(path))))
     }
@@ -164,4 +181,22 @@ impl From<HbpError> for HbpResponse {
             content: HbpContent::Plain(e.msg),
         }
     }
+}
+
+fn action_html_for(status_code: &StatusCode) -> String {
+    match status_code {
+        StatusCode::Unauthorized => {
+            r#"
+        <p>
+            Click <a href="/users/login">here</a> to signin...!
+        </p>"#
+        }
+        _ => {
+            r#"
+        <p>
+            Click <a href="/">here</a> to get home...!
+        </p>"#
+        }
+    }
+    .to_owned()
 }

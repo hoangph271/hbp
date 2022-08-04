@@ -31,7 +31,7 @@ impl TemplateRenderer {
 
     pub fn to_html_page(
         &self,
-        data: impl Serialize,
+        data: impl Serialize + std::fmt::Debug,
         layout_data: IndexLayoutData,
     ) -> HbpResult<String> {
         #[derive(Serialize)]

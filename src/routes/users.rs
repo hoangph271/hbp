@@ -23,7 +23,7 @@ use serde::{Deserialize, Serialize};
 
 #[get("/")]
 fn index(jwt: AuthPayload) -> HbpResponse {
-    #[derive(Serialize)]
+    #[derive(Serialize, Debug)]
     struct RenderData {
         username: String,
     }

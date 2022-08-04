@@ -52,7 +52,7 @@ pub async fn render_markdown(
     markdown: &Markdown,
     layout_data: IndexLayoutData,
 ) -> HbpResult<String> {
-    #[derive(Serialize)]
+    #[derive(Serialize, Debug)]
     struct RenderData {
         markdown_html: String,
     }

@@ -157,7 +157,7 @@ pub struct MarkdownDir {
     pub url: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub enum MarkdownOrMarkdownDir {
     Markdown(Markdown),
     MarkdownDir(MarkdownDir),

@@ -58,7 +58,7 @@ impl HbpResponse {
     pub fn status(status_code: StatusCode) -> HbpResponse {
         let status_code = StatusCode::from(status_code.as_u16());
 
-        #[derive(Serialize)]
+        #[derive(Serialize, Debug)]
         struct RenderData {
             error_text: String,
             action_html: String,

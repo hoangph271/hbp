@@ -32,13 +32,23 @@
     |
     <a href="https://github.com" class="Header-link" target="_blank">github</a>
   </nav>
-  {{#moveup_url}}
-    <div>
-      <a href="/{{ moveup_url }}">{{ moveup_url }}</a>
-    </div>
-  {{/moveup_url}}
+  <nav aria-label="Breadcrumb" class="px-4">
+    <ol>
+      {{#moveup_urls}}
+        <li class="breadcrumb-item">
+          <a href="{{ url }}">{{ title }}</a>
+        </li>
+      {{/moveup_urls}}
+    </ol>
+  </nav>
   {{{ raw_content }}}
   <!-- SCRIPTS -->
 </body>
 
 </html>
+
+<style>
+  .breadcrumb-item:last-of-type::after {
+    display: none;
+  }
+</style>

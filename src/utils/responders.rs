@@ -20,7 +20,7 @@ pub enum HbpContent {
     Plain(String),
     Html(String),
     Json(String),
-    Redirect(String),
+    Found(String),
     File(Box<PathBuf>),
 }
 
@@ -110,11 +110,10 @@ impl HbpResponse {
         HbpResponse::status(StatusCode::NotFound)
     }
 
-    #[allow(dead_code)]
     pub fn redirect(uri: rocket::http::uri::Origin) -> HbpResponse {
         HbpResponse {
             status_code: StatusCode::MovedPermanently,
-            content: HbpContent::Redirect(uri.into_normalized().to_string()),
+            content: HbpContent::Found(uri.into_normalized().to_string()),
         }
     }
 
@@ -147,10 +146,10 @@ impl<'r> Responder<'r, 'r> for HbpResponse {
                     .header(ContentType::JSON)
                     .sized_body(json.len(), Cursor::new(json));
             }
-            HbpContent::Redirect(path) => {
+            HbpContent::Found(path) => {
                 response_builder
                     .header(ContentType::HTML)
-                    .status(Status::MovedPermanently)
+                    .status(Status::Found)
                     .header(Header::new("Location", path));
             }
             HbpContent::File(file_path) => {

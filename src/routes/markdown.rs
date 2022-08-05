@@ -9,7 +9,7 @@ use crate::utils::{
 };
 use httpstatus::StatusCode;
 use log::*;
-use rocket::{get, routes, Route};
+use rocket::{get, routes, uri, Route};
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 
@@ -94,6 +94,10 @@ async fn user_markdown_editor(sub_path: PathBuf, _jwt: AuthPayload) -> HbpRespon
 
 #[get("/users/<username>/<sub_path..>", rank = 1)]
 async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: AuthPayload) -> HbpResponse {
+    if !username.eq(jwt.username()) {
+        return HbpResponse::forbidden();
+    }
+
     let (file_path_str, file_path) = markdown_path_from(username, &sub_path);
 
     if !jwt.match_path(&file_path_str, Some(assert_payload_access)) {
@@ -178,6 +182,14 @@ async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: AuthPayload)
     }
 }
 
+#[get("/users", rank = 1)]
+async fn user_default(jwt: AuthPayload) -> HbpResponse {
+    // FIXME: `/markdown` is hard coded
+    let uri = uri!("/markdown", user_markdown_file(jwt.username(), PathBuf::new()));
+
+    HbpResponse::redirect(uri)
+}
+
 #[derive(Serialize, Default)]
 pub struct MarkdownExtraData {
     title: String,
@@ -186,7 +198,12 @@ pub struct MarkdownExtraData {
 }
 
 pub fn markdown_routes() -> Vec<Route> {
-    routes![markdown_file, user_markdown_file, user_markdown_editor]
+    routes![
+        markdown_file,
+        user_markdown_file,
+        user_markdown_editor,
+        user_default
+    ]
 }
 
 fn moveup_urls_from(file_path: &Path) -> Vec<MoveUpUrl> {

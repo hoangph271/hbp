@@ -33,9 +33,8 @@ fn jwt_expires_in_ms() -> i64 {
     let jwt_expires_in_hours: i64 = env::from_env(env::EnvKey::JwtExpiresInHours)
         .parse()
         .unwrap();
-    let jwt_expires_in_ms = jwt_expires_in_hours * MS_PER_HOUR;
 
-    jwt_expires_in_ms
+    jwt_expires_in_hours * MS_PER_HOUR
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]

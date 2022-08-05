@@ -1,6 +1,6 @@
 use crate::shared::entities::markdown::*;
 use crate::utils::markdown::render_markdown_list;
-use crate::utils::template::{IndexLayoutData, TemplateRenderer};
+use crate::utils::template::{IndexLayoutData, MoveUpUrl, TemplateRenderer};
 use crate::utils::{
     auth::{AuthPayload, UserPayload},
     markdown,
@@ -36,7 +36,21 @@ async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpRespon
     let file_path = PathBuf::from("markdown").join(sub_path.clone());
 
     if !markdown::is_markdown(&sub_path) {
-        return HbpResponse::file(file_path);
+        return if file_path.is_dir() {
+            let layout_data = IndexLayoutData::default()
+                .moveup_urls(moveup_urls_from(&file_path))
+                .maybe_auth(jwt)
+                .title(
+                    &file_path
+                        .file_name()
+                        .map(|file_name| file_name.to_string_lossy())
+                        .unwrap_or_else(|| file_path.to_string_lossy()),
+                );
+
+            render_dir(&file_path, layout_data)
+        } else {
+            HbpResponse::file(file_path)
+        };
     }
 
     match Markdown::from_markdown(&file_path) {
@@ -78,23 +92,6 @@ async fn user_markdown_editor(sub_path: PathBuf, _jwt: AuthPayload) -> HbpRespon
     }
 }
 
-fn moveup_url_from(file_path: &Path) -> String {
-    let moveup_url = if let Some(parent_path) = file_path.parent() {
-        let parent_path = parent_path.to_string_lossy().to_string();
-        let is_user_root = parent_path.eq("markdown/users");
-
-        if is_user_root {
-            "".to_string()
-        } else {
-            parent_path
-        }
-    } else {
-        "".to_string()
-    };
-
-    url_encode_path(&moveup_url)
-}
-
 #[get("/users/<username>/<sub_path..>", rank = 1)]
 async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: AuthPayload) -> HbpResponse {
     let (file_path_str, file_path) = markdown_path_from(username, &sub_path);
@@ -108,21 +105,15 @@ async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: AuthPayload)
         return HbpResponse::not_found();
     }
 
-    let moveup_url = moveup_url_from(&file_path);
+    let moveup_urls = moveup_urls_from(&file_path);
 
     if file_path.is_dir() {
-        let markdowns: Vec<MarkdownOrMarkdownDir> =
-            markdown::markdown_from_dir(&file_path).unwrap();
-
-        return match render_markdown_list(
+        return render_dir(
+            &file_path,
             IndexLayoutData::only_title(&file_path_str)
                 .username(username)
-                .moveup_url(&moveup_url),
-            markdowns,
-        ) {
-            Ok(html) => HbpResponse::html(&html, None),
-            Err(e) => e.into(),
-        };
+                .moveup_urls(moveup_urls),
+        );
     }
 
     if !markdown::is_markdown(&file_path) {
@@ -148,7 +139,7 @@ async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: AuthPayload)
             match render_markdown_list(
                 IndexLayoutData::only_title(&file_path_str)
                     .maybe_auth(Some(jwt))
-                    .moveup_url(&moveup_url),
+                    .moveup_urls(moveup_urls),
                 markdowns,
             ) {
                 Ok(html) => HbpResponse::html(&html, None),
@@ -168,7 +159,7 @@ async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: AuthPayload)
                     &markdown_data,
                     IndexLayoutData::only_title(&markdown_data.title)
                         .maybe_auth(Some(jwt))
-                        .moveup_url(&moveup_url),
+                        .moveup_urls(moveup_urls),
                 )
                 .await
             }
@@ -196,4 +187,40 @@ pub struct MarkdownExtraData {
 
 pub fn markdown_routes() -> Vec<Route> {
     routes![markdown_file, user_markdown_file, user_markdown_editor]
+}
+
+fn moveup_urls_from(file_path: &Path) -> Vec<MoveUpUrl> {
+    match file_path.parent() {
+        Some(parent_path) => {
+            let mut moveup_urls: Vec<MoveUpUrl> = vec![];
+
+            for sub_path in parent_path.iter() {
+                let title = sub_path.to_string_lossy().to_string();
+                let prev_url: String = match moveup_urls.last() {
+                    Some(moveup_url) => (*moveup_url).url.clone(),
+                    None => "/".to_string(),
+                };
+
+                let mut url = PathBuf::from(prev_url);
+                url.push(title.clone());
+
+                moveup_urls.push(MoveUpUrl {
+                    title,
+                    url: url_encode_path(&url.to_string_lossy()),
+                })
+            }
+
+            moveup_urls
+        }
+        None => vec![],
+    }
+}
+
+fn render_dir(dir_path: &PathBuf, layout_data: IndexLayoutData) -> HbpResponse {
+    let markdowns: Vec<MarkdownOrMarkdownDir> = markdown::markdown_from_dir(dir_path).unwrap();
+
+    match render_markdown_list(layout_data, markdowns) {
+        Ok(html) => HbpResponse::html(&html, None),
+        Err(e) => e.into(),
+    }
 }

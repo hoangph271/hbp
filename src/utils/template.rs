@@ -38,24 +38,30 @@ impl TemplateRenderer {
         struct RenderData {
             raw_content: String,
             title: String,
-            moveup_url: String,
+            moveup_urls: Vec<MoveUpUrl>,
             username: String,
         }
 
         TemplateRenderer::new("index.html".into()).to_html(RenderData {
             raw_content: self.to_html(data)?,
             title: layout_data.title,
-            moveup_url: layout_data.moveup_url,
+            moveup_urls: layout_data.moveup_urls,
             username: layout_data.username,
         })
     }
 }
 
 #[derive(Default, Serialize)]
+pub struct MoveUpUrl {
+    pub title: String,
+    pub url: String
+}
+
+#[derive(Default, Serialize)]
 pub struct IndexLayoutData {
     title: String,
     username: String,
-    moveup_url: String,
+    moveup_urls: Vec<MoveUpUrl>,
     raw_content: String,
 }
 impl IndexLayoutData {
@@ -86,8 +92,8 @@ impl IndexLayoutData {
     pub fn only_title(title: &str) -> Self {
         Self::default().title(title)
     }
-    pub fn moveup_url(mut self, moveup_url: &str) -> Self {
-        self.moveup_url = moveup_url.to_owned();
+    pub fn moveup_urls(mut self, moveup_urls: Vec<MoveUpUrl>) -> Self {
+        self.moveup_urls = moveup_urls;
 
         self
     }

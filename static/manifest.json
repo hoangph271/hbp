@@ -15,7 +15,7 @@
     ],
     "theme_color": "#47668b",
     "background_color": "#47668b",
-    "start_url": "/markdown",
+    "start_url": "/markdown/users",
     "display": "fullscreen",
     "orientation": "portrait"
 }

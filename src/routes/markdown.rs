@@ -185,7 +185,10 @@ async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: AuthPayload)
 #[get("/users", rank = 1)]
 async fn user_default(jwt: AuthPayload) -> HbpResponse {
     // FIXME: `/markdown` is hard coded
-    let uri = uri!("/markdown", user_markdown_file(jwt.username(), PathBuf::new()));
+    let uri = uri!(
+        "/markdown",
+        user_markdown_file(jwt.username(), PathBuf::new())
+    );
 
     HbpResponse::redirect(uri)
 }
@@ -211,7 +214,7 @@ fn moveup_urls_from(file_path: &Path) -> Vec<MoveUpUrl> {
         Some(parent_path) => {
             let mut moveup_urls: Vec<MoveUpUrl> = vec![];
 
-            for sub_path in parent_path.iter() {
+            for sub_path in parent_path.iter().chain(file_path.file_name().into_iter()) {
                 let title = sub_path.to_string_lossy().to_string();
                 let prev_url: String = match moveup_urls.last() {
                     Some(moveup_url) => (*moveup_url).url.clone(),

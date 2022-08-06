@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use std::vec;
 
 use super::auth::AuthPayload;
+use super::string::url_encode_path;
 
 fn compile_template(path: &PathBuf) -> HbpResult<Template> {
     mustache::compile_path(Path::new("template").join(path)).map_err(|e| e.into())
@@ -54,7 +55,35 @@ impl TemplateRenderer {
 #[derive(Default, Serialize)]
 pub struct MoveUpUrl {
     pub title: String,
-    pub url: String
+    pub url: String,
+}
+impl MoveUpUrl {
+    pub fn from_path(file_path: &Path) -> Vec<MoveUpUrl> {
+        match file_path.parent() {
+            Some(parent_path) => {
+                let mut moveup_urls: Vec<MoveUpUrl> = vec![];
+
+                for sub_path in parent_path.iter().chain(file_path.file_name().into_iter()) {
+                    let title = sub_path.to_string_lossy().to_string();
+                    let prev_url: String = match moveup_urls.last() {
+                        Some(moveup_url) => (*moveup_url).url.clone(),
+                        None => "/".to_string(),
+                    };
+
+                    let mut url = PathBuf::from(prev_url);
+                    url.push(title.clone());
+
+                    moveup_urls.push(MoveUpUrl {
+                        title,
+                        url: url_encode_path(&url.to_string_lossy()),
+                    })
+                }
+
+                moveup_urls
+            }
+            None => vec![],
+        }
+    }
 }
 
 #[derive(Default, Serialize)]

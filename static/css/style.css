@@ -27,23 +27,6 @@ code {
   font-family: 'Ubuntu', Courier, monospace;
 }
 
-/* * Header */
-/* #region */
-.Header {
-  gap: var(--radius-gentle);
-}
-
-.moveup-urls {
-  flex-grow: 1;
-  align-items: end;
-  display: flex;
-  justify-content: end;
-}
-.moveup-urls .breadcrumb-item {
-  margin: 0;
-}
-/* #endregion */
-
 .block-img {
   max-width: 100%;
 }

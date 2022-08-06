@@ -1,0 +1,23 @@
+.Header {
+  gap: var(--radius-gentle);
+}
+
+.Header-link-wrapper {
+  min-width: 10rem;
+}
+
+.breadcrumb-item:last-of-type::after {
+  display: none;
+}
+
+.moveup-urls {
+  flex-grow: 1;
+  align-items: end;
+  display: flex;
+  justify-content: end;
+  flex-wrap: wrap;
+}
+
+.moveup-urls .breadcrumb-item {
+  margin: 0;
+}

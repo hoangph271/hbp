@@ -5,7 +5,7 @@ use crate::shared::entities::markdown::*;
 use crate::utils::auth::AuthPayload;
 use crate::utils::markdown::{markdown_from_dir, render_markdown_list};
 use crate::utils::responders::HbpResponse;
-use crate::utils::template::IndexLayoutData;
+use crate::utils::template::{IndexLayoutData};
 
 #[get("/")]
 pub fn index(jwt: Option<AuthPayload>) -> HbpResponse {

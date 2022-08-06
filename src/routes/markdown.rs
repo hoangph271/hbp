@@ -5,7 +5,6 @@ use crate::utils::{
     auth::{AuthPayload, UserPayload},
     markdown,
     responders::{HbpContent, HbpResponse},
-    string::url_encode_path,
 };
 use httpstatus::StatusCode;
 use log::*;
@@ -38,7 +37,7 @@ async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpRespon
     if !markdown::is_markdown(&sub_path) {
         return if file_path.is_dir() {
             let layout_data = IndexLayoutData::default()
-                .moveup_urls(moveup_urls_from(&file_path))
+                .moveup_urls(MoveUpUrl::from_path(&file_path))
                 .maybe_auth(jwt)
                 .title(
                     &file_path
@@ -61,7 +60,9 @@ async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpRespon
                 } else {
                     markdown::render_markdown(
                         &markdown_data,
-                        IndexLayoutData::only_title(&markdown_data.title).maybe_auth(jwt),
+                        IndexLayoutData::only_title(&markdown_data.title)
+                            .maybe_auth(jwt)
+                            .moveup_urls(MoveUpUrl::from_path(&file_path)),
                     )
                     .await
                 }
@@ -109,7 +110,7 @@ async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: AuthPayload)
         return HbpResponse::not_found();
     }
 
-    let moveup_urls = moveup_urls_from(&file_path);
+    let moveup_urls = MoveUpUrl::from_path(&file_path);
 
     if file_path.is_dir() {
         return render_dir(
@@ -207,33 +208,6 @@ pub fn markdown_routes() -> Vec<Route> {
         user_markdown_editor,
         user_default
     ]
-}
-
-fn moveup_urls_from(file_path: &Path) -> Vec<MoveUpUrl> {
-    match file_path.parent() {
-        Some(parent_path) => {
-            let mut moveup_urls: Vec<MoveUpUrl> = vec![];
-
-            for sub_path in parent_path.iter().chain(file_path.file_name().into_iter()) {
-                let title = sub_path.to_string_lossy().to_string();
-                let prev_url: String = match moveup_urls.last() {
-                    Some(moveup_url) => (*moveup_url).url.clone(),
-                    None => "/".to_string(),
-                };
-
-                let mut url = PathBuf::from(prev_url);
-                url.push(title.clone());
-
-                moveup_urls.push(MoveUpUrl {
-                    title,
-                    url: url_encode_path(&url.to_string_lossy()),
-                })
-            }
-
-            moveup_urls
-        }
-        None => vec![],
-    }
 }
 
 fn render_dir(dir_path: &PathBuf, layout_data: IndexLayoutData) -> HbpResponse {

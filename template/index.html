@@ -26,22 +26,24 @@
 </head>
 
 <body>
-  <nav class="Header">
-    <a href="/" class="Header-link">@hbp</a>
-    |
-    <a href="/blogs" class="Header-link">blogs</a>
-    |
-    <a href="https://github.com/hoangph271" class="Header-link" target="_blank">github</a>
-  </nav>
-  <nav aria-label="Breadcrumb" class="px-4">
-    <ol>
-      {{#moveup_urls}}
-        <li class="breadcrumb-item">
-          <a href="{{ url }}">{{ title }}</a>
-        </li>
-      {{/moveup_urls}}
-    </ol>
-  </nav>
+  <header>
+    <nav class="Header">
+      <div>
+        <a href="/" class="Header-link">@hbp</a>
+        |
+        <a href="/blogs" class="Header-link">blogs</a>
+        |
+        <a href="https://github.com/hoangph271" class="Header-link" target="_blank">github</a>
+      </div>
+      <ol class="moveup-urls">
+        {{#moveup_urls}}
+          <li class="breadcrumb-item">
+            <a href="{{ url }}">{{ title }}</a>
+          </li>
+        {{/moveup_urls}}
+      </ol>
+    </nav>
+  </header>
   {{{ raw_content }}}
   <!-- SCRIPTS -->
   <script src="/static/js/index.js"></script>

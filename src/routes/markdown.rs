@@ -34,6 +34,10 @@ fn markdown_path_from(username: &str, sub_path: &Path) -> (String, PathBuf) {
 async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpResponse {
     let file_path = PathBuf::from("markdown").join(sub_path.clone());
 
+    if !file_path.exists() {
+        return HbpResponse::not_found()
+    }
+
     if !markdown::is_markdown(&sub_path) {
         return if file_path.is_dir() {
             let layout_data = IndexLayoutData::default()

@@ -1,28 +1,16 @@
-<div class="position-relative text-center error-box">
-  <div class="Popover-message p-2 mx-auto Box color-shadow-large">
+<style>
+  main {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+</style>
+
+<div class="text-center">
+  <div class="Popover-message p-2 mx-auto">
     <h3 class="mb-2">
       {{ error_text }}
     </h3>
     {{{ action_html }}}
   </div>
 </div>
-
-<style>
-  body {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    background-image: url(/static/images/cuddlyferris.png);
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-  }
-
-  .error-box {
-    flex-grow: 1;
-    justify-content: center;
-    align-items: center;
-    display: flex;
-  }
-
-</style>

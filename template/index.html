@@ -22,12 +22,12 @@
     <meta property="og:image" content="{{ og_image }}" />
     <meta property="og:image:secure" content="{{ og_image }}" />
   {{/og_image}}
+  <!-- * STYLES -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.1.0/github-markdown.min.css" integrity="sha512-KUoB3bZ1XRBYj1QcH4BHCQjurAZnCO3WdrswyLDtp7BMwCw7dPZngSLqILf68SGgvnWHTD5pPaYrXi6wiRJ65g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="/static/css/index.css">
-  <!-- * STYLES -->
 </head>
 
-<body>
+<body class="d-flex flex-column">
   <header>
     <nav class="Header">
       <div class="Header-link-wrapper">
@@ -44,15 +44,17 @@
       </ol>
     </nav>
   </header>
-  {{{ raw_content }}}
-  <div class="Box">
+  <main class="flex-1">
+    {{{ raw_content }}}
+  </main>
+  <footer class="Box">
     <div class="Box-header" style="text-align: center;">
       <span>Source code </span>
       <a class="Box-row-link" href="https://github.com/hoangph271/hbp">@hoangph271/hbp</a>,
       <span> about me </span>
       <a class="Box-row-link" href="/markdown/AboutMe.md">here.</a>
     </div>
-  </div>
+  </footer>
   <!-- SCRIPTS -->
   <script src="/static/js/index.js"></script>
 </body>

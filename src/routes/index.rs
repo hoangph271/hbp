@@ -23,7 +23,7 @@ async fn readme_md() -> HbpResponse {
                 } else {
                     let html = markdown::render_markdown(
                         &markdown_data,
-                        IndexLayoutData::only_title(&markdown_data.title),
+                        IndexLayoutData::default().title(&markdown_data.title),
                     )
                     .await;
                     html

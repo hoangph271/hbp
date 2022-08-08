@@ -35,7 +35,7 @@ async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpRespon
     let file_path = PathBuf::from("markdown").join(sub_path.clone());
 
     if !file_path.exists() {
-        return HbpResponse::not_found()
+        return HbpResponse::not_found();
     }
 
     if !markdown::is_markdown(&sub_path) {
@@ -64,7 +64,8 @@ async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpRespon
                 } else {
                     markdown::render_markdown(
                         &markdown_data,
-                        IndexLayoutData::only_title(&markdown_data.title)
+                        IndexLayoutData::default()
+                            .title(&markdown_data.title)
                             .maybe_auth(jwt)
                             .moveup_urls(MoveUpUrl::from_path(&file_path)),
                     )
@@ -119,7 +120,8 @@ async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: AuthPayload)
     if file_path.is_dir() {
         return render_dir(
             &file_path,
-            IndexLayoutData::only_title(&file_path_str)
+            IndexLayoutData::default()
+                .title(&file_path_str)
                 .username(username)
                 .moveup_urls(moveup_urls),
         );
@@ -146,7 +148,8 @@ async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: AuthPayload)
             // });
 
             match render_markdown_list(
-                IndexLayoutData::only_title(&file_path_str)
+                IndexLayoutData::default()
+                    .title(&file_path_str)
                     .maybe_auth(Some(jwt))
                     .moveup_urls(moveup_urls),
                 markdowns,
@@ -164,13 +167,7 @@ async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: AuthPayload)
             if markdown::is_marp(&markdown_data.content) {
                 markdown::render_marp(&markdown_data).await
             } else {
-                markdown::render_markdown(
-                    &markdown_data,
-                    IndexLayoutData::only_title(&markdown_data.title)
-                        .maybe_auth(Some(jwt))
-                        .moveup_urls(moveup_urls),
-                )
-                .await
+                markdown::render_user_markdown(&markdown_data, &jwt, &file_path).await
             }
         }
         .await;

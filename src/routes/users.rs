@@ -32,7 +32,9 @@ fn index(jwt: AuthPayload) -> HbpResponse {
         RenderData {
             username: jwt.username().to_owned(),
         },
-        IndexLayoutData::only_title(jwt.username()).username(jwt.username()),
+        IndexLayoutData::default()
+            .title(jwt.username())
+            .username(jwt.username()),
     ) {
         Ok(html) => HbpResponse::html(&html, None),
         Err(e) => e.into(),
@@ -42,7 +44,7 @@ fn index(jwt: AuthPayload) -> HbpResponse {
 #[get("/login")]
 fn login() -> HbpResponse {
     let html = TemplateRenderer::new("users/login.html".into())
-        .to_html_page((), template::IndexLayoutData::only_title("Login"))
+        .to_html_page((), template::IndexLayoutData::default().title("Login"))
         .expect("render users/login.html failed");
 
     HbpResponse::html(&html, None)
@@ -50,7 +52,7 @@ fn login() -> HbpResponse {
 #[get("/signup")]
 fn signup() -> HbpResponse {
     match TemplateRenderer::new("users/signup.html".into())
-        .to_html_page((), template::IndexLayoutData::only_title("Signup"))
+        .to_html_page((), template::IndexLayoutData::default().title("Signup"))
     {
         Ok(html) => HbpResponse::html(&html, None),
         Err(e) => e.into(),

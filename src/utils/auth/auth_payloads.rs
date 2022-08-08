@@ -140,18 +140,17 @@ impl AuthPayload {
                     false
                 }
             }
-            AuthPayload::UserResource(payload) => {
-                if payload.path.is_empty() {
-                    // ? Yeah, this one to make previously used JWT works
-                    // FIXME: Maybe remove this, or use '*'
-                    return true;
-                }
+            AuthPayload::UserResource(payload) => match glob::Pattern::new(&payload.path) {
+                Ok(pattern) => pattern.matches(path),
+                Err(_) => false,
+            },
+        }
+    }
 
-                match glob::Pattern::new(&payload.path) {
-                    Ok(pattern) => pattern.matches(path),
-                    Err(_) => false,
-                }
-            }
+    pub fn sign(&self) -> Result<String, HbpError> {
+        match self {
+            AuthPayload::User(user_payload) => jwt::sign_jwt(user_payload),
+            AuthPayload::UserResource(resource_payload) => jwt::sign_jwt(resource_payload),
         }
     }
 }

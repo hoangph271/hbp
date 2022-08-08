@@ -74,7 +74,7 @@ impl HbpResponse {
                     ),
                     action_html: action_html_for(&status_code),
                 },
-                IndexLayoutData::only_title("Error"),
+                IndexLayoutData::default().title(status_code.reason_phrase()),
             )
             .unwrap();
 

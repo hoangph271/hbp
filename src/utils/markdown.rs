@@ -5,12 +5,12 @@ use crate::utils::template::TemplateRenderer;
 use crate::utils::types::{HbpError, HbpResult};
 use httpstatus::StatusCode::BadRequest;
 use pulldown_cmark::{html, Options, Parser};
-use serde::Serialize;
 use std::collections::HashMap;
 use std::fs::read_dir;
 use std::path::Path;
 
-use super::template::IndexLayoutData;
+use super::auth::{AuthPayload, UserResoucePayload};
+use super::template::{IndexLayoutData, MarkdownRenderData, MoveUpUrl};
 
 pub fn markdown_to_html(markdown: &str) -> String {
     let mut options = Options::empty();
@@ -52,15 +52,35 @@ pub async fn render_markdown(
     markdown: &Markdown,
     layout_data: IndexLayoutData,
 ) -> HbpResult<String> {
-    #[derive(Serialize, Debug)]
-    struct RenderData {
-        markdown_html: String,
-    }
+    TemplateRenderer::new("markdown/markdown.html".into())
+        .to_html_page(MarkdownRenderData::of(markdown, None), layout_data)
+}
+
+pub async fn render_user_markdown(
+    markdown: &Markdown,
+    jwt: &AuthPayload,
+    file_path: &Path,
+) -> HbpResult<String> {
+    let layout_data = IndexLayoutData::default()
+        .title(&markdown.title)
+        .username(jwt.username())
+        .moveup_urls(MoveUpUrl::from_path(file_path));
+
+    let resource_payload = UserResoucePayload {
+        sub: jwt.username().to_owned(),
+        path: file_path.to_string_lossy().to_string(),
+        ..Default::default()
+    };
+
+    let signed_path = AuthPayload::UserResource(resource_payload).sign();
+    let signed_url = if let Ok(signed_path) = signed_path {
+        format!("?jwt={}", signed_path)
+    } else {
+        String::new()
+    };
 
     TemplateRenderer::new("markdown/markdown.html".into()).to_html_page(
-        RenderData {
-            markdown_html: markdown_to_html(&markdown.content),
-        },
+        MarkdownRenderData::of(markdown, Some(signed_url)),
         layout_data,
     )
 }

@@ -1,3 +1,4 @@
+use crate::shared::entities::markdown::Markdown;
 use crate::utils::types::HbpResult;
 use mustache::Template;
 use serde::Serialize;
@@ -5,6 +6,7 @@ use std::path::{Path, PathBuf};
 use std::vec;
 
 use super::auth::AuthPayload;
+use super::markdown::markdown_to_html;
 use super::string::url_encode_path;
 
 fn compile_template(path: &PathBuf) -> HbpResult<Template> {
@@ -63,7 +65,7 @@ impl MoveUpUrl {
             Some(parent_path) => {
                 let mut moveup_urls: Vec<MoveUpUrl> = vec![];
 
-                for sub_path in parent_path.iter().chain(file_path.file_name().into_iter()) {
+                for sub_path in parent_path.iter() {
                     let title = sub_path.to_string_lossy().to_string();
                     let prev_url: String = match moveup_urls.last() {
                         Some(moveup_url) => (*moveup_url).url.clone(),
@@ -93,6 +95,7 @@ pub struct IndexLayoutData {
     moveup_urls: Vec<MoveUpUrl>,
     raw_content: String,
 }
+
 impl IndexLayoutData {
     pub fn title(mut self, title: &str) -> Self {
         self.title = title.to_owned();
@@ -118,12 +121,26 @@ impl IndexLayoutData {
 
         self
     }
-    pub fn only_title(title: &str) -> Self {
-        Self::default().title(title)
-    }
     pub fn moveup_urls(mut self, moveup_urls: Vec<MoveUpUrl>) -> Self {
         self.moveup_urls = moveup_urls;
 
         self
+    }
+}
+
+#[derive(Serialize, Debug)]
+pub struct MarkdownRenderData {
+    markdown_html: String,
+    markdown_signed_url: String,
+    markdown_title: String,
+}
+
+impl MarkdownRenderData {
+    pub fn of(markdown: &Markdown, signed_url: Option<String>) -> MarkdownRenderData {
+        MarkdownRenderData {
+            markdown_html: markdown_to_html(&markdown.content),
+            markdown_title: markdown.title.clone(),
+            markdown_signed_url: signed_url.unwrap_or_default(),
+        }
     }
 }

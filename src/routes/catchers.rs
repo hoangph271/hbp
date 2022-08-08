@@ -1,6 +1,6 @@
 use crate::utils::responders::HbpResponse;
 use httpstatus::StatusCode;
-use rocket::{catch, http::Status, Catcher, Request, catchers};
+use rocket::{catch, catchers, http::Status, Catcher, Request};
 
 #[catch(default)]
 fn default(status: Status, _req: &Request) -> HbpResponse {

@@ -2,7 +2,7 @@
 > I'm a coder from Vietnam...! 🇻🇳
 
 I often create & abandon pet projects...!  
-Until I stop, that'll what I keep doing...! :"}
+Until I stop, that'll be what I keep doing...! :"}
 
 Things I like:
   - Coding, `Rust` & `JavaScript`

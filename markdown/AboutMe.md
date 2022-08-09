@@ -1,4 +1,4 @@
-> Hello, friend...!  
+> `eps1.0_hellofriend.mov`  
 > I'm a coder from Vietnam...! 🇻🇳
 
 I often create & abandon pet projects...!  

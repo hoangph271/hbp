@@ -1,5 +1,3 @@
-use std::vec;
-
 use httpstatus::StatusCode;
 use log::*;
 use serde::Serialize;
@@ -7,6 +5,8 @@ use stargate_grpc::{
     result::{ColumnPositions, ResultSetMapper, TryFromRow},
     *,
 };
+use std::vec;
+use thiserror::Error;
 
 #[derive(Debug)]
 #[allow(unused)]
@@ -14,12 +14,8 @@ pub enum OrmError {
     NotFound,
 }
 
-pub fn get_keyspace() -> &'static str {
-    env::from_env(EnvKey::AstraKeySpace)
-}
-
 pub mod post_orm {
-    use super::{execute_stargate_query_for_vec, get_keyspace, stargate_client_from_env, DbError};
+    use super::{execute_stargate_query_for_vec, stargate_client_from_env, DbError};
     use crate::data::lib::OrmError;
     use crate::data::models::posts_model::*;
     use stargate_grpc::Query;
@@ -29,10 +25,7 @@ pub mod post_orm {
     }
 
     pub async fn get_posts() -> Result<Vec<Post>, DbError> {
-        let posts_query = Query::builder()
-            .keyspace(get_keyspace())
-            .query("SELECT * FROM posts")
-            .build();
+        let posts_query = Query::builder().query("SELECT * FROM posts").build();
 
         let val = execute_stargate_query_for_vec(posts_query).await?;
 
@@ -71,10 +64,11 @@ pub mod post_orm {
 
 use crate::{
     shared::interfaces::ApiErrorResponse,
-    utils::env::{self, from_env, EnvKey},
+    utils::env::{from_env, EnvKey},
 };
 
-#[derive(Debug, Serialize)]
+#[derive(Error, Debug, Serialize)]
+#[error("DbError: {status_code:?} - {message}")]
 pub struct DbError {
     pub status_code: StatusCode,
     pub message: String,
@@ -190,4 +184,8 @@ where
     } else {
         Ok(None)
     }
+}
+
+pub fn get_keyspace() -> &'static str {
+    from_env(EnvKey::AstraKeySpace)
 }

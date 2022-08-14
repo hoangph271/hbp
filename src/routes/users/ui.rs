@@ -1,4 +1,4 @@
-use crate::data::user_orm::user_orm;
+use crate::data::user_orm::UserOrm;
 use crate::routes::users::shared::{LoginBody, SignupBody};
 use crate::utils::auth::{AuthPayload, UserPayload};
 use crate::utils::constants::cookies;
@@ -97,7 +97,7 @@ pub async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
             .expect("Hashing password failed"),
     };
 
-    if user_orm::create_user(new_user).await.is_ok() {
+    if UserOrm::from_env().create_user(new_user).await.is_ok() {
         HbpResponse::redirect(uri!("/users", login))
     } else {
         HbpResponse::redirect(uri!("/users", signup))

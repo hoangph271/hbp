@@ -13,7 +13,7 @@ pub fn init_db() {
         info!("---@ init_db()");
 
         loop {
-            match task::block_on(user_orm::user_orm::init_users_table()) {
+            match task::block_on(user_orm::UserOrm::from_env().init_users_table()) {
                 Ok(_) => break,
                 Err(e) => {
                     error!("{:?}", e);

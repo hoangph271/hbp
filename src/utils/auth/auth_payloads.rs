@@ -1,6 +1,5 @@
 use httpstatus::StatusCode;
-use jsonwebtoken::{decode, DecodingKey, Validation};
-use log::error;
+use jsonwebtoken::{decode, DecodingKey, TokenData, Validation};
 use rocket::serde::{Deserialize, Serialize};
 
 use crate::utils::{env, timestamp_now, types::HbpError};
@@ -104,28 +103,20 @@ impl AuthPayload {
         let key = &DecodingKey::from_secret(&jwt_secret());
         let validation = &Validation::default();
 
-        match decode::<UserPayload>(token, key, validation) {
-            Ok(result) => {
-                return Ok(AuthPayload::User(result.claims));
-            }
-            Err(e) => {
-                error!("decode::<UserPayload> fail: {e}");
-            }
-        }
+        let auth_payload: Result<AuthPayload, HbpError> =
+            decode::<UserPayload>(token, key, validation)
+                .map(|val| val.into())
+                .or_else(|_| {
+                    decode::<UserResoucePayload>(token, key, validation).map(|val| val.into())
+                })
+                .map_err(|_| {
+                    HbpError::from_message(
+                        &format!("verify_jwt failed for {token}"),
+                        StatusCode::Unauthorized,
+                    )
+                });
 
-        match decode::<UserResoucePayload>(token, key, validation) {
-            Ok(result) => {
-                return Ok(AuthPayload::UserResource(result.claims));
-            }
-            Err(e) => {
-                error!("decode::<UserResoucePayload> fail: {}", e);
-            }
-        }
-
-        Err(HbpError::from_message(
-            &format!("verify_jwt failed for {token}"),
-            StatusCode::Unauthorized,
-        ))
+        auth_payload
     }
 
     pub fn match_path<F>(&self, path: &str, user_assert: Option<F>) -> bool
@@ -152,5 +143,16 @@ impl AuthPayload {
             AuthPayload::User(user_payload) => jwt::sign_jwt(user_payload),
             AuthPayload::UserResource(resource_payload) => jwt::sign_jwt(resource_payload),
         }
+    }
+}
+
+impl From<TokenData<UserPayload>> for AuthPayload {
+    fn from(token_data: TokenData<UserPayload>) -> Self {
+        AuthPayload::User(token_data.claims)
+    }
+}
+impl From<TokenData<UserResoucePayload>> for AuthPayload {
+    fn from(token_data: TokenData<UserResoucePayload>) -> Self {
+        AuthPayload::UserResource(token_data.claims)
     }
 }

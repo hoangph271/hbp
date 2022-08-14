@@ -3,7 +3,7 @@ mod user_orm_test;
 
 use crate::data::{lib::*, models::users_model::*};
 use httpstatus::StatusCode;
-use stargate_grpc::Query;
+use stargate_grpc::{Query, StargateClient};
 
 pub struct UserOrm {
     pub keyspace: String,
@@ -16,8 +16,12 @@ impl UserOrm {
         }
     }
 
+    fn build_stargate_client(&self) -> Result<StargateClient, DbError> {
+        todo!()
+    }
+
     pub async fn init_users_table(&self) -> Result<(), DbError> {
-        let mut client = stargate_client_from_env().await?;
+        let mut client = self.build_stargate_client()?;
 
         let create_users_table = stargate_grpc::Query::builder()
             .keyspace(&self.keyspace)
@@ -50,7 +54,8 @@ impl UserOrm {
             .bind_name("username", username)
             .build();
 
-        let maybe_user: Option<User> = execute_stargate_query_for_one(user_query).await?;
+        let client = self.build_stargate_client()?;
+        let maybe_user: Option<User> = execute_stargate_query_for_one(client, user_query).await?;
 
         Ok(maybe_user)
     }

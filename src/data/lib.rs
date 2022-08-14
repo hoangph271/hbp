@@ -162,13 +162,12 @@ where
     Ok(Some(items))
 }
 pub async fn execute_stargate_query_for_one<T>(
+    mut client: StargateClient,
     query: stargate_grpc::Query,
 ) -> Result<Option<T>, DbError>
 where
     T: ColumnPositions + TryFromRow,
 {
-    let mut client = stargate_client_from_env().await?;
-
     let response = client.execute_query(query).await.unwrap();
     let mut result_set: ResultSet = response.try_into().unwrap();
 

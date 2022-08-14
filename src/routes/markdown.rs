@@ -140,12 +140,6 @@ async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: AuthPayload)
             });
 
             // TODO: Sort...! :"<
-            // markdowns.sort_by(|m1, m2| {
-            //     const DATE_FORMAT: &str = "%m/%d/%Y";
-            //     NaiveDate::parse_from_str(&m2.dob, DATE_FORMAT)
-            //         .unwrap()
-            //         .cmp(&NaiveDate::parse_from_str(&m1.dob, DATE_FORMAT).unwrap())
-            // });
 
             match render_markdown_list(
                 IndexLayoutData::default()

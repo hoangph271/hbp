@@ -28,8 +28,6 @@ impl UserOrm {
     }
 
     pub async fn init_users_table(&self) -> Result<(), DbError> {
-        let mut client = self.build_stargate_client().await?;
-
         let create_users_table = stargate_grpc::Query::builder()
             .keyspace(&self.keyspace)
             .query(
@@ -41,11 +39,33 @@ impl UserOrm {
             )
             .build();
 
-        client
+        self.build_stargate_client()
+            .await?
             .execute_query(create_users_table)
             .await
             .map_err(|e| {
                 let msg = format!("init_users_table failed at .execute_query(): {e:?}");
+
+                DbError::internal_server_error(msg)
+            })?;
+
+        println!("created users table");
+        Ok(())
+    }
+    #[cfg(test)]
+    #[allow(dead_code)]
+    pub async fn drop_users_table(&self) -> Result<(), DbError> {
+        let create_users_table = stargate_grpc::Query::builder()
+            .keyspace(&self.keyspace)
+            .query("DROP TABLE IF EXISTS users")
+            .build();
+
+        self.build_stargate_client()
+            .await?
+            .execute_query(create_users_table)
+            .await
+            .map_err(|e| {
+                let msg = format!("drop_users_table failed at .execute_query(): {e:?}");
 
                 DbError::internal_server_error(msg)
             })?;
@@ -80,7 +100,9 @@ impl UserOrm {
             .bind(new_user.clone())
             .build();
 
-        let mut result_set = execute_stargate_query(user_query).await?.unwrap();
+        let client = self.build_stargate_client().await?;
+        let mut result_set = execute_stargate_query(client, user_query).await?.unwrap();
+
         let mut row = result_set.rows.pop().unwrap();
         let inserted: bool = row.try_take(0).unwrap();
 

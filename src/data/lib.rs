@@ -122,14 +122,13 @@ pub async fn stargate_client_from_env() -> Result<StargateClient, DbError> {
     .await
 }
 pub async fn execute_stargate_query(
+    mut client: StargateClient,
     query: stargate_grpc::Query,
 ) -> Result<Option<ResultSet>, DbError> {
-    let mut client = stargate_client_from_env().await?;
+    let response = client.execute_query(query).await.map_err(|e| {
+        let msg = format!("execute_stargate_query failed at .execute_query(): {e:?}");
 
-    let response = client.execute_query(query).await.map_err(|_| {
-        DbError::internal_server_error(
-            "execute_stargate_query failed at .execute_query()".to_owned(),
-        )
+        DbError::internal_server_error(msg)
     })?;
 
     Ok(response.try_into().ok())

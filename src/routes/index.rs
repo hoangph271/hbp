@@ -21,12 +21,11 @@ async fn readme_md() -> HbpResponse {
                 if markdown::is_marp(&markdown_data.content) {
                     markdown::render_marp(&markdown_data).await
                 } else {
-                    let html = markdown::render_markdown(
+                    markdown::render_markdown(
                         &markdown_data,
                         IndexLayoutData::default().title(&markdown_data.title),
                     )
-                    .await;
-                    html
+                    .await
                 }
             };
 

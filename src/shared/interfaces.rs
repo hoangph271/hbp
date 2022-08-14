@@ -1,7 +1,7 @@
 use httpstatus::StatusCode;
 use serde::{Serialize, Serializer};
 
-use crate::utils::responders::HbpResponse;
+use crate::utils::{responders::HbpResponse, types::HbpError};
 
 fn status_code_serialize<S>(val: &StatusCode, s: S) -> Result<S::Ok, S::Error>
 where
@@ -23,6 +23,14 @@ impl From<ApiErrorResponse> for HbpResponse {
         HbpResponse::json(api_error_response, Some(status_code))
     }
 }
+impl From<ApiErrorResponse> for HbpError {
+    fn from(api_error_response: ApiErrorResponse) -> HbpError {
+        HbpError {
+            msg: api_error_response.errors.join(";"),
+            status_code: api_error_response.status_code,
+        }
+    }
+}
 impl ApiErrorResponse {
     pub fn bad_request(errors: Vec<String>) -> ApiErrorResponse {
         ApiErrorResponse {
@@ -31,24 +39,23 @@ impl ApiErrorResponse {
         }
     }
 
-    pub fn unauthorized() -> ApiErrorResponse {
-        let status_code = StatusCode::Unauthorized;
-        let errors = vec![status_code.reason_phrase().to_string()];
-
-        ApiErrorResponse {
-            status_code,
-            errors,
+    pub fn from_status(status_code: StatusCode) -> Self {
+        Self {
+            status_code: status_code.clone(),
+            errors: vec![status_code.reason_phrase().to_string()],
         }
     }
 
-    pub fn internal_server_error() -> ApiErrorResponse {
-        let status_code = StatusCode::InternalServerError;
-        let errors = vec![status_code.reason_phrase().to_string()];
+    pub fn unauthorized() -> ApiErrorResponse {
+        Self::from_status(StatusCode::Unauthorized)
+    }
 
-        ApiErrorResponse {
-            status_code,
-            errors,
-        }
+    pub fn forbidden() -> ApiErrorResponse {
+        Self::from_status(StatusCode::Forbidden)
+    }
+
+    pub fn internal_server_error() -> ApiErrorResponse {
+        Self::from_status(StatusCode::InternalServerError)
     }
 }
 

@@ -1,11 +1,13 @@
+use crate::data::models::users_model::PutUser;
 use crate::data::user_orm::UserOrm;
 use crate::shared::interfaces::{ApiErrorResponse, ApiItemResponse};
+use crate::utils::auth::UserPayload;
 use crate::utils::responders::HbpResponse;
 use crate::utils::types::{HbpError, HbpResult};
 use httpstatus::StatusCode::BadRequest;
 use log::*;
-use rocket::post;
 use rocket::serde::json::{Error as JsonError, Json};
+use rocket::{post, put};
 use rocket_okapi::openapi;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -13,11 +15,11 @@ use serde::Deserialize;
 use super::shared::{attemp_signin, LoginBody};
 
 #[derive(Deserialize, JsonSchema)]
-pub struct SignupApiBody {
+pub struct SignupApiPayload {
     username: String,
     password: String,
 }
-impl SignupApiBody {
+impl SignupApiPayload {
     fn validate(&self) -> HbpResult<()> {
         if self.username.is_empty() {
             HbpResult::Err(HbpError::from_message(
@@ -36,13 +38,13 @@ impl SignupApiBody {
 }
 
 #[openapi]
-#[post("/signup", data = "<signup_body>")]
+#[post("/signup", data = "<signup_payload>")]
 pub async fn api_post_signup(
-    signup_body: Result<Json<SignupApiBody>, JsonError<'_>>,
+    signup_payload: Result<Json<SignupApiPayload>, JsonError<'_>>,
 ) -> HbpResponse {
     use crate::data::models::users_model::NewUser;
 
-    match signup_body {
+    match signup_payload {
         Err(e) => {
             let error = match e {
                 JsonError::Io(_) => "Can not read JSON".to_owned(),
@@ -74,6 +76,25 @@ pub async fn api_post_signup(
                 }
             }
         }
+    }
+}
+
+#[openapi]
+#[put("/<username>", data = "<user>")]
+pub async fn api_put_user(username: String, user: Json<PutUser>, jwt: UserPayload) -> HbpResponse {
+    if username.ne(&jwt.sub) {
+        return ApiErrorResponse::forbidden().into();
+    }
+
+    let user = user.into_inner();
+
+    match UserOrm::from_env().update_user(user.clone()).await {
+        Ok(_) => ApiItemResponse::ok(user).into(),
+        Err(e) => ApiErrorResponse {
+            status_code: e.status_code,
+            errors: vec![e.message],
+        }
+        .into(),
     }
 }
 

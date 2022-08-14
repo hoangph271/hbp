@@ -1,11 +1,20 @@
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use stargate_grpc_derive::{IntoValues, TryFromRow};
 
-#[derive(Debug, Serialize, TryFromRow, Deserialize)]
+#[derive(Debug, Serialize, TryFromRow, Deserialize, JsonSchema, Clone, IntoValues)]
 pub struct User {
     pub username: String,
     #[serde(skip_serializing)]
     pub hashed_password: String,
+    pub title: String,
+    #[serde(rename = "avatarUrl")]
+    pub avatar_url: Option<String>,
+}
+
+#[derive(Debug, Serialize, TryFromRow, Deserialize, JsonSchema, Clone, IntoValues)]
+pub struct PutUser {
+    pub username: String,
     pub title: String,
     #[serde(rename = "avatarUrl")]
     pub avatar_url: Option<String>,

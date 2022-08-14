@@ -122,4 +122,24 @@ impl UserOrm {
             })
         }
     }
+
+    pub async fn update_user(&self, user: PutUser) -> Result<(), DbError> {
+        let user_query = Query::builder()
+            .keyspace(&self.keyspace)
+            .query(
+                "
+                UPDATE users
+                SET title = :title,
+                avatar_url = :avatar_url
+                WHERE username = :username",
+            )
+            .bind(user.clone())
+            .build();
+
+        let client = self.build_stargate_client().await?;
+        let res = execute_stargate_query(client, user_query).await?;
+        println!("{res:?}");
+
+        Ok(())
+    }
 }

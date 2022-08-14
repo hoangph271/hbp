@@ -124,6 +124,10 @@ impl HbpError {
         Self::from_status(StatusCode::Unauthorized)
     }
 
+    pub fn forbidden() -> HbpError {
+        Self::from_status(StatusCode::Forbidden)
+    }
+
     pub fn not_found() -> HbpError {
         Self::from_status(StatusCode::NotFound)
     }

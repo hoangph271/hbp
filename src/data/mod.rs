@@ -1,5 +1,6 @@
 pub mod lib;
 pub mod models;
+pub mod user_orm;
 
 use async_std::task;
 use log::*;
@@ -11,7 +12,7 @@ pub fn init_db() {
         info!("---@ init_db()");
 
         loop {
-            match task::block_on(lib::user_orm::init_users_table()) {
+            match task::block_on(user_orm::init_users_table()) {
                 Ok(_) => break,
                 Err(e) => {
                     error!("{:?}", e);

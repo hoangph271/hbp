@@ -1,8 +1,6 @@
-use crate::data::{lib::build_stargate_client, models::users_model::*};
+use crate::data::{lib::*, models::users_model::*};
 use httpstatus::StatusCode;
 use stargate_grpc::Query;
-
-use super::lib::{execute_stargate_query, execute_stargate_query_for_one, DbError};
 
 pub async fn init_users_table() -> Result<(), DbError> {
     let mut client = build_stargate_client().await?;

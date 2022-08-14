@@ -1,4 +1,4 @@
-use crate::data::user_orm;
+use crate::data::user_orm::user_orm;
 use crate::shared::interfaces::{ApiErrorResponse, ApiItemResponse};
 use crate::utils::responders::HbpResponse;
 use crate::utils::types::{HbpError, HbpResult};

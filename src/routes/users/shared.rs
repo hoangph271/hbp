@@ -4,7 +4,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
-    data::{lib::DbResult, models::users_model::User, user_orm},
+    data::{lib::DbResult, models::users_model::User, user_orm::user_orm},
     utils::types::{HbpError, HbpResult},
 };
 

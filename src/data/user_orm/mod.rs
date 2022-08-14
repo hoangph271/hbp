@@ -1,27 +1,34 @@
 #[cfg(test)]
 mod user_orm_test;
 
-use crate::data::{lib::*, models::users_model::*};
+use crate::{
+    data::{lib::*, models::users_model::*},
+    utils::env::{from_env, EnvKey},
+};
 use httpstatus::StatusCode;
 use stargate_grpc::{Query, StargateClient};
 
 pub struct UserOrm {
     pub keyspace: String,
+    pub astra_uri: String,
+    pub bearer_token: String,
 }
 
 impl UserOrm {
     pub fn from_env() -> Self {
         Self {
-            keyspace: get_keyspace().to_owned(),
+            keyspace: from_env(EnvKey::AstraKeySpace).to_owned(),
+            astra_uri: from_env(EnvKey::AstraUri).to_owned(),
+            bearer_token: from_env(EnvKey::AstraBearerToken).to_owned(),
         }
     }
 
-    fn build_stargate_client(&self) -> Result<StargateClient, DbError> {
-        todo!()
+    async fn build_stargate_client(&self) -> Result<StargateClient, DbError> {
+        build_stargate_client(&self.astra_uri, &self.bearer_token).await
     }
 
     pub async fn init_users_table(&self) -> Result<(), DbError> {
-        let mut client = self.build_stargate_client()?;
+        let mut client = self.build_stargate_client().await?;
 
         let create_users_table = stargate_grpc::Query::builder()
             .keyspace(&self.keyspace)
@@ -54,7 +61,7 @@ impl UserOrm {
             .bind_name("username", username)
             .build();
 
-        let client = self.build_stargate_client()?;
+        let client = self.build_stargate_client().await?;
         let maybe_user: Option<User> = execute_stargate_query_for_one(client, user_query).await?;
 
         Ok(maybe_user)

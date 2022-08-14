@@ -109,10 +109,9 @@ pub async fn build_stargate_client(
         .connect()
         .await
         .map_err(|e| {
-            error!("{:?}", e);
-            DbError::internal_server_error(
-                "build_stargate_client() failed at .connect()".to_owned(),
-            )
+            let msg = format!("build_stargate_client() failed at .connect(): {e:?}");
+
+            DbError::internal_server_error(msg)
         })
 }
 pub async fn stargate_client_from_env() -> Result<StargateClient, DbError> {

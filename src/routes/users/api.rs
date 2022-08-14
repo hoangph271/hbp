@@ -1,4 +1,4 @@
-use crate::data::user_orm;
+use crate::data::user_orm::UserOrm;
 use crate::shared::interfaces::{ApiErrorResponse, ApiItemResponse};
 use crate::utils::responders::HbpResponse;
 use crate::utils::types::{HbpError, HbpResult};
@@ -65,7 +65,7 @@ pub async fn api_post_signup(
                     .expect("Hashing password failed"),
             };
 
-            match user_orm::create_user(new_user).await {
+            match UserOrm::from_env().create_user(new_user).await {
                 Ok(new_user) => ApiItemResponse::ok(new_user).into(),
                 Err(e) => {
                     let e: ApiErrorResponse = e.into();

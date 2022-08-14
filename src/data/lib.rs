@@ -1,5 +1,3 @@
-use std::vec;
-
 use httpstatus::StatusCode;
 use log::*;
 use serde::Serialize;
@@ -7,6 +5,8 @@ use stargate_grpc::{
     result::{ColumnPositions, ResultSetMapper, TryFromRow},
     *,
 };
+use std::vec;
+use thiserror::Error;
 
 #[derive(Debug)]
 #[allow(unused)]
@@ -15,7 +15,7 @@ pub enum OrmError {
 }
 
 pub mod post_orm {
-    use super::{build_stargate_client, execute_stargate_query_for_vec, DbError};
+    use super::{execute_stargate_query_for_vec, stargate_client_from_env, DbError};
     use crate::data::lib::OrmError;
     use crate::data::models::posts_model::*;
     use stargate_grpc::Query;
@@ -25,10 +25,7 @@ pub mod post_orm {
     }
 
     pub async fn get_posts() -> Result<Vec<Post>, DbError> {
-        let posts_query = Query::builder()
-            .keyspace("astra")
-            .query("SELECT * FROM posts")
-            .build();
+        let posts_query = Query::builder().query("SELECT * FROM posts").build();
 
         let val = execute_stargate_query_for_vec(posts_query).await?;
 
@@ -48,7 +45,7 @@ pub mod post_orm {
     }
 
     pub async fn init_posts_table() -> Result<(), DbError> {
-        let mut client = build_stargate_client().await?;
+        let mut client = stargate_client_from_env().await?;
 
         let create_posts_table = stargate_grpc::Query::builder()
             .query(
@@ -70,7 +67,8 @@ use crate::{
     utils::env::{from_env, EnvKey},
 };
 
-#[derive(Debug, Serialize)]
+#[derive(Error, Debug, Serialize)]
+#[error("DbError: {status_code:?} - {message}")]
 pub struct DbError {
     pub status_code: StatusCode,
     pub message: String,
@@ -95,12 +93,13 @@ impl From<DbError> for ApiErrorResponse {
     }
 }
 
-pub async fn build_stargate_client() -> Result<StargateClient, DbError> {
-    let astra_uri = from_env(EnvKey::AstraUri);
-    let bearer_token = from_env(EnvKey::AstraBearerToken);
+pub async fn build_stargate_client(
+    astra_uri: &str,
+    bearer_token: &str,
+) -> Result<StargateClient, DbError> {
     use std::str::FromStr;
 
-    let stargate_client = StargateClient::builder()
+    StargateClient::builder()
         .uri(astra_uri)
         .map_err(|_| {
             DbError::internal_server_error("build_stargate_client() failed at .uri()".to_owned())
@@ -110,18 +109,22 @@ pub async fn build_stargate_client() -> Result<StargateClient, DbError> {
         .connect()
         .await
         .map_err(|e| {
-            error!("{:?}", e);
-            DbError::internal_server_error(
-                "build_stargate_client() failed at .connect()".to_owned(),
-            )
-        })?;
+            let msg = format!("build_stargate_client() failed at .connect(): {e:?}");
 
-    Ok(stargate_client)
+            DbError::internal_server_error(msg)
+        })
+}
+pub async fn stargate_client_from_env() -> Result<StargateClient, DbError> {
+    build_stargate_client(
+        from_env(EnvKey::AstraUri),
+        from_env(EnvKey::AstraBearerToken),
+    )
+    .await
 }
 pub async fn execute_stargate_query(
     query: stargate_grpc::Query,
 ) -> Result<Option<ResultSet>, DbError> {
-    let mut client = build_stargate_client().await?;
+    let mut client = stargate_client_from_env().await?;
 
     let response = client.execute_query(query).await.map_err(|_| {
         DbError::internal_server_error(
@@ -137,7 +140,7 @@ pub async fn execute_stargate_query_for_vec<T>(
 where
     T: ColumnPositions + TryFromRow,
 {
-    let mut client = build_stargate_client().await?;
+    let mut client = stargate_client_from_env().await?;
 
     let response = client.execute_query(query).await.unwrap();
 
@@ -158,13 +161,12 @@ where
     Ok(Some(items))
 }
 pub async fn execute_stargate_query_for_one<T>(
+    mut client: StargateClient,
     query: stargate_grpc::Query,
 ) -> Result<Option<T>, DbError>
 where
     T: ColumnPositions + TryFromRow,
 {
-    let mut client = build_stargate_client().await?;
-
     let response = client.execute_query(query).await.unwrap();
     let mut result_set: ResultSet = response.try_into().unwrap();
 
@@ -180,4 +182,8 @@ where
     } else {
         Ok(None)
     }
+}
+
+pub fn get_keyspace() -> &'static str {
+    from_env(EnvKey::AstraKeySpace)
 }

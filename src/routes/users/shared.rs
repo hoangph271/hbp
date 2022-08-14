@@ -4,12 +4,12 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
-    data::{lib::DbResult, models::users_model::User, user_orm},
+    data::{lib::DbResult, models::users_model::User, user_orm::UserOrm},
     utils::types::{HbpError, HbpResult},
 };
 
 pub async fn attemp_signin(username: &str, password: &str) -> DbResult<Option<User>> {
-    if let Some(user) = user_orm::find_one(username).await? {
+    if let Some(user) = UserOrm::from_env().find_one(username).await? {
         let is_password_matches = bcrypt::verify(password, &user.hashed_password).unwrap_or(false);
 
         if is_password_matches {

@@ -1,9 +1,13 @@
 use log::*;
+use okapi::openapi3::Responses;
+use rocket_okapi::{gen::OpenApiGenerator, response::OpenApiResponderInner};
 use std::error::Error;
 use std::fmt;
 
 use httpstatus::StatusCode::{self};
 use rocket::response::Responder;
+
+use crate::data::lib::DbError;
 
 use super::responders::HbpResponse;
 
@@ -70,6 +74,14 @@ impl From<std::str::Utf8Error> for HbpError {
         )
     }
 }
+impl From<DbError> for HbpError {
+    fn from(e: DbError) -> Self {
+        HbpError {
+            msg: e.message,
+            status_code: e.status_code,
+        }
+    }
+}
 
 impl<'r> Responder<'r, 'static> for HbpError {
     fn respond_to(self, _: &'r rocket::Request<'_>) -> rocket::response::Result<'static> {
@@ -77,7 +89,21 @@ impl<'r> Responder<'r, 'static> for HbpError {
     }
 }
 
+impl OpenApiResponderInner for HbpError {
+    fn responses(_gen: &mut OpenApiGenerator) -> rocket_okapi::Result<Responses> {
+        Ok(Responses {
+            ..Default::default()
+        })
+    }
+}
+
 impl HbpError {
+    pub fn from_status(status_code: StatusCode) -> Self {
+        Self {
+            msg: status_code.reason_phrase().to_owned(),
+            status_code,
+        }
+    }
     pub fn from_message(msg: &str, status_code: StatusCode) -> HbpError {
         HbpError {
             status_code,
@@ -91,17 +117,15 @@ impl HbpError {
     }
 
     pub fn not_implemented() -> HbpError {
-        HbpError {
-            msg: StatusCode::NotImplemented.reason_phrase().to_owned(),
-            status_code: StatusCode::NotImplemented,
-        }
+        Self::from_status(StatusCode::NotImplemented)
     }
 
     pub fn unauthorized() -> HbpError {
-        HbpError {
-            msg: StatusCode::Unauthorized.reason_phrase().to_owned(),
-            status_code: StatusCode::Unauthorized,
-        }
+        Self::from_status(StatusCode::Unauthorized)
+    }
+
+    pub fn not_found() -> HbpError {
+        Self::from_status(StatusCode::NotFound)
     }
 }
 

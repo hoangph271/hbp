@@ -19,12 +19,6 @@ pub fn index(jwt: Option<AuthPayload>) -> HbpResponse {
     };
 
     // FIXME: Now with dir, how to sort...?
-    // markdowns.sort_by(|m1, m2| {
-    //     const DATE_FORMAT: &str = "%m/%d/%Y";
-    //     NaiveDate::parse_from_str(&m2.dob, DATE_FORMAT)
-    //         .unwrap()
-    //         .cmp(&NaiveDate::parse_from_str(&m1.dob, DATE_FORMAT).unwrap())
-    // });
 
     match render_markdown_list(
         IndexLayoutData::default().title("Blogs").maybe_auth(jwt),

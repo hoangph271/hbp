@@ -50,7 +50,7 @@ impl From<Markdown> for Data {
     }
 }
 
-fn extract_markdown_header_content(content: &str) -> Option<String> {
+pub fn extract_markdown_header_content(content: &str) -> Option<String> {
     if let Some(header_comment) = Regex::new("<!--((.|\n)*?)-->").ok()?.find(content) {
         if header_comment.start() != 0 {
             None
@@ -161,14 +161,4 @@ pub struct MarkdownDir {
 pub enum MarkdownOrMarkdownDir {
     Markdown(Markdown),
     MarkdownDir(MarkdownDir),
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn skip_if_no_metadata_comment() {
-        assert_eq!(extract_markdown_header_content(""), None);
-    }
 }

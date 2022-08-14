@@ -1,11 +1,11 @@
 <!--
 cover_image: /markdown/blogs/snake-game.png
-title: Zero sum games
-dob: 
-author: @HBP
-tags: arrial-2016, hhp
+title: A non zero sum game
+dob: 14/08/2022
+author: @hbp
+tags: arrival-2016, hhp
 -->
 
-### Zero sum games
+### A non zero sum game
 
 > I learned it from the 2016 movie - [Arrival](https://www.imdb.com/title/tt2543164/).

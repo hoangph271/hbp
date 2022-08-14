@@ -1,4 +1,4 @@
-use crate::data::lib::user_orm;
+use crate::data::user_orm;
 use crate::routes::users::shared::{LoginBody, SignupBody};
 use crate::utils::auth::{AuthPayload, UserPayload};
 use crate::utils::constants::cookies;

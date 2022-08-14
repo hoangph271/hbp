@@ -14,8 +14,12 @@ pub enum OrmError {
     NotFound,
 }
 
+pub fn get_keyspace() -> &'static str {
+    env::from_env(EnvKey::AstraKeySpace)
+}
+
 pub mod post_orm {
-    use super::{build_stargate_client, execute_stargate_query_for_vec, DbError};
+    use super::{execute_stargate_query_for_vec, get_keyspace, stargate_client_from_env, DbError};
     use crate::data::lib::OrmError;
     use crate::data::models::posts_model::*;
     use stargate_grpc::Query;
@@ -26,7 +30,7 @@ pub mod post_orm {
 
     pub async fn get_posts() -> Result<Vec<Post>, DbError> {
         let posts_query = Query::builder()
-            .keyspace("astra")
+            .keyspace(get_keyspace())
             .query("SELECT * FROM posts")
             .build();
 
@@ -48,7 +52,7 @@ pub mod post_orm {
     }
 
     pub async fn init_posts_table() -> Result<(), DbError> {
-        let mut client = build_stargate_client().await?;
+        let mut client = stargate_client_from_env().await?;
 
         let create_posts_table = stargate_grpc::Query::builder()
             .query(
@@ -67,7 +71,7 @@ pub mod post_orm {
 
 use crate::{
     shared::interfaces::ApiErrorResponse,
-    utils::env::{from_env, EnvKey},
+    utils::env::{self, from_env, EnvKey},
 };
 
 #[derive(Debug, Serialize)]
@@ -95,12 +99,13 @@ impl From<DbError> for ApiErrorResponse {
     }
 }
 
-pub async fn build_stargate_client() -> Result<StargateClient, DbError> {
-    let astra_uri = from_env(EnvKey::AstraUri);
-    let bearer_token = from_env(EnvKey::AstraBearerToken);
+pub async fn build_stargate_client(
+    astra_uri: &str,
+    bearer_token: &str,
+) -> Result<StargateClient, DbError> {
     use std::str::FromStr;
 
-    let stargate_client = StargateClient::builder()
+    StargateClient::builder()
         .uri(astra_uri)
         .map_err(|_| {
             DbError::internal_server_error("build_stargate_client() failed at .uri()".to_owned())
@@ -114,14 +119,19 @@ pub async fn build_stargate_client() -> Result<StargateClient, DbError> {
             DbError::internal_server_error(
                 "build_stargate_client() failed at .connect()".to_owned(),
             )
-        })?;
-
-    Ok(stargate_client)
+        })
+}
+pub async fn stargate_client_from_env() -> Result<StargateClient, DbError> {
+    build_stargate_client(
+        from_env(EnvKey::AstraUri),
+        from_env(EnvKey::AstraBearerToken),
+    )
+    .await
 }
 pub async fn execute_stargate_query(
     query: stargate_grpc::Query,
 ) -> Result<Option<ResultSet>, DbError> {
-    let mut client = build_stargate_client().await?;
+    let mut client = stargate_client_from_env().await?;
 
     let response = client.execute_query(query).await.map_err(|_| {
         DbError::internal_server_error(
@@ -137,7 +147,7 @@ pub async fn execute_stargate_query_for_vec<T>(
 where
     T: ColumnPositions + TryFromRow,
 {
-    let mut client = build_stargate_client().await?;
+    let mut client = stargate_client_from_env().await?;
 
     let response = client.execute_query(query).await.unwrap();
 
@@ -163,7 +173,7 @@ pub async fn execute_stargate_query_for_one<T>(
 where
     T: ColumnPositions + TryFromRow,
 {
-    let mut client = build_stargate_client().await?;
+    let mut client = stargate_client_from_env().await?;
 
     let response = client.execute_query(query).await.unwrap();
     let mut result_set: ResultSet = response.try_into().unwrap();

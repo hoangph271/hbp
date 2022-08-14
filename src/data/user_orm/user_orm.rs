@@ -3,7 +3,7 @@ use httpstatus::StatusCode;
 use stargate_grpc::Query;
 
 pub async fn init_users_table() -> Result<(), DbError> {
-    let mut client = build_stargate_client().await?;
+    let mut client = stargate_client_from_env().await?;
 
     let create_users_table = stargate_grpc::Query::builder()
         .query(
@@ -28,7 +28,7 @@ pub async fn init_users_table() -> Result<(), DbError> {
 
 pub async fn find_one(username: &str) -> Result<Option<User>, DbError> {
     let user_query = Query::builder()
-        .keyspace("astra")
+        .keyspace(get_keyspace())
         .query("SELECT * FROM users WHERE username = :username")
         .bind_name("username", username)
         .build();
@@ -42,7 +42,7 @@ pub async fn create_user(new_user: NewUser) -> Result<User, DbError> {
     let new_user: InsertableNewUser = new_user.into();
 
     let user_query = Query::builder()
-        .keyspace("astra")
+        .keyspace(get_keyspace())
         .query(
             "INSERT INTO users(username, hashed_password, title) \
                     VALUES (:username, :hashed_password, :title) \

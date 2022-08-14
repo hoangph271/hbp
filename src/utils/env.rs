@@ -7,6 +7,7 @@ pub enum EnvKey {
     MarpApiRoot,
     AstraUri,
     AstraBearerToken,
+    AstraKeySpace,
 }
 
 pub fn from_env(env_key: EnvKey) -> &'static str {
@@ -25,5 +26,6 @@ pub fn from_env(env_key: EnvKey) -> &'static str {
         EnvKey::MarpApiRoot => dotenv!("MARP_API_ROOT"),
         EnvKey::AstraUri => dotenv!("ASTRA_URI"),
         EnvKey::AstraBearerToken => dotenv!("ASTRA_BEARER_TOKEN"),
+        EnvKey::AstraKeySpace => dotenv!("ASTRA_KEY_SPACE"),
     }
 }

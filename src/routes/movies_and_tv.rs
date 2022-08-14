@@ -6,7 +6,7 @@ use stargate_grpc::{Query, ResultSet};
 use stargate_grpc_derive::TryFromRow;
 
 use crate::{
-    data::lib::{execute_stargate_query, execute_stargate_query_for_one},
+    data::lib::{execute_stargate_query, execute_stargate_query_for_one, get_keyspace},
     shared::interfaces::{ApiErrorResponse, ApiItemResponse, ApiListResponse},
     utils::responders::HbpResponse,
 };
@@ -21,7 +21,7 @@ struct MovieOrTv {
 #[get("/")]
 async fn api_get_shows() -> HbpResponse {
     let query = Query::builder()
-        .keyspace("astra")
+        .keyspace(get_keyspace())
         .query("SELECT title, show_id FROM movies_and_tv")
         .build();
 
@@ -46,7 +46,7 @@ async fn api_get_shows() -> HbpResponse {
 #[get("/<show_id>")]
 async fn api_get_one(show_id: i64) -> HbpResponse {
     let query = Query::builder()
-        .keyspace("astra")
+        .keyspace(get_keyspace())
         .query("SELECT title, show_id FROM movies_and_tv WHERE show_id = :show_id")
         .bind_name("show_id", show_id)
         .build();

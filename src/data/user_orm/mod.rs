@@ -35,6 +35,7 @@ impl UserOrm {
                     username text PRIMARY KEY,
                     hashed_password text,
                     title text,
+                    avatar_url text,
                 )",
             )
             .build();
@@ -70,7 +71,7 @@ impl UserOrm {
                 DbError::internal_server_error(msg)
             })?;
 
-        println!("created users table");
+        println!("dropped users table");
         Ok(())
     }
 
@@ -93,9 +94,10 @@ impl UserOrm {
         let user_query = Query::builder()
             .keyspace(&self.keyspace)
             .query(
-                "INSERT INTO users(username, hashed_password, title) \
-                        VALUES (:username, :hashed_password, :title) \
-                        IF NOT EXISTS",
+                "
+                INSERT INTO users(username, hashed_password, title, avatar_url)
+                VALUES (:username, :hashed_password, :title, :avatar_url)
+                IF NOT EXISTS",
             )
             .bind(new_user.clone())
             .build();
@@ -107,7 +109,12 @@ impl UserOrm {
         let inserted: bool = row.try_take(0).unwrap();
 
         if inserted {
-            Ok(new_user.into())
+            match self.find_one(&new_user.username).await? {
+                Some(user) => Ok(user),
+                None => Err(DbError::internal_server_error(
+                    "create_user failed".to_owned(),
+                )),
+            }
         } else {
             Err(DbError {
                 status_code: StatusCode::Conflict,

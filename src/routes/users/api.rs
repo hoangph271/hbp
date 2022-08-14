@@ -60,6 +60,7 @@ pub async fn api_post_signup(
 
             let new_user = NewUser {
                 title: None,
+                avatar_url: None,
                 username: signup_body.username.clone(),
                 hashed_password: bcrypt::hash(&signup_body.password, bcrypt::DEFAULT_COST)
                     .expect("Hashing password failed"),

@@ -1,6 +1,6 @@
 <!--
 cover_image: /markdown/blogs/js-book.png
-title: The next big YouTube Channel...!
+title: The next big YouTube channel...!
 dob: 05/06/2022
 author: @HBP
 tags: js, code, hbp
@@ -19,13 +19,13 @@ We could...!
 - Create a YouTube/Twitch channel
 - START recording
 - Follow the MDN tutorials and learn JavaScript together
-- Only speak in English
+- Only speak English
 - END recording
 - Repeat every week
 - Pick a project, keep learning & building
 
 
 ```
+`I` - could be any coder...!
 `You` - could be any non-coder...!
-`I` - could be any developer...!
 ```

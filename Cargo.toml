@@ -32,7 +32,6 @@ serde_json = "1.0.82"
 nanoid = "0.4.0"
 bcrypt = "0.13.0"
 reqwest = { version = "0.11.11", features = ["multipart", "json"] }
-bonsaidb = { version = "0.4.1", features = ["local"] }
 futures = "0.3.21"
 glob = "0.3.0"
 regex = "1.6.0"
@@ -43,6 +42,7 @@ async-std = { version = "1.12.0", features = ["tokio1"] }
 schemars = "0.8.10"
 okapi = { version = "0.7.0-rc.1" }
 rocket_okapi = { version = "0.8.0-rc.2", features = ["swagger"] }
+thiserror = "1.0.32"
 
 [profile.dev]
 overflow-checks = true

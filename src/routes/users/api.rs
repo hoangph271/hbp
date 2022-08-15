@@ -43,37 +43,34 @@ pub async fn api_post_signup(
 ) -> HbpResponse {
     use crate::data::models::users_model::NewUser;
 
-    match signup_payload {
-        Err(e) => {
+    let maybe_user = wrap_api_handler(|| async {
+        let signup_body = signup_payload.map_err(|e| {
             let error = match e {
                 JsonError::Io(_) => "Can not read JSON".to_owned(),
                 JsonError::Parse(_, e) => e.to_string(),
             };
 
-            let errors = vec![error];
-            ApiErrorResponse::bad_request(errors).into()
-        }
-        Ok(signup_body) => {
-            if let Err(e) = signup_body.validate() {
-                let errors = vec![e.msg];
-                return ApiErrorResponse::bad_request(errors).into();
-            }
+            HbpError::bad_request(error)
+        })?;
 
-            let new_user = NewUser {
+        signup_body.validate()?;
+
+        let new_user = UserOrm::from_env()
+            .create_user(NewUser {
                 title: None,
                 username: signup_body.username.clone(),
                 hashed_password: bcrypt::hash(&signup_body.password, bcrypt::DEFAULT_COST)
                     .expect("Hashing password failed"),
-            };
+            })
+            .await?;
 
-            match UserOrm::from_env().create_user(new_user).await {
-                Ok(new_user) => ApiItemResponse::ok(new_user).into(),
-                Err(e) => {
-                    let e: ApiErrorResponse = e.into();
-                    e.into()
-                }
-            }
-        }
+        Ok(new_user)
+    })
+    .await;
+
+    match maybe_user {
+        Ok(user) => ApiItemResponse::ok(user).into(),
+        Err(e) => ApiErrorResponse::from_hbp_error(e).into(),
     }
 }
 

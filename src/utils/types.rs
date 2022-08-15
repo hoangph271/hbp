@@ -131,6 +131,13 @@ impl HbpError {
     pub fn not_found() -> HbpError {
         Self::from_status(StatusCode::NotFound)
     }
+
+    pub fn bad_request(msg: String) -> HbpError {
+        Self {
+            msg,
+            status_code: StatusCode::BadRequest,
+        }
+    }
 }
 
 pub type HbpResult<T> = Result<T, HbpError>;

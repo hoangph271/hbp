@@ -201,7 +201,7 @@ fn action_html_for(status_code: &StatusCode) -> String {
     .to_owned()
 }
 
-pub async fn wrap_api_handler<R, T>(handler: impl Fn() -> R) -> HbpResult<T>
+pub async fn wrap_api_handler<R, T>(handler: impl FnOnce() -> R) -> HbpResult<T>
 where
     R: Future<Output = HbpResult<T>>,
 {

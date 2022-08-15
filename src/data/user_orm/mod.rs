@@ -15,6 +15,15 @@ pub struct UserOrm {
 }
 
 impl UserOrm {
+    #[cfg(test)]
+    pub fn from_test_env() -> Self {
+        Self {
+            keyspace: dotenv!("TEST_ASTRA_KEY_SPACE").to_owned(),
+            astra_uri: dotenv!("TEST_ASTRA_URI").to_owned(),
+            bearer_token: dotenv!("TEST_ASTRA_BEARER_TOKEN").to_owned(),
+        }
+    }
+
     pub fn from_env() -> Self {
         Self {
             keyspace: from_env(EnvKey::AstraKeySpace).to_owned(),
@@ -35,7 +44,6 @@ impl UserOrm {
                     username text PRIMARY KEY,
                     hashed_password text,
                     title text,
-                    avatar_url text,
                 )",
             )
             .build();
@@ -75,7 +83,7 @@ impl UserOrm {
         Ok(())
     }
 
-    pub async fn find_one(&self, username: &str) -> Result<Option<User>, DbError> {
+    pub async fn find_one(&self, username: &str) -> Result<Option<DbUser>, DbError> {
         let user_query = Query::builder()
             .keyspace(&self.keyspace)
             .query("SELECT * FROM users WHERE username = :username")
@@ -83,20 +91,20 @@ impl UserOrm {
             .build();
 
         let client = self.build_stargate_client().await?;
-        let maybe_user: Option<User> = execute_stargate_query_for_one(client, user_query).await?;
+        let maybe_user: Option<DbUser> = execute_stargate_query_for_one(client, user_query).await?;
 
         Ok(maybe_user)
     }
 
-    pub async fn create_user(&self, new_user: NewUser) -> Result<User, DbError> {
+    pub async fn create_user(&self, new_user: NewUser) -> Result<DbUser, DbError> {
         let new_user: InsertableNewUser = new_user.into();
 
         let user_query = Query::builder()
             .keyspace(&self.keyspace)
             .query(
                 "
-                INSERT INTO users(username, hashed_password, title, avatar_url)
-                VALUES (:username, :hashed_password, :title, :avatar_url)
+                INSERT INTO users(username, hashed_password, title)
+                VALUES (:username, :hashed_password, :title)
                 IF NOT EXISTS",
             )
             .bind(new_user.clone())
@@ -129,8 +137,7 @@ impl UserOrm {
             .query(
                 "
                 UPDATE users
-                SET title = :title,
-                avatar_url = :avatar_url
+                SET title = :title
                 WHERE username = :username",
             )
             .bind(user.clone())

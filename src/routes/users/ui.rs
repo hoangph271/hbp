@@ -92,7 +92,6 @@ pub async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
     use crate::data::models::users_model::NewUser;
     let new_user = NewUser {
         title: None,
-        avatar_url: None,
         username: signup_body.username.clone(),
         hashed_password: bcrypt::hash(&signup_body.password, bcrypt::DEFAULT_COST)
             .expect("Hashing password failed"),

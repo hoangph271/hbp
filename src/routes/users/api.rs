@@ -2,10 +2,9 @@ use crate::data::models::users_model::PutUser;
 use crate::data::user_orm::UserOrm;
 use crate::shared::interfaces::{ApiErrorResponse, ApiItemResponse};
 use crate::utils::auth::UserPayload;
-use crate::utils::responders::HbpResponse;
+use crate::utils::responders::{wrap_api_handler, HbpResponse};
 use crate::utils::types::{HbpError, HbpResult};
 use httpstatus::StatusCode::BadRequest;
-use log::*;
 use rocket::serde::json::{Error as JsonError, Json};
 use rocket::{post, put};
 use rocket_okapi::openapi;
@@ -62,7 +61,6 @@ pub async fn api_post_signup(
 
             let new_user = NewUser {
                 title: None,
-                avatar_url: None,
                 username: signup_body.username.clone(),
                 hashed_password: bcrypt::hash(&signup_body.password, bcrypt::DEFAULT_COST)
                     .expect("Hashing password failed"),
@@ -101,16 +99,19 @@ pub async fn api_put_user(username: String, user: Json<PutUser>, jwt: UserPayloa
 #[openapi]
 #[post("/signin", data = "<signin_body>")]
 pub async fn api_post_signin(signin_body: Json<LoginBody>) -> HbpResponse {
-    let user_result = attemp_signin(&signin_body.username, &signin_body.password).await;
+    let maybe_jwt: HbpResult<String> = wrap_api_handler(|| async {
+        let user = attemp_signin(&signin_body.username, &signin_body.password)
+            .await?
+            .ok_or_else(HbpError::unauthorized)?;
 
-    match user_result {
-        Ok(maybe_user) => match maybe_user {
-            Some(user) => ApiItemResponse::ok(user).into(),
-            None => ApiErrorResponse::unauthorized().into(),
-        },
-        Err(e) => {
-            error!("{:?}", e);
-            ApiErrorResponse::internal_server_error().into()
-        }
+        let user_jwt: UserPayload = user.into();
+
+        user_jwt.sign_jwt()
+    })
+    .await;
+
+    match maybe_jwt {
+        Ok(jwt) => ApiItemResponse::ok(jwt).into(),
+        Err(e) => ApiErrorResponse::from_hbp_error(e).into(),
     }
 }

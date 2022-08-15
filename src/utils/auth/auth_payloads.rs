@@ -6,7 +6,10 @@ use rocket_okapi::{
     request::{OpenApiFromRequest, RequestHeaderInput},
 };
 
-use crate::utils::{env, timestamp_now, types::HbpError};
+use crate::{
+    data::models::users_model::DbUser,
+    utils::{env, timestamp_now, types::HbpError},
+};
 
 pub mod jwt {
     use crate::utils::types::{HbpError, HbpResult};
@@ -79,6 +82,14 @@ impl<'r> OpenApiFromRequest<'r> for UserPayload {
         _required: bool,
     ) -> rocket_okapi::Result<RequestHeaderInput> {
         Ok(RequestHeaderInput::None)
+    }
+}
+impl From<DbUser> for UserPayload {
+    fn from(db_user: DbUser) -> Self {
+        UserPayload {
+            sub: db_user.username,
+            ..Default::default()
+        }
     }
 }
 

@@ -1,9 +1,10 @@
 use crate::utils::template::IndexLayoutData;
+use futures::Future;
 use httpstatus::StatusCode;
 use okapi::openapi3::Responses;
 use rocket::fs::NamedFile;
 use rocket::http::{ContentType, Header, Status};
-use rocket::response::{Responder, Response, Result};
+use rocket::response::{Responder, Response, Result as ResResult};
 use rocket_okapi::gen::OpenApiGenerator;
 use rocket_okapi::response::OpenApiResponderInner;
 use rocket_okapi::JsonSchema;
@@ -12,7 +13,7 @@ use std::io::Cursor;
 use std::path::PathBuf;
 
 use super::template::TemplateRenderer;
-use super::types::HbpError;
+use super::types::{HbpError, HbpResult};
 
 #[allow(dead_code)]
 #[derive(Serialize, Deserialize, JsonSchema)]
@@ -124,7 +125,7 @@ impl HbpResponse {
 
 impl<'r> Responder<'r, 'r> for HbpResponse {
     // ! FIXME: Change `respond_to` into async when async Traits roll out...!
-    fn respond_to(self, request: &rocket::Request<'_>) -> Result<'r> {
+    fn respond_to(self, request: &rocket::Request<'_>) -> ResResult<'r> {
         let mut response_builder = Response::build();
 
         let status = Status::from_code(self.status_code.as_u16()).unwrap();
@@ -198,4 +199,17 @@ fn action_html_for(status_code: &StatusCode) -> String {
         }
     }
     .to_owned()
+}
+
+pub async fn wrap_api_handler<R, T>(handler: impl Fn() -> R) -> HbpResult<T>
+where
+    R: Future<Output = HbpResult<T>>,
+{
+    match handler().await {
+        Ok(val) => Ok(val),
+        Err(e) => {
+            log::error!("{e:?}");
+            Err(e)
+        }
+    }
 }

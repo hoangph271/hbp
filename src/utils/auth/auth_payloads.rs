@@ -1,8 +1,15 @@
 use httpstatus::StatusCode;
-use jsonwebtoken::{decode, DecodingKey, TokenData, Validation};
+use jsonwebtoken::{decode, errors::Error, DecodingKey, TokenData, Validation};
 use rocket::serde::{Deserialize, Serialize};
+use rocket_okapi::{
+    gen::OpenApiGenerator,
+    request::{OpenApiFromRequest, RequestHeaderInput},
+};
 
-use crate::utils::{env, timestamp_now, types::HbpError};
+use crate::{
+    data::models::users_model::DbUser,
+    utils::{env, timestamp_now, types::HbpError},
+};
 
 pub mod jwt {
     use crate::utils::types::{HbpError, HbpResult};
@@ -51,6 +58,13 @@ impl UserPayload {
         self.sub = sub;
         self
     }
+
+    pub fn decode(token: &str) -> Result<UserPayload, Error> {
+        let key = &DecodingKey::from_secret(&jwt_secret());
+        let validation = &Validation::default();
+
+        decode::<UserPayload>(token, key, validation).map(|val| val.claims)
+    }
 }
 impl Default for UserPayload {
     fn default() -> Self {
@@ -58,6 +72,23 @@ impl Default for UserPayload {
             sub: Default::default(),
             roles: Default::default(),
             exp: timestamp_now() + jwt_expires_in_ms(),
+        }
+    }
+}
+impl<'r> OpenApiFromRequest<'r> for UserPayload {
+    fn from_request_input(
+        _gen: &mut OpenApiGenerator,
+        _name: String,
+        _required: bool,
+    ) -> rocket_okapi::Result<RequestHeaderInput> {
+        Ok(RequestHeaderInput::None)
+    }
+}
+impl From<DbUser> for UserPayload {
+    fn from(db_user: DbUser) -> Self {
+        UserPayload {
+            sub: db_user.username,
+            ..Default::default()
         }
     }
 }
@@ -103,18 +134,15 @@ impl AuthPayload {
         let key = &DecodingKey::from_secret(&jwt_secret());
         let validation = &Validation::default();
 
-        let auth_payload: Result<AuthPayload, HbpError> =
-            decode::<UserPayload>(token, key, validation)
-                .map(|val| val.into())
-                .or_else(|_| {
-                    decode::<UserResoucePayload>(token, key, validation).map(|val| val.into())
-                })
-                .map_err(|_| {
-                    HbpError::from_message(
-                        &format!("verify_jwt failed for {token}"),
-                        StatusCode::Unauthorized,
-                    )
-                });
+        let auth_payload: Result<AuthPayload, HbpError> = UserPayload::decode(token)
+            .map(AuthPayload::User)
+            .or_else(|_| decode::<UserResoucePayload>(token, key, validation).map(|val| val.into()))
+            .map_err(|_| {
+                HbpError::from_message(
+                    &format!("verify_jwt failed for {token}"),
+                    StatusCode::Unauthorized,
+                )
+            });
 
         auth_payload
     }

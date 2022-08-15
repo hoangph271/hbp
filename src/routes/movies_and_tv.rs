@@ -25,13 +25,17 @@ struct MovieOrTv {
 
 #[openapi]
 #[get("/")]
-async fn api_get_shows() -> HbpResponse {
+async fn api_get_shows() -> HbpResult<HbpResponse> {
     let query = Query::builder()
         .keyspace(get_keyspace())
         .query("SELECT title, show_id FROM movies_and_tv")
         .build();
 
-    let result_set: ResultSet = execute_stargate_query(query).await.unwrap().unwrap();
+    let client = stargate_client_from_env().await?;
+    let result_set: ResultSet = execute_stargate_query(client, query)
+        .await
+        .unwrap()
+        .unwrap();
 
     let mapper = result_set.mapper().unwrap();
 
@@ -45,7 +49,7 @@ async fn api_get_shows() -> HbpResponse {
         })
         .collect();
 
-    ApiListResponse::ok(movies_and_tv).into()
+    Ok(ApiListResponse::ok(movies_and_tv).into())
 }
 
 #[openapi]
@@ -62,7 +66,7 @@ async fn api_get_one(show_id: i64) -> HbpResult<HbpResponse> {
     execute_stargate_query_for_one::<MovieOrTv>(client, query)
         .await?
         .map(|show| ApiItemResponse::ok(show).into())
-        .ok_or_else(|| HbpError::not_found())
+        .ok_or_else(HbpError::not_found)
 }
 
 pub fn get_routes_and_docs(settings: &OpenApiSettings) -> (Vec<Route>, OpenApi) {

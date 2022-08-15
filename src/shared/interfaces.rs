@@ -1,7 +1,9 @@
 use httpstatus::StatusCode;
+use okapi::openapi3::Responses;
+use rocket_okapi::{gen::OpenApiGenerator, response::OpenApiResponderInner};
 use serde::{Serialize, Serializer};
 
-use crate::utils::responders::HbpResponse;
+use crate::utils::{responders::HbpResponse, types::HbpError};
 
 fn status_code_serialize<S>(val: &StatusCode, s: S) -> Result<S::Ok, S::Error>
 where
@@ -10,7 +12,7 @@ where
     s.serialize_u16(val.as_u16())
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct ApiErrorResponse {
     #[serde(serialize_with = "status_code_serialize")]
     pub status_code: StatusCode,
@@ -23,7 +25,21 @@ impl From<ApiErrorResponse> for HbpResponse {
         HbpResponse::json(api_error_response, Some(status_code))
     }
 }
+impl From<ApiErrorResponse> for HbpError {
+    fn from(api_error_response: ApiErrorResponse) -> HbpError {
+        HbpError {
+            msg: api_error_response.errors.join(";"),
+            status_code: api_error_response.status_code,
+        }
+    }
+}
 impl ApiErrorResponse {
+    pub fn from_hbp_error(e: HbpError) -> Self {
+        Self {
+            status_code: e.status_code,
+            errors: vec![e.msg],
+        }
+    }
     pub fn bad_request(errors: Vec<String>) -> ApiErrorResponse {
         ApiErrorResponse {
             status_code: StatusCode::BadRequest,
@@ -31,24 +47,40 @@ impl ApiErrorResponse {
         }
     }
 
-    pub fn unauthorized() -> ApiErrorResponse {
-        let status_code = StatusCode::Unauthorized;
-        let errors = vec![status_code.reason_phrase().to_string()];
-
-        ApiErrorResponse {
-            status_code,
-            errors,
+    pub fn from_status(status_code: StatusCode) -> Self {
+        Self {
+            status_code: status_code.clone(),
+            errors: vec![status_code.reason_phrase().to_string()],
         }
     }
 
-    pub fn internal_server_error() -> ApiErrorResponse {
-        let status_code = StatusCode::InternalServerError;
-        let errors = vec![status_code.reason_phrase().to_string()];
+    pub fn unauthorized() -> ApiErrorResponse {
+        Self::from_status(StatusCode::Unauthorized)
+    }
 
-        ApiErrorResponse {
-            status_code,
-            errors,
-        }
+    pub fn not_found() -> ApiErrorResponse {
+        Self::from_status(StatusCode::NotFound)
+    }
+
+    pub fn forbidden() -> ApiErrorResponse {
+        Self::from_status(StatusCode::Forbidden)
+    }
+
+    pub fn internal_server_error() -> ApiErrorResponse {
+        Self::from_status(StatusCode::InternalServerError)
+    }
+}
+
+impl<'r> rocket::response::Responder<'r, 'static> for ApiErrorResponse {
+    fn respond_to(self, _: &'r rocket::Request<'_>) -> rocket::response::Result<'static> {
+        Ok(HbpResponse::json(self.clone(), Some(self.status_code)).into())
+    }
+}
+impl OpenApiResponderInner for ApiErrorResponse {
+    fn responses(_gen: &mut OpenApiGenerator) -> rocket_okapi::Result<Responses> {
+        Ok(Responses {
+            ..Default::default()
+        })
     }
 }
 

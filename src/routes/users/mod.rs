@@ -14,5 +14,5 @@ pub fn users_routes() -> Vec<Route> {
 }
 
 pub fn get_routes_and_docs(settings: &OpenApiSettings) -> (Vec<Route>, OpenApi) {
-    openapi_get_routes_spec![settings: api_post_signup, api_post_signin]
+    openapi_get_routes_spec![settings: api_post_signup, api_post_signin, api_put_user,]
 }

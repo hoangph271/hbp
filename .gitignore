@@ -6,3 +6,4 @@ tmp/*.sqlite3-*
 markdown/users/*
 static/images/users/*
 Rocket.toml
+static/images/avatars/*

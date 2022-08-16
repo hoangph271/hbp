@@ -1,37 +1,32 @@
 use anyhow::Result;
 use rocket::tokio;
 
-use crate::data::models::users_model::NewUser;
+use crate::data::{lib::DbError, models::users_model::DbUser, OrmConfig, OrmInit};
 
 use super::UserOrm;
 
-async fn reset_users_table() -> Result<()> {
-    let user_orm = UserOrm::from_test_env();
-
-    user_orm.drop_users_table().await?;
-    user_orm.init_users_table().await?;
-
-    Ok(())
+fn get_user_orm() -> UserOrm {
+    UserOrm {
+        orm_config: OrmConfig::from_test_env(),
+    }
 }
 
 #[tokio::test]
-async fn can_prepare_each_test() -> Result<()> {
-    reset_users_table().await
+async fn can_prepare_each_test() -> Result<(), DbError> {
+    get_user_orm().reset_table().await
 }
 
 #[tokio::test]
 async fn can_create_minimal_user() -> Result<()> {
-    reset_users_table().await?;
+    get_user_orm().reset_table().await?;
 
-    let new_user = NewUser {
+    let new_user = DbUser {
         username: "username".to_owned(),
         hashed_password: "hashed_password".to_owned(),
-        title: None,
+        title: "username".to_owned(),
     };
 
-    let user = UserOrm::from_test_env()
-        .create_user(new_user.clone())
-        .await?;
+    let user = get_user_orm().create_user(new_user.clone()).await?;
 
     assert_eq!(user.username, new_user.username);
     assert_eq!(user.hashed_password, new_user.hashed_password);

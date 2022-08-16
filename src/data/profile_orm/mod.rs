@@ -1,47 +1,50 @@
 #[cfg(test)]
-mod user_orm_test;
+mod profile_orm_test;
 
-use crate::data::{lib::*, models::users_model::*};
 use httpstatus::StatusCode;
 use rocket::async_trait;
 use stargate_grpc::Query;
 
-use super::{OrmConfig, OrmInit};
+use super::{
+    lib::{execute_stargate_query, execute_stargate_query_for_one, DbError},
+    models::profiles_model::DbProfile,
+    OrmConfig, OrmInit,
+};
 
 #[derive(Default)]
-pub struct UserOrm {
-    orm_config: OrmConfig,
+pub struct ProfileOrm {
+    pub orm_config: OrmConfig,
 }
 
 #[async_trait]
-impl OrmInit for UserOrm {
+impl OrmInit for ProfileOrm {
     fn orm_config(&self) -> &OrmConfig {
         &self.orm_config
     }
 
     async fn init_table(&self) -> Result<(), DbError> {
-        let create_users_table = stargate_grpc::Query::builder()
+        let create_profiles_table = stargate_grpc::Query::builder()
             .keyspace(&self.orm_config.keyspace)
             .query(
-                "CREATE TABLE IF NOT EXISTS users (
+                "CREATE TABLE IF NOT EXISTS profiles (
                     username text PRIMARY KEY,
-                    hashed_password text,
                     title text,
+                    avatar_url text,
                 )",
             )
             .build();
 
         self.stargate_client()
             .await?
-            .execute_query(create_users_table)
+            .execute_query(create_profiles_table)
             .await
             .map_err(|e| {
-                let msg = format!("init_table() users failed at .execute_query(): {e:?}");
+                let msg = format!("init_table() profiles failed at .execute_query(): {e:?}");
 
                 DbError::internal_server_error(msg)
             })?;
 
-        println!("created users table");
+        println!("created profiles table");
         Ok(())
     }
 
@@ -49,7 +52,7 @@ impl OrmInit for UserOrm {
     async fn drop_table(&self) -> Result<(), DbError> {
         let create_users_table = stargate_grpc::Query::builder()
             .keyspace(&self.orm_config.keyspace)
-            .query("DROP TABLE IF EXISTS users")
+            .query("DROP TABLE IF EXISTS profiles")
             .build();
 
         self.stargate_client()
@@ -57,40 +60,42 @@ impl OrmInit for UserOrm {
             .execute_query(create_users_table)
             .await
             .map_err(|e| {
-                let msg = format!("drop_table() users failed at .execute_query(): {e:?}");
+                let msg = format!("drop_table() profiles failed at .execute_query(): {e:?}");
 
                 DbError::internal_server_error(msg)
             })?;
 
-        println!("dropped users table");
+        println!("dropped profiles table");
         Ok(())
     }
 }
 
-impl UserOrm {
-    pub async fn find_one(&self, username: &str) -> Result<Option<DbUser>, DbError> {
-        let user_query = Query::builder()
+impl ProfileOrm {
+    #[allow(dead_code)]
+    pub async fn find_one(&self, username: &str) -> Result<Option<DbProfile>, DbError> {
+        let profile_query = Query::builder()
             .keyspace(&self.orm_config.keyspace)
-            .query("SELECT * FROM users WHERE username = :username")
+            .query("SELECT * FROM profiles WHERE username = :username")
             .bind_name("username", username)
             .build();
 
         let client = self.stargate_client().await?;
-        let maybe_user: Option<DbUser> = execute_stargate_query_for_one(client, user_query).await?;
+        let maybe_profile: Option<DbProfile> =
+            execute_stargate_query_for_one(client, profile_query).await?;
 
-        Ok(maybe_user)
+        Ok(maybe_profile)
     }
 
-    pub async fn create_user(&self, new_user: DbUser) -> Result<DbUser, DbError> {
+    pub async fn create_profile(&self, new_profile: DbProfile) -> Result<DbProfile, DbError> {
         let insert_query = Query::builder()
             .keyspace(&self.orm_config.keyspace)
             .query(
                 "
-                INSERT INTO users(username, hashed_password, title)
-                VALUES (:username, :hashed_password, :title)
+                INSERT INTO profiles(username, title, avatar_url)
+                VALUES (:username, :title, :avatar_url)
                 IF NOT EXISTS",
             )
-            .bind(new_user.clone())
+            .bind(new_profile.clone())
             .build();
 
         let client = self.stargate_client().await?;
@@ -100,7 +105,7 @@ impl UserOrm {
         let inserted: bool = row.try_take(0).unwrap();
 
         if inserted {
-            match self.find_one(&new_user.username).await? {
+            match self.find_one(&new_profile.username).await? {
                 Some(user) => Ok(user),
                 None => Err(DbError::internal_server_error(
                     "create_user failed".to_owned(),
@@ -109,27 +114,8 @@ impl UserOrm {
         } else {
             Err(DbError {
                 status_code: StatusCode::Conflict,
-                message: format!("username `{}` existed", new_user.username),
+                message: format!("username `{}` existed", new_profile.username),
             })
         }
-    }
-
-    pub async fn update_user(&self, user: PutUser) -> Result<(), DbError> {
-        let user_query = Query::builder()
-            .keyspace(&self.orm_config.keyspace)
-            .query(
-                "
-                UPDATE users
-                SET title = :title
-                WHERE username = :username",
-            )
-            .bind(user.clone())
-            .build();
-
-        let client = self.stargate_client().await?;
-        let res = execute_stargate_query(client, user_query).await?;
-        println!("{res:?}");
-
-        Ok(())
     }
 }

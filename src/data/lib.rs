@@ -18,6 +18,8 @@ pub mod post_orm {
     use super::{execute_stargate_query_for_vec, stargate_client_from_env, DbError};
     use crate::data::lib::OrmError;
     use crate::data::models::posts_model::*;
+    use crate::data::{OrmConfig, OrmInit};
+    use rocket::async_trait;
     use stargate_grpc::Query;
 
     pub fn get_one(_post_id: &str) -> Result<Post, OrmError> {
@@ -44,21 +46,38 @@ pub mod post_orm {
         todo!()
     }
 
-    pub async fn init_posts_table() -> Result<(), DbError> {
-        let mut client = stargate_client_from_env().await?;
+    #[derive(Default)]
+    pub struct PostOrm {
+        orm_config: OrmConfig,
+    }
 
-        let create_posts_table = stargate_grpc::Query::builder()
-            .query(
-                "CREATE TABLE IF NOT EXISTS astra.posts \
-                    (title text, body text, published Boolean, id int, PRIMARY KEY (id));",
-            )
-            .build();
+    #[async_trait]
+    impl OrmInit for PostOrm {
+        fn orm_config(&self) -> &OrmConfig {
+            &self.orm_config
+        }
 
-        client.execute_query(create_posts_table).await.unwrap();
+        async fn init_table(&self) -> Result<(), DbError> {
+            let mut client = stargate_client_from_env().await?;
 
-        println!("created posts table");
+            let create_posts_table = stargate_grpc::Query::builder()
+                .query(
+                    "CREATE TABLE IF NOT EXISTS astra.posts \
+                        (title text, body text, published Boolean, id int, PRIMARY KEY (id));",
+                )
+                .build();
 
-        Ok(())
+            client.execute_query(create_posts_table).await.unwrap();
+
+            println!("created posts table");
+
+            Ok(())
+        }
+
+        #[cfg(test)]
+        async fn drop_table(&self) -> Result<(), DbError> {
+            todo!()
+        }
     }
 }
 
@@ -66,6 +85,8 @@ use crate::{
     shared::interfaces::ApiErrorResponse,
     utils::env::{from_env, EnvKey},
 };
+
+use super::OrmConfig;
 
 #[derive(Error, Debug, Serialize)]
 #[error("DbError: {status_code:?} - {message}")]
@@ -120,6 +141,9 @@ pub async fn stargate_client_from_env() -> Result<StargateClient, DbError> {
         from_env(EnvKey::AstraBearerToken),
     )
     .await
+}
+pub async fn stargate_client_from(orm_config: &OrmConfig) -> Result<StargateClient, DbError> {
+    build_stargate_client(&orm_config.astra_uri, &orm_config.bearer_token).await
 }
 pub async fn execute_stargate_query(
     mut client: StargateClient,

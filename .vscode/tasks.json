@@ -3,7 +3,7 @@
 	"tasks": [
 		{
 			"type": "cargo",
-			"subcommand": "check",
+			"command": "check",
 			"problemMatcher": [
 				"$rustc"
 			],
@@ -12,11 +12,32 @@
 		},
 		{
 			"type": "cargo",
-			"subcommand": "run",
+			"command": "run",
 			"problemMatcher": [
 				"$rustc"
 			],
 			"label": "Rust: cargo run - hbp"
+		},
+		{
+			"type": "cargo",
+			"command": "test",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"group": "test",
+			"label": "rust: cargo test"
+		},
+		{
+			"type": "cargo",
+			"command": "test",
+			"problemMatcher": [
+				"$rustc"
+			],
+			"args": [
+				"profile_orm_test"
+			],
+			"group": "test",
+			"label": "rust: cargo profile_orm_test"
 		}
 	]
 }

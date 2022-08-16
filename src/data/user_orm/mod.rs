@@ -4,7 +4,7 @@ mod user_orm_test;
 use crate::data::{lib::*, models::users_model::*};
 use httpstatus::StatusCode;
 use rocket::async_trait;
-use stargate_grpc::{Query, StargateClient};
+use stargate_grpc::Query;
 
 use super::{OrmConfig, OrmInit};
 
@@ -31,12 +31,12 @@ impl OrmInit for UserOrm {
             )
             .build();
 
-        self.build_stargate_client()
+        self.stargate_client()
             .await?
             .execute_query(create_users_table)
             .await
             .map_err(|e| {
-                let msg = format!("init_users_table failed at .execute_query(): {e:?}");
+                let msg = format!("init_table() users failed at .execute_query(): {e:?}");
 
                 DbError::internal_server_error(msg)
             })?;
@@ -52,12 +52,12 @@ impl OrmInit for UserOrm {
             .query("DROP TABLE IF EXISTS users")
             .build();
 
-        self.build_stargate_client()
+        self.stargate_client()
             .await?
             .execute_query(create_users_table)
             .await
             .map_err(|e| {
-                let msg = format!("drop_users_table failed at .execute_query(): {e:?}");
+                let msg = format!("drop_table() users failed at .execute_query(): {e:?}");
 
                 DbError::internal_server_error(msg)
             })?;
@@ -68,10 +68,6 @@ impl OrmInit for UserOrm {
 }
 
 impl UserOrm {
-    async fn build_stargate_client(&self) -> Result<StargateClient, DbError> {
-        stargate_client_from(&self.orm_config).await
-    }
-
     pub async fn find_one(&self, username: &str) -> Result<Option<DbUser>, DbError> {
         let user_query = Query::builder()
             .keyspace(&self.orm_config.keyspace)
@@ -79,7 +75,7 @@ impl UserOrm {
             .bind_name("username", username)
             .build();
 
-        let client = self.build_stargate_client().await?;
+        let client = self.stargate_client().await?;
         let maybe_user: Option<DbUser> = execute_stargate_query_for_one(client, user_query).await?;
 
         Ok(maybe_user)
@@ -99,7 +95,7 @@ impl UserOrm {
             .bind(new_user.clone())
             .build();
 
-        let client = self.build_stargate_client().await?;
+        let client = self.stargate_client().await?;
         let mut result_set = execute_stargate_query(client, user_query).await?.unwrap();
 
         let mut row = result_set.rows.pop().unwrap();
@@ -132,7 +128,7 @@ impl UserOrm {
             .bind(user.clone())
             .build();
 
-        let client = self.build_stargate_client().await?;
+        let client = self.stargate_client().await?;
         let res = execute_stargate_query(client, user_query).await?;
         println!("{res:?}");
 

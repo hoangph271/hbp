@@ -17,13 +17,23 @@ async fn can_prepare_each_test() -> Result<(), DbError> {
 }
 
 #[tokio::test]
-async fn can_create_minimal_profile() -> Result<()> {
+async fn can_handle_non_exist_profile() -> Result<()> {
     let profile_orm = get_profile_orm();
     profile_orm.reset_table().await?;
 
     let username = String::from("username");
 
-    profile_orm.find_one(&username).await?;
+    let maybe_user = profile_orm.find_one(&username).await?;
+
+    assert!(maybe_user.is_none());
 
     Ok(())
+}
+
+#[tokio::test]
+async fn can_get_minimal_profile() -> Result<()> {
+    let profile_orm = get_profile_orm();
+    profile_orm.reset_table().await?;
+
+    todo!()
 }

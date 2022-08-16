@@ -2,8 +2,13 @@
 mod profile_orm_test;
 
 use rocket::async_trait;
+use stargate_grpc::Query;
 
-use super::{lib::DbError, OrmConfig, OrmInit};
+use super::{
+    lib::{execute_stargate_query_for_one, DbError},
+    models::profiles_model::DbProfile,
+    OrmConfig, OrmInit,
+};
 
 #[derive(Default)]
 pub struct ProfileOrm {
@@ -12,10 +17,18 @@ pub struct ProfileOrm {
 
 impl ProfileOrm {
     #[allow(dead_code)]
-    pub async fn find_one(&self, _username: &str) -> Result<(), DbError> {
-        let _client = self.stargate_client().await?;
+    pub async fn find_one(&self, username: &str) -> Result<Option<DbProfile>, DbError> {
+        let user_query = Query::builder()
+            .keyspace(&self.orm_config.keyspace)
+            .query("SELECT * FROM profiles WHERE username = :username")
+            .bind_name("username", username)
+            .build();
 
-        todo!()
+        let client = self.stargate_client().await?;
+        let maybe_profile: Option<DbProfile> =
+            execute_stargate_query_for_one(client, user_query).await?;
+
+        Ok(maybe_profile)
     }
 }
 
@@ -32,7 +45,7 @@ impl OrmInit for ProfileOrm {
                 "CREATE TABLE IF NOT EXISTS profiles (
                     username text PRIMARY KEY,
                     title text,
-                    avatarUrl text,
+                    avatar_url text,
                 )",
             )
             .build();

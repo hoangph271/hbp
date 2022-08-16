@@ -41,7 +41,7 @@ impl SignupApiPayload {
 pub async fn api_post_signup(
     signup_payload: Result<Json<SignupApiPayload>, JsonError<'_>>,
 ) -> HbpResponse {
-    use crate::data::models::users_model::NewUser;
+    use crate::data::models::users_model::DbUser;
 
     let maybe_user = wrap_api_handler(|| async {
         let signup_body = signup_payload.map_err(|e| {
@@ -56,8 +56,8 @@ pub async fn api_post_signup(
         signup_body.validate()?;
 
         let new_user = UserOrm::default()
-            .create_user(NewUser {
-                title: None,
+            .create_user(DbUser {
+                title: signup_body.username.clone(),
                 username: signup_body.username.clone(),
                 hashed_password: bcrypt::hash(&signup_body.password, bcrypt::DEFAULT_COST)
                     .expect("Hashing password failed"),

@@ -6,5 +6,5 @@ pub struct DbProfile {
     username: String,
     title: String,
     #[serde(rename = "avatarUrl")]
-    avatar_url: String,
+    avatar_url: Option<String>,
 }

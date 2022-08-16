@@ -81,9 +81,7 @@ impl UserOrm {
         Ok(maybe_user)
     }
 
-    pub async fn create_user(&self, new_user: NewUser) -> Result<DbUser, DbError> {
-        let new_user: InsertableNewUser = new_user.into();
-
+    pub async fn create_user(&self, new_user: DbUser) -> Result<DbUser, DbError> {
         let user_query = Query::builder()
             .keyspace(&self.orm_config.keyspace)
             .query(

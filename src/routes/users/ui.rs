@@ -1,3 +1,4 @@
+use crate::data::models::users_model::DbUser;
 use crate::data::user_orm::UserOrm;
 use crate::routes::users::shared::{LoginBody, SignupBody};
 use crate::utils::auth::{AuthPayload, UserPayload};
@@ -89,9 +90,8 @@ pub async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
         return HbpResponse::redirect(uri!("/users", signup));
     }
 
-    use crate::data::models::users_model::NewUser;
-    let new_user = NewUser {
-        title: None,
+    let new_user = DbUser {
+        title: signup_body.username.clone(),
         username: signup_body.username.clone(),
         hashed_password: bcrypt::hash(&signup_body.password, bcrypt::DEFAULT_COST)
             .expect("Hashing password failed"),

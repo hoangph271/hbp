@@ -1,44 +1,32 @@
 #[cfg(test)]
 mod user_orm_test;
 
-use crate::{
-    data::{lib::*, models::users_model::*},
-    utils::env::{from_env, EnvKey},
-};
+use crate::data::{lib::*, models::users_model::*};
 use httpstatus::StatusCode;
 use stargate_grpc::{Query, StargateClient};
 
+use super::OrmConfig;
+
 pub struct UserOrm {
-    pub keyspace: String,
-    pub astra_uri: String,
-    pub bearer_token: String,
+    orm_config: OrmConfig,
+}
+
+impl Default for UserOrm {
+    fn default() -> Self {
+        Self {
+            orm_config: OrmConfig::from_env(),
+        }
+    }
 }
 
 impl UserOrm {
-    #[cfg(test)]
-    pub fn from_test_env() -> Self {
-        Self {
-            keyspace: dotenv!("TEST_ASTRA_KEY_SPACE").to_owned(),
-            astra_uri: dotenv!("TEST_ASTRA_URI").to_owned(),
-            bearer_token: dotenv!("TEST_ASTRA_BEARER_TOKEN").to_owned(),
-        }
-    }
-
-    pub fn from_env() -> Self {
-        Self {
-            keyspace: from_env(EnvKey::AstraKeySpace).to_owned(),
-            astra_uri: from_env(EnvKey::AstraUri).to_owned(),
-            bearer_token: from_env(EnvKey::AstraBearerToken).to_owned(),
-        }
-    }
-
     async fn build_stargate_client(&self) -> Result<StargateClient, DbError> {
-        build_stargate_client(&self.astra_uri, &self.bearer_token).await
+        build_stargate_client(&self.orm_config.astra_uri, &self.orm_config.bearer_token).await
     }
 
     pub async fn init_users_table(&self) -> Result<(), DbError> {
         let create_users_table = stargate_grpc::Query::builder()
-            .keyspace(&self.keyspace)
+            .keyspace(&self.orm_config.keyspace)
             .query(
                 "CREATE TABLE IF NOT EXISTS users (
                     username text PRIMARY KEY,
@@ -65,7 +53,7 @@ impl UserOrm {
     #[allow(dead_code)]
     pub async fn drop_users_table(&self) -> Result<(), DbError> {
         let create_users_table = stargate_grpc::Query::builder()
-            .keyspace(&self.keyspace)
+            .keyspace(&self.orm_config.keyspace)
             .query("DROP TABLE IF EXISTS users")
             .build();
 
@@ -85,7 +73,7 @@ impl UserOrm {
 
     pub async fn find_one(&self, username: &str) -> Result<Option<DbUser>, DbError> {
         let user_query = Query::builder()
-            .keyspace(&self.keyspace)
+            .keyspace(&self.orm_config.keyspace)
             .query("SELECT * FROM users WHERE username = :username")
             .bind_name("username", username)
             .build();
@@ -100,7 +88,7 @@ impl UserOrm {
         let new_user: InsertableNewUser = new_user.into();
 
         let user_query = Query::builder()
-            .keyspace(&self.keyspace)
+            .keyspace(&self.orm_config.keyspace)
             .query(
                 "
                 INSERT INTO users(username, hashed_password, title)
@@ -133,7 +121,7 @@ impl UserOrm {
 
     pub async fn update_user(&self, user: PutUser) -> Result<(), DbError> {
         let user_query = Query::builder()
-            .keyspace(&self.keyspace)
+            .keyspace(&self.orm_config.keyspace)
             .query(
                 "
                 UPDATE users

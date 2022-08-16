@@ -55,7 +55,7 @@ pub async fn api_post_signup(
 
         signup_body.validate()?;
 
-        let new_user = UserOrm::from_env()
+        let new_user = UserOrm::default()
             .create_user(NewUser {
                 title: None,
                 username: signup_body.username.clone(),
@@ -83,7 +83,7 @@ pub async fn api_put_user(username: String, user: Json<PutUser>, jwt: UserPayloa
 
     let user = user.into_inner();
 
-    match UserOrm::from_env().update_user(user.clone()).await {
+    match UserOrm::default().update_user(user.clone()).await {
         Ok(_) => ApiItemResponse::ok(user).into(),
         Err(e) => ApiErrorResponse {
             status_code: e.status_code,

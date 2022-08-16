@@ -97,7 +97,7 @@ pub async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
             .expect("Hashing password failed"),
     };
 
-    if UserOrm::from_env().create_user(new_user).await.is_ok() {
+    if UserOrm::default().create_user(new_user).await.is_ok() {
         HbpResponse::redirect(uri!("/users", login))
     } else {
         HbpResponse::redirect(uri!("/users", signup))

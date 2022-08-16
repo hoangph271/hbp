@@ -86,7 +86,7 @@ impl ProfileOrm {
         Ok(maybe_profile)
     }
 
-    pub async fn create_user(&self, new_profile: DbProfile) -> Result<DbProfile, DbError> {
+    pub async fn create_profile(&self, new_profile: DbProfile) -> Result<DbProfile, DbError> {
         let insert_query = Query::builder()
             .keyspace(&self.orm_config.keyspace)
             .query(

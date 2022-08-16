@@ -1,10 +1,10 @@
 use serde::Serialize;
-use stargate_grpc_derive::TryFromRow;
+use stargate_grpc_derive::{IntoValues, TryFromRow};
 
-#[derive(Serialize, TryFromRow)]
+#[derive(Serialize, TryFromRow, Clone, IntoValues)]
 pub struct DbProfile {
-    username: String,
-    title: String,
+    pub username: String,
+    pub title: String,
     #[serde(rename = "avatarUrl")]
-    avatar_url: Option<String>,
+    pub avatar_url: Option<String>,
 }

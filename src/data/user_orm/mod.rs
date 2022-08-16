@@ -82,7 +82,7 @@ impl UserOrm {
     }
 
     pub async fn create_user(&self, new_user: DbUser) -> Result<DbUser, DbError> {
-        let user_query = Query::builder()
+        let insert_query = Query::builder()
             .keyspace(&self.orm_config.keyspace)
             .query(
                 "
@@ -94,7 +94,7 @@ impl UserOrm {
             .build();
 
         let client = self.stargate_client().await?;
-        let mut result_set = execute_stargate_query(client, user_query).await?.unwrap();
+        let mut result_set = execute_stargate_query(client, insert_query).await?.unwrap();
 
         let mut row = result_set.rows.pop().unwrap();
         let inserted: bool = row.try_take(0).unwrap();

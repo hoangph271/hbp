@@ -1,7 +1,10 @@
 use rocket::async_trait;
 use stargate_grpc::StargateClient;
 
-use crate::utils::env::{from_env, EnvKey};
+use crate::{
+    data::{lib::post_orm::PostOrm, profile_orm::ProfileOrm, user_orm::UserOrm},
+    utils::env::{from_env, EnvKey},
+};
 
 use self::lib::{stargate_client_from, DbError};
 
@@ -19,8 +22,10 @@ pub fn init_db() {
     spawn(|| {
         log::info!("---@ init_db()");
 
+        // FIXME: Fix these loops
+
         loop {
-            match task::block_on(user_orm::UserOrm::default().init_table()) {
+            match task::block_on(UserOrm::default().init_table()) {
                 Ok(_) => break,
                 Err(e) => {
                     log::error!("{:?}", e);
@@ -28,9 +33,17 @@ pub fn init_db() {
                 }
             }
         }
-
         loop {
-            match task::block_on(lib::post_orm::init_posts_table()) {
+            match task::block_on(PostOrm::default().init_table()) {
+                Ok(_) => break,
+                Err(e) => {
+                    log::error!("{:?}", e);
+                    sleep(Duration::from_secs(10))
+                }
+            }
+        }
+        loop {
+            match task::block_on(ProfileOrm::default().init_table()) {
                 Ok(_) => break,
                 Err(e) => {
                     log::error!("{:?}", e);

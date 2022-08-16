@@ -1,7 +1,7 @@
 use anyhow::Result;
 use rocket::tokio;
 
-use crate::data::{lib::DbError, OrmConfig, OrmInit};
+use crate::data::{lib::DbError, models::profiles_model::DbProfile, OrmConfig, OrmInit};
 
 use super::ProfileOrm;
 
@@ -35,5 +35,18 @@ async fn can_create_minimal_profile() -> Result<()> {
     let profile_orm = get_profile_orm();
     profile_orm.reset_table().await?;
 
-    todo!()
+    let username = "username".to_string();
+
+    let maybe_profile = profile_orm
+        .create_user(DbProfile {
+            username: username.clone(),
+            title: username.clone(),
+            avatar_url: None,
+        })
+        .await?;
+
+    assert_eq!(maybe_profile.username, username);
+    assert_eq!(maybe_profile.avatar_url, None);
+
+    Ok(())
 }

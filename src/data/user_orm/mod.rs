@@ -3,28 +3,23 @@ mod user_orm_test;
 
 use crate::data::{lib::*, models::users_model::*};
 use httpstatus::StatusCode;
+use rocket::async_trait;
 use stargate_grpc::{Query, StargateClient};
 
-use super::OrmConfig;
+use super::{OrmConfig, OrmInit};
 
+#[derive(Default)]
 pub struct UserOrm {
     orm_config: OrmConfig,
 }
 
-impl Default for UserOrm {
-    fn default() -> Self {
-        Self {
-            orm_config: OrmConfig::from_env(),
-        }
-    }
-}
-
-impl UserOrm {
-    async fn build_stargate_client(&self) -> Result<StargateClient, DbError> {
-        build_stargate_client(&self.orm_config.astra_uri, &self.orm_config.bearer_token).await
+#[async_trait]
+impl OrmInit for UserOrm {
+    fn orm_config(&self) -> &OrmConfig {
+        &self.orm_config
     }
 
-    pub async fn init_users_table(&self) -> Result<(), DbError> {
+    async fn init_table(&self) -> Result<(), DbError> {
         let create_users_table = stargate_grpc::Query::builder()
             .keyspace(&self.orm_config.keyspace)
             .query(
@@ -49,9 +44,9 @@ impl UserOrm {
         println!("created users table");
         Ok(())
     }
+
     #[cfg(test)]
-    #[allow(dead_code)]
-    pub async fn drop_users_table(&self) -> Result<(), DbError> {
+    async fn drop_table(&self) -> Result<(), DbError> {
         let create_users_table = stargate_grpc::Query::builder()
             .keyspace(&self.orm_config.keyspace)
             .query("DROP TABLE IF EXISTS users")
@@ -69,6 +64,12 @@ impl UserOrm {
 
         println!("dropped users table");
         Ok(())
+    }
+}
+
+impl UserOrm {
+    async fn build_stargate_client(&self) -> Result<StargateClient, DbError> {
+        stargate_client_from(&self.orm_config).await
     }
 
     pub async fn find_one(&self, username: &str) -> Result<Option<DbUser>, DbError> {

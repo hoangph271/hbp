@@ -1,7 +1,7 @@
 use anyhow::Result;
 use rocket::tokio;
 
-use crate::data::{models::users_model::NewUser, OrmConfig};
+use crate::data::{lib::DbError, models::users_model::NewUser, OrmConfig, OrmInit};
 
 use super::UserOrm;
 
@@ -11,23 +11,14 @@ fn get_user_orm() -> UserOrm {
     }
 }
 
-async fn reset_users_table() -> Result<()> {
-    let user_orm = get_user_orm();
-
-    user_orm.drop_users_table().await?;
-    user_orm.init_users_table().await?;
-
-    Ok(())
-}
-
 #[tokio::test]
-async fn can_prepare_each_test() -> Result<()> {
-    reset_users_table().await
+async fn can_prepare_each_test() -> Result<(), DbError> {
+    get_user_orm().reset_table().await
 }
 
 #[tokio::test]
 async fn can_create_minimal_user() -> Result<()> {
-    reset_users_table().await?;
+    get_user_orm().reset_table().await?;
 
     let new_user = NewUser {
         username: "username".to_owned(),

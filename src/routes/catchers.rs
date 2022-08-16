@@ -9,7 +9,7 @@ fn default(status: Status, req: &Request) -> HbpResponse {
     let status_code = StatusCode::from(status.code);
 
     if !is_api {
-        return HbpResponse::status(StatusCode::from(status_code));
+        return HbpResponse::status(status_code);
     }
 
     match status_code {

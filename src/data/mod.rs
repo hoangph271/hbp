@@ -1,4 +1,9 @@
+use rocket::async_trait;
+use stargate_grpc::StargateClient;
+
 use crate::utils::env::{from_env, EnvKey};
+
+use self::lib::{stargate_client_from, DbError};
 
 pub mod lib;
 pub mod models;
@@ -15,7 +20,7 @@ pub fn init_db() {
         log::info!("---@ init_db()");
 
         loop {
-            match task::block_on(user_orm::UserOrm::default().init_users_table()) {
+            match task::block_on(user_orm::UserOrm::default().init_table()) {
                 Ok(_) => break,
                 Err(e) => {
                     log::error!("{:?}", e);
@@ -44,6 +49,12 @@ pub struct OrmConfig {
     pub bearer_token: String,
 }
 
+impl Default for OrmConfig {
+    fn default() -> Self {
+        Self::from_env()
+    }
+}
+
 impl OrmConfig {
     #[cfg(test)]
     pub fn from_test_env() -> Self {
@@ -60,5 +71,27 @@ impl OrmConfig {
             astra_uri: from_env(EnvKey::AstraUri).to_owned(),
             bearer_token: from_env(EnvKey::AstraBearerToken).to_owned(),
         }
+    }
+}
+
+#[async_trait]
+pub trait OrmInit {
+    fn orm_config(&self) -> &OrmConfig;
+    async fn stargate_client(&self) -> Result<StargateClient, DbError> {
+        let orm_config = self.orm_config();
+        stargate_client_from(orm_config).await
+    }
+
+    async fn init_table(&self) -> Result<(), DbError>;
+
+    #[cfg(test)]
+    async fn drop_table(&self) -> Result<(), DbError>;
+
+    #[cfg(test)]
+    async fn reset_table(&self) -> Result<(), DbError> {
+        self.drop_table().await?;
+        self.init_table().await?;
+
+        Ok(())
     }
 }

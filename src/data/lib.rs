@@ -67,6 +67,8 @@ use crate::{
     utils::env::{from_env, EnvKey},
 };
 
+use super::OrmConfig;
+
 #[derive(Error, Debug, Serialize)]
 #[error("DbError: {status_code:?} - {message}")]
 pub struct DbError {
@@ -120,6 +122,9 @@ pub async fn stargate_client_from_env() -> Result<StargateClient, DbError> {
         from_env(EnvKey::AstraBearerToken),
     )
     .await
+}
+pub async fn stargate_client_from(orm_config: &OrmConfig) -> Result<StargateClient, DbError> {
+    build_stargate_client(&orm_config.astra_uri, &orm_config.bearer_token).await
 }
 pub async fn execute_stargate_query(
     mut client: StargateClient,

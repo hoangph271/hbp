@@ -9,6 +9,18 @@ pub struct DbProfile {
     pub title: String,
     #[serde(rename = "avatarUrl")]
     pub avatar_url: Option<String>,
+    pub description: Option<String>,
+}
+
+impl DbProfile {
+    pub fn from_username(username: String) -> DbProfile {
+        DbProfile {
+            username: username.clone(),
+            title: username,
+            avatar_url: None,
+            description: None,
+        }
+    }
 }
 
 impl From<DbUser> for DbProfile {
@@ -17,6 +29,7 @@ impl From<DbUser> for DbProfile {
             username: db_user.username,
             title: db_user.title,
             avatar_url: None,
+            description: None,
         }
     }
 }

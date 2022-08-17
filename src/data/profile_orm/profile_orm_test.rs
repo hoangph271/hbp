@@ -38,11 +38,7 @@ async fn can_create_minimal_profile() -> Result<()> {
     let username = "username".to_string();
 
     let maybe_profile = profile_orm
-        .create_profile(DbProfile {
-            username: username.clone(),
-            title: username.clone(),
-            avatar_url: None,
-        })
+        .create_profile(DbProfile::from_username(username.clone()))
         .await?;
 
     assert_eq!(maybe_profile.username, username);

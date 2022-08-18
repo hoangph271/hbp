@@ -1,6 +1,6 @@
 use crate::utils::auth::{AuthPayload, UserPayload};
-use crate::utils::constants;
 use crate::utils::types::{HbpError, HbpResult};
+use crate::utils::{constants, status_from};
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
 
@@ -50,7 +50,7 @@ impl<'r> FromRequest<'r> for AuthPayload {
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         match get_jwt(req) {
             Ok(jwt) => Outcome::Success(jwt),
-            Err(e) => Outcome::Failure((Status::from_code(e.status_code.as_u16()).unwrap(), e)),
+            Err(e) => Outcome::Failure((status_from(e.status_code.clone()), e)),
         }
     }
 }

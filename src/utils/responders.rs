@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use std::io::Cursor;
 use std::path::PathBuf;
 
+use super::status_from;
 use super::template::TemplateRenderer;
 use super::types::{HbpError, HbpResult};
 
@@ -128,7 +129,7 @@ impl<'r> Responder<'r, 'r> for HbpResponse {
     fn respond_to(self, request: &rocket::Request<'_>) -> ResResult<'r> {
         let mut response_builder = Response::build();
 
-        let status = Status::from_code(self.status_code.as_u16()).unwrap();
+        let status = status_from(self.status_code);
         response_builder.status(status);
 
         match self.content {
@@ -167,7 +168,7 @@ impl From<HbpResponse> for Response<'_> {
     fn from(hbp_response: HbpResponse) -> Response<'static> {
         let mut response_builder = Response::build();
 
-        let status = Status::from_code(hbp_response.status_code.as_u16()).unwrap();
+        let status = status_from(hbp_response.status_code);
         response_builder.status(status);
 
         response_builder.finalize()

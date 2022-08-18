@@ -1,3 +1,6 @@
+use httpstatus::StatusCode;
+use rocket::http::Status;
+
 pub mod auth;
 pub mod constants;
 pub mod cors;
@@ -16,4 +19,9 @@ pub fn timestamp_now() -> i64 {
         .checked_add_signed(chrono::Duration::minutes(60))
         .unwrap()
         .timestamp()
+}
+
+pub fn status_from(status_code: StatusCode) -> Status {
+    Status::from_code(status_code.as_u16())
+        .unwrap_or_else(|| panic!("status_code {} is NOT valid", status_code.as_u16()))
 }

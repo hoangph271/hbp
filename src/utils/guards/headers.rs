@@ -1,6 +1,6 @@
+use crate::utils::status_from;
 use crate::utils::types::HbpError;
 use httpstatus::StatusCode;
-use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
 
 pub struct Referer(String);
@@ -14,7 +14,7 @@ impl<'r> FromRequest<'r> for Referer {
         match token {
             Some(token) => Outcome::Success(Referer(token.to_string())),
             None => Outcome::Failure((
-                Status::from_code(StatusCode::Unauthorized.as_u16()).unwrap(),
+                status_from(StatusCode::Unauthorized),
                 HbpError::from_message("No valid jwt found", StatusCode::Unauthorized),
             )),
         }

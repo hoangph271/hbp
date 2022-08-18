@@ -122,7 +122,7 @@ async fn user_markdown_file(
 
     if !markdown::is_markdown(&file_path) {
         return if file_path.is_dir() {
-            let mut markdowns = markdown::markdown_from_dir(&file_path).unwrap();
+            let mut markdowns = markdown::markdown_from_dir(&file_path)?;
 
             markdowns.iter_mut().for_each(|markdown| {
                 if let MarkdownOrMarkdownDir::Markdown(markdown) = markdown {
@@ -192,7 +192,7 @@ pub fn markdown_routes() -> Vec<Route> {
 }
 
 fn render_dir(dir_path: &PathBuf, layout_data: IndexLayoutData) -> HbpResult<HbpResponse> {
-    let markdowns: Vec<MarkdownOrMarkdownDir> = markdown::markdown_from_dir(dir_path).unwrap();
+    let markdowns: Vec<MarkdownOrMarkdownDir> = markdown::markdown_from_dir(dir_path)?;
 
     render_markdown_list(layout_data, markdowns).map(|html| HbpResponse::html(html, None))
 }

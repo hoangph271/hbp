@@ -3,6 +3,7 @@ mod user_orm_test;
 
 use crate::data::{lib::*, models::users_model::*};
 use httpstatus::StatusCode;
+use log::error;
 use rocket::async_trait;
 use stargate_grpc::Query;
 
@@ -94,10 +95,18 @@ impl UserOrm {
             .build();
 
         let client = self.stargate_client().await?;
-        let mut result_set = execute_stargate_query(client, insert_query).await?.unwrap();
+        let mut result_set = execute_stargate_query(client, insert_query)
+            .await?
+            .expect("result_set must NOT be None");
 
-        let mut row = result_set.rows.pop().unwrap();
-        let inserted: bool = row.try_take(0).unwrap();
+        let mut row = result_set.rows.pop().expect("result_set MUST has one row");
+        let inserted: bool = row.try_take(0).map_err(|e| {
+            let message = format!("Can't read inserted: {e}");
+
+            error!("{message}");
+
+            DbError::internal_server_error(message)
+        })?;
 
         if inserted {
             match self.find_one(&new_user.username).await? {

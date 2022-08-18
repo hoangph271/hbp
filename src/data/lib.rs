@@ -178,7 +178,9 @@ where
         .await
         .unwrap_or_else(|e| panic!("execute_query failed: {e}"));
 
-    let result_set: ResultSet = response.try_into().unwrap();
+    let result_set: ResultSet = response
+        .try_into()
+        .unwrap_or_else(|e| panic!("response.try_into() failed: {e}"));
 
     let mapper: ResultSetMapper<T> = result_set
         .mapper()
@@ -207,10 +209,19 @@ pub async fn execute_stargate_query_for_one<T>(
 where
     T: ColumnPositions + TryFromRow,
 {
-    let response = client.execute_query(query).await.unwrap();
-    let mut result_set: ResultSet = response.try_into().unwrap();
+    let response = client.execute_query(query).await.map_err(|e| {
+        let message = format!("execute_query() failed: {e}");
+        error!("{message}");
 
-    let mapper: ResultSetMapper<T> = result_set.mapper().unwrap();
+        DbError::internal_server_error(message)
+    })?;
+    let mut result_set: ResultSet = response.try_into().unwrap_or_else(|e| {
+        panic!("response.try_into() failed: {e}");
+    });
+
+    let mapper: ResultSetMapper<T> = result_set
+        .mapper()
+        .unwrap_or_else(|e| panic!("mapper() failed: {e}"));
 
     if let Some(row) = result_set.rows.pop() {
         match mapper.try_unpack(row) {

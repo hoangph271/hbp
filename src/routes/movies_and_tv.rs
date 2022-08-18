@@ -1,3 +1,4 @@
+use log::error;
 use okapi::openapi3::OpenApi;
 use rocket::{get, Route};
 use rocket_okapi::{openapi, openapi_get_routes_spec, settings::OpenApiSettings};
@@ -32,22 +33,33 @@ async fn api_get_shows() -> HbpResult<HbpResponse> {
         .build();
 
     let client = stargate_client_from_env().await?;
-    let result_set: ResultSet = execute_stargate_query(client, query)
-        .await
-        .unwrap()
-        .unwrap();
+    let result_set: Option<ResultSet> = execute_stargate_query(client, query).await?;
 
-    let mapper = result_set.mapper().unwrap();
+    let movies_and_tv: Vec<MovieOrTv> = match result_set {
+        Some(result_set) => {
+            let mapper = result_set.mapper().unwrap_or_else(|e| {
+                error!("{e}");
+                panic!("result_set.mapper() failed")
+            });
 
-    let movies_and_tv: Vec<MovieOrTv> = result_set
-        .rows
-        .into_iter()
-        .map(|row| {
-            let movie_or_tv: MovieOrTv = mapper.try_unpack(row).unwrap();
+            let movies_and_tv: Vec<MovieOrTv> = result_set
+                .rows
+                .into_iter()
+                .filter_map(|row| {
+                    mapper
+                        .try_unpack(row)
+                        .map_err(|e| {
+                            error!("try_unpack failed: {:?}", e);
+                            e
+                        })
+                        .ok()
+                })
+                .collect();
 
-            movie_or_tv
-        })
-        .collect();
+            movies_and_tv
+        }
+        None => vec![],
+    };
 
     Ok(ApiListResponse::ok(movies_and_tv).into())
 }

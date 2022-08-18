@@ -4,6 +4,7 @@ use crate::utils::string::url_encode_path;
 use crate::utils::template::TemplateRenderer;
 use crate::utils::types::{HbpError, HbpResult};
 use httpstatus::StatusCode::BadRequest;
+use log::error;
 use pulldown_cmark::{html, Options, Parser};
 use std::collections::HashMap;
 use std::fs::read_dir;
@@ -87,7 +88,10 @@ pub async fn render_user_markdown(
 
 pub fn markdown_from_dir<P: AsRef<Path>>(path: &P) -> HbpResult<Vec<MarkdownOrMarkdownDir>> {
     let markdowns = read_dir(path)
-        .unwrap()
+        .map_err(|e| {
+            error!("read_dir failed: {e:?}");
+            HbpError::internal_server_error()
+        })?
         .filter_map(|entry| {
             let entry = entry.ok()?;
             let title = match entry.path().file_name() {

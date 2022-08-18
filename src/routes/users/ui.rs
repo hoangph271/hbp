@@ -7,6 +7,7 @@ use crate::utils::env::{from_env, EnvKey};
 use crate::utils::responders::HbpResponse;
 use crate::utils::template;
 use crate::utils::template::{IndexLayoutData, TemplateRenderer};
+use crate::utils::types::HbpError;
 use log::*;
 use rocket::form::Form;
 use rocket::http::{Cookie, CookieJar};
@@ -57,29 +58,36 @@ pub fn signup() -> HbpResponse {
 
 #[post("/login", data = "<login_body>")]
 pub async fn post_login(login_body: Form<LoginBody>, jar: &CookieJar<'_>) -> HbpResponse {
-    match attemp_signin(&login_body.username, &login_body.password)
-        .await
-        .unwrap()
-    {
-        Some(user) => {
-            let jwt = UserPayload::default().set_sub(user.username).sign_jwt();
-
-            match jwt {
-                Ok(jwt) => {
-                    let jwt_expires_in: i64 = from_env(EnvKey::JwtExpiresInHours).parse().unwrap();
-                    let expries_in = OffsetDateTime::now_utc() + Duration::hours(jwt_expires_in);
-
-                    let mut cookie = Cookie::new(cookies::USER_JWT, jwt);
-                    cookie.set_expires(expries_in);
-
-                    jar.add_private(cookie);
-
-                    HbpResponse::redirect(uri!("/users", index))
-                }
-                Err(e) => e.into(),
-            }
+    match attemp_signin(&login_body.username, &login_body.password).await {
+        Err(e) => {
+            error!("attemp_signin() failed: {e}");
+            HbpError::internal_server_error().into()
         }
-        None => HbpResponse::redirect(uri!("/users", login)),
+        Ok(user) => match user {
+            Some(user) => {
+                let jwt = UserPayload::default().set_sub(user.username).sign_jwt();
+
+                match jwt {
+                    Ok(jwt) => {
+                        let jwt_expires_in: i64 = from_env(EnvKey::JwtExpiresInHours)
+                            .parse()
+                            .unwrap_or_else(|e| panic!("parse JwtExpiresInHours failed: {e}"));
+
+                        let expries_in =
+                            OffsetDateTime::now_utc() + Duration::hours(jwt_expires_in);
+
+                        let mut cookie = Cookie::new(cookies::USER_JWT, jwt);
+                        cookie.set_expires(expries_in);
+
+                        jar.add_private(cookie);
+
+                        HbpResponse::redirect(uri!("/users", index))
+                    }
+                    Err(e) => e.into(),
+                }
+            }
+            None => HbpResponse::redirect(uri!("/users", login)),
+        },
     }
 }
 

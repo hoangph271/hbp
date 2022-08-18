@@ -66,23 +66,18 @@ impl HbpResponse {
             action_html: String,
         }
 
-        let html = TemplateRenderer::new("static/error.html".into())
-            .to_html_page(
-                RenderData {
-                    error_text: format!(
-                        "{} | {}",
-                        status_code.as_u16(),
-                        status_code.reason_phrase()
-                    ),
-                    action_html: action_html_for(&status_code),
-                },
-                IndexLayoutData::default().title(status_code.reason_phrase()),
-            )
-            .unwrap();
-
-        HbpResponse {
-            status_code,
-            content: HbpContent::Html(html),
+        match TemplateRenderer::new("static/error.html".into()).to_html_page(
+            RenderData {
+                error_text: format!("{} | {}", status_code.as_u16(), status_code.reason_phrase()),
+                action_html: action_html_for(&status_code),
+            },
+            IndexLayoutData::default().title(status_code.reason_phrase()),
+        ) {
+            Ok(html) => HbpResponse {
+                status_code,
+                content: HbpContent::Html(html),
+            },
+            Err(e) => e.into(),
         }
     }
 

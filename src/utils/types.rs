@@ -138,6 +138,9 @@ impl HbpError {
             status_code: StatusCode::BadRequest,
         }
     }
+    pub fn internal_server_error() -> HbpError {
+        Self::from_status(StatusCode::InternalServerError)
+    }
 }
 
 pub type HbpResult<T> = Result<T, HbpError>;

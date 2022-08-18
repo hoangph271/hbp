@@ -67,7 +67,10 @@ pub mod post_orm {
                 )
                 .build();
 
-            client.execute_query(create_posts_table).await.unwrap();
+            client
+                .execute_query(create_posts_table)
+                .await
+                .unwrap_or_else(|e| panic!("execute_query() failed: {:?}", e));
 
             println!("created posts table");
 
@@ -125,8 +128,13 @@ pub async fn build_stargate_client(
         .map_err(|_| {
             DbError::internal_server_error("build_stargate_client() failed at .uri()".to_owned())
         })?
-        .auth_token(AuthToken::from_str(bearer_token).unwrap())
-        .tls(Some(client::default_tls_config().unwrap()))
+        .auth_token(AuthToken::from_str(bearer_token).map_err(|e| {
+            error!("{e}");
+            DbError::internal_server_error(format!("bearer_token invalid: {bearer_token}"))
+        })?)
+        .tls(Some(
+            client::default_tls_config().unwrap_or_else(|_| panic!("build default client fail")),
+        ))
         .connect()
         .await
         .map_err(|e| {
@@ -165,19 +173,30 @@ where
 {
     let mut client = stargate_client_from_env().await?;
 
-    let response = client.execute_query(query).await.unwrap();
+    let response = client
+        .execute_query(query)
+        .await
+        .unwrap_or_else(|e| panic!("execute_query failed: {e}"));
 
-    let result_set: ResultSet = response.try_into().unwrap();
+    let result_set: ResultSet = response
+        .try_into()
+        .unwrap_or_else(|e| panic!("response.try_into() failed: {e}"));
 
-    let mapper: ResultSetMapper<T> = result_set.mapper().unwrap();
+    let mapper: ResultSetMapper<T> = result_set
+        .mapper()
+        .unwrap_or_else(|e| panic!("mapper() failed: {e}"));
 
     let items: Vec<T> = result_set
         .rows
         .into_iter()
-        .map(|row| {
-            let item: T = mapper.try_unpack(row).unwrap();
-
-            item
+        .filter_map(|row| {
+            mapper
+                .try_unpack(row)
+                .map_err(|e| {
+                    error!("try_unpacked() failed: {e:?}");
+                    e
+                })
+                .ok()
         })
         .collect();
 
@@ -190,10 +209,19 @@ pub async fn execute_stargate_query_for_one<T>(
 where
     T: ColumnPositions + TryFromRow,
 {
-    let response = client.execute_query(query).await.unwrap();
-    let mut result_set: ResultSet = response.try_into().unwrap();
+    let response = client.execute_query(query).await.map_err(|e| {
+        let message = format!("execute_query() failed: {e}");
+        error!("{message}");
 
-    let mapper: ResultSetMapper<T> = result_set.mapper().unwrap();
+        DbError::internal_server_error(message)
+    })?;
+    let mut result_set: ResultSet = response.try_into().unwrap_or_else(|e| {
+        panic!("response.try_into() failed: {e}");
+    });
+
+    let mapper: ResultSetMapper<T> = result_set
+        .mapper()
+        .unwrap_or_else(|e| panic!("mapper() failed: {e}"));
 
     if let Some(row) = result_set.rows.pop() {
         match mapper.try_unpack(row) {

@@ -36,7 +36,9 @@ impl From<Markdown> for Data {
             if let Some(tags) = markdown.tags {
                 map_builder = map_builder.insert_vec("tags", |mut builder| {
                     for tag in &tags[..] {
-                        builder = builder.push(tag).unwrap();
+                        builder = builder
+                            .push(tag)
+                            .unwrap_or_else(|e| panic!("push tag failed: {e:?}"));
                     }
 
                     builder
@@ -46,7 +48,7 @@ impl From<Markdown> for Data {
             Ok(map_builder.build())
         };
 
-        insert_fields().unwrap()
+        insert_fields().unwrap_or_else(|e| panic!("insert_fields fail: {e}"))
     }
 }
 
@@ -78,7 +80,11 @@ impl Markdown {
             // TODO: Abstract this map_err
             content: fs::read_to_string(path)
                 .map_err(|e| HbpError::from_std_error(e, StatusCode::InternalServerError))?,
-            file_name: path.file_name().unwrap().to_string_lossy().into_owned(),
+            file_name: path
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .into_owned(),
             url: url_encode_path(&path.to_string_lossy()),
             ..Markdown::default()
         };
@@ -88,7 +94,9 @@ impl Markdown {
                 .trim()
                 .split('\n')
                 .map(|line| {
-                    let colon_index = line.find(':').unwrap();
+                    let colon_index = line
+                        .find(':')
+                        .expect("header_comment value lines MUST contain a colon");
 
                     (
                         (&line[..colon_index]).trim().to_string(),

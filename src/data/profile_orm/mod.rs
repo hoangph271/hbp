@@ -99,10 +99,14 @@ impl ProfileOrm {
             .build();
 
         let client = self.stargate_client().await?;
-        let mut result_set = execute_stargate_query(client, insert_query).await?.unwrap();
+        let mut result_set = execute_stargate_query(client, insert_query)
+            .await?
+            .unwrap_or_else(|| panic!("result_set must NOT be None"));
 
-        let mut row = result_set.rows.pop().unwrap();
-        let inserted: bool = row.try_take(0).unwrap();
+        let mut row = result_set.rows.pop().expect("result_set must has one row");
+        let inserted: bool = row
+            .try_take(0)
+            .unwrap_or_else(|_| panic!("inserted must NOT be None"));
 
         if inserted {
             match self.find_one(&new_profile.username).await? {

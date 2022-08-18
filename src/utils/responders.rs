@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use std::io::Cursor;
 use std::path::PathBuf;
 
+use super::status_from;
 use super::template::TemplateRenderer;
 use super::types::{HbpError, HbpResult};
 
@@ -39,10 +40,10 @@ impl OpenApiResponderInner for HbpResponse {
 }
 
 impl HbpResponse {
-    pub fn html(html: &str, status_code: Option<StatusCode>) -> HbpResponse {
+    pub fn html(html: String, status_code: Option<StatusCode>) -> HbpResponse {
         HbpResponse {
             status_code: status_code.unwrap_or(StatusCode::Ok),
-            content: HbpContent::Html(html.to_owned()),
+            content: HbpContent::Html(html),
         }
     }
 
@@ -65,23 +66,18 @@ impl HbpResponse {
             action_html: String,
         }
 
-        let html = TemplateRenderer::new("static/error.html".into())
-            .to_html_page(
-                RenderData {
-                    error_text: format!(
-                        "{} | {}",
-                        status_code.as_u16(),
-                        status_code.reason_phrase()
-                    ),
-                    action_html: action_html_for(&status_code),
-                },
-                IndexLayoutData::default().title(status_code.reason_phrase()),
-            )
-            .unwrap();
-
-        HbpResponse {
-            status_code,
-            content: HbpContent::Html(html),
+        match TemplateRenderer::new("static/error.html".into()).to_html_page(
+            RenderData {
+                error_text: format!("{} | {}", status_code.as_u16(), status_code.reason_phrase()),
+                action_html: action_html_for(&status_code),
+            },
+            IndexLayoutData::default().title(status_code.reason_phrase()),
+        ) {
+            Ok(html) => HbpResponse {
+                status_code,
+                content: HbpContent::Html(html),
+            },
+            Err(e) => e.into(),
         }
     }
 
@@ -128,7 +124,7 @@ impl<'r> Responder<'r, 'r> for HbpResponse {
     fn respond_to(self, request: &rocket::Request<'_>) -> ResResult<'r> {
         let mut response_builder = Response::build();
 
-        let status = Status::from_code(self.status_code.as_u16()).unwrap();
+        let status = status_from(self.status_code);
         response_builder.status(status);
 
         match self.content {
@@ -167,7 +163,7 @@ impl From<HbpResponse> for Response<'_> {
     fn from(hbp_response: HbpResponse) -> Response<'static> {
         let mut response_builder = Response::build();
 
-        let status = Status::from_code(hbp_response.status_code.as_u16()).unwrap();
+        let status = status_from(hbp_response.status_code);
         response_builder.status(status);
 
         response_builder.finalize()

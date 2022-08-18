@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use super::constants;
 
 pub enum EnvKey {
@@ -8,6 +10,8 @@ pub enum EnvKey {
     AstraUri,
     AstraBearerToken,
     AstraKeySpace,
+    PublicFilesRoot,
+    RootUser,
 }
 
 pub fn from_env(env_key: EnvKey) -> &'static str {
@@ -27,5 +31,22 @@ pub fn from_env(env_key: EnvKey) -> &'static str {
         EnvKey::AstraUri => dotenv!("ASTRA_URI"),
         EnvKey::AstraBearerToken => dotenv!("ASTRA_BEARER_TOKEN"),
         EnvKey::AstraKeySpace => dotenv!("ASTRA_KEY_SPACE"),
+        EnvKey::PublicFilesRoot => dotenv!("PUBLIC_FILES_ROOT"),
+        EnvKey::RootUser => dotenv!("ROOT_USER"),
     }
+}
+
+pub fn public_files_root() -> PathBuf {
+    let path: PathBuf = from_env(EnvKey::PublicFilesRoot).into();
+
+    path
+}
+pub fn is_root(sub: &str) -> bool {
+    if sub.is_empty() {
+        return false;
+    }
+
+    let root_user = from_env(EnvKey::RootUser);
+
+    root_user.eq(sub)
 }

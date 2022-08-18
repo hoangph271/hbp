@@ -7,7 +7,7 @@ use crate::utils::env::{from_env, EnvKey};
 use crate::utils::responders::HbpResponse;
 use crate::utils::template;
 use crate::utils::template::{IndexLayoutData, TemplateRenderer};
-use crate::utils::types::HbpError;
+use crate::utils::types::{HbpError, HbpResult};
 use log::*;
 use rocket::form::Form;
 use rocket::http::{Cookie, CookieJar};
@@ -18,23 +18,22 @@ use serde::Serialize;
 use super::shared::attemp_signin;
 
 #[get("/")]
-pub fn index(jwt: AuthPayload) -> HbpResponse {
+pub fn index(jwt: AuthPayload) -> HbpResult<HbpResponse> {
     #[derive(Serialize, Debug)]
     struct RenderData {
         username: String,
     }
 
-    match TemplateRenderer::new("users/profile.html".into()).to_html_page(
+    let html = TemplateRenderer::new("users/profile.html".into()).to_html_page(
         RenderData {
             username: jwt.username().to_owned(),
         },
         IndexLayoutData::default()
             .title(jwt.username())
             .username(jwt.username()),
-    ) {
-        Ok(html) => HbpResponse::html(&html, None),
-        Err(e) => e.into(),
-    }
+    )?;
+
+    Ok(HbpResponse::html(html, None))
 }
 
 #[get("/login")]
@@ -43,17 +42,15 @@ pub fn login() -> HbpResponse {
         .to_html_page((), template::IndexLayoutData::default().title("Login"))
         .expect("render users/login.html failed");
 
-    HbpResponse::html(&html, None)
+    HbpResponse::html(html, None)
 }
 
 #[get("/signup")]
-pub fn signup() -> HbpResponse {
-    match TemplateRenderer::new("users/signup.html".into())
-        .to_html_page((), template::IndexLayoutData::default().title("Signup"))
-    {
-        Ok(html) => HbpResponse::html(&html, None),
-        Err(e) => e.into(),
-    }
+pub fn signup() -> HbpResult<HbpResponse> {
+    let html = TemplateRenderer::new("users/signup.html".into())
+        .to_html_page((), template::IndexLayoutData::default().title("Signup"))?;
+
+    Ok(HbpResponse::html(html, None))
 }
 
 #[post("/login", data = "<login_body>")]

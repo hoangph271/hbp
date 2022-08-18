@@ -40,10 +40,10 @@ impl OpenApiResponderInner for HbpResponse {
 }
 
 impl HbpResponse {
-    pub fn html(html: &str, status_code: Option<StatusCode>) -> HbpResponse {
+    pub fn html(html: String, status_code: Option<StatusCode>) -> HbpResponse {
         HbpResponse {
             status_code: status_code.unwrap_or(StatusCode::Ok),
-            content: HbpContent::Html(html.to_owned()),
+            content: HbpContent::Html(html),
         }
     }
 

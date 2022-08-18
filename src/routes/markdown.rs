@@ -1,12 +1,12 @@
 use crate::shared::entities::markdown::*;
 use crate::utils::markdown::render_markdown_list;
 use crate::utils::template::{IndexLayoutData, MoveUpUrl, TemplateRenderer};
+use crate::utils::types::{HbpError, HbpResult};
 use crate::utils::{
     auth::{AuthPayload, UserPayload},
     markdown,
     responders::{HbpContent, HbpResponse},
 };
-use httpstatus::StatusCode;
 use log::*;
 use rocket::{get, routes, uri, Route};
 use serde::Serialize;
@@ -31,11 +31,11 @@ fn markdown_path_from(username: &str, sub_path: &Path) -> (String, PathBuf) {
 }
 
 #[get("/<sub_path..>", rank = 2)]
-async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpResponse {
+async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpResult<HbpResponse> {
     let file_path = PathBuf::from("markdown").join(sub_path.clone());
 
     if !file_path.exists() {
-        return HbpResponse::not_found();
+        return Err(HbpError::not_found());
     }
 
     if !markdown::is_markdown(&sub_path) {
@@ -52,40 +52,29 @@ async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpRespon
 
             render_dir(&file_path, layout_data)
         } else {
-            HbpResponse::file(file_path)
+            Ok(HbpResponse::file(file_path))
         };
     }
 
-    match Markdown::from_markdown(&file_path) {
-        Ok(markdown_data) => {
-            let html_result = async {
-                if markdown::is_marp(&markdown_data.content) {
-                    markdown::render_marp(&markdown_data).await
-                } else {
-                    markdown::render_markdown(
-                        &markdown_data,
-                        IndexLayoutData::default()
-                            .title(&markdown_data.title)
-                            .maybe_auth(jwt)
-                            .moveup_urls(MoveUpUrl::from_path(&file_path)),
-                    )
-                    .await
-                }
-            };
+    let markdown_data = Markdown::from_markdown(&file_path)?;
 
-            match html_result.await {
-                Ok(html) => HbpResponse::html(&html, None),
-                Err(e) => {
-                    error!("{}", e);
-                    HbpResponse::status(StatusCode::InternalServerError)
-                }
-            }
-        }
-        Err(e) => {
-            error!("{e}");
-            HbpResponse::status(StatusCode::InternalServerError)
+    let html = async {
+        if markdown::is_marp(&markdown_data.content) {
+            markdown::render_marp(&markdown_data).await
+        } else {
+            markdown::render_markdown(
+                &markdown_data,
+                IndexLayoutData::default()
+                    .title(&markdown_data.title)
+                    .maybe_auth(jwt)
+                    .moveup_urls(MoveUpUrl::from_path(&file_path)),
+            )
+            .await
         }
     }
+    .await?;
+
+    Ok(HbpResponse::html(html, None))
 }
 
 #[get("/_edit/<sub_path..>")]
@@ -99,20 +88,24 @@ async fn user_markdown_editor(sub_path: PathBuf, _jwt: AuthPayload) -> HbpRespon
 }
 
 #[get("/users/<username>/<sub_path..>", rank = 1)]
-async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: AuthPayload) -> HbpResponse {
+async fn user_markdown_file(
+    username: &str,
+    sub_path: PathBuf,
+    jwt: AuthPayload,
+) -> HbpResult<HbpResponse> {
     if !username.eq(jwt.username()) {
-        return HbpResponse::forbidden();
+        return Ok(HbpResponse::forbidden());
     }
 
     let (file_path_str, file_path) = markdown_path_from(username, &sub_path);
 
     if !jwt.match_path(&file_path_str, Some(assert_payload_access)) {
-        return HbpResponse::forbidden();
+        return Ok(HbpResponse::forbidden());
     }
 
     if !file_path.exists() {
         info!("{:?} not exists", file_path.to_string_lossy());
-        return HbpResponse::not_found();
+        return Ok(HbpResponse::not_found());
     }
 
     let moveup_urls = MoveUpUrl::from_path(&file_path);
@@ -141,40 +134,33 @@ async fn user_markdown_file(username: &str, sub_path: PathBuf, jwt: AuthPayload)
 
             // TODO: Sort...! :"<
 
-            match render_markdown_list(
+            let html = render_markdown_list(
                 IndexLayoutData::default()
                     .title(&file_path_str)
                     .maybe_auth(Some(jwt))
                     .moveup_urls(moveup_urls),
                 markdowns,
-            ) {
-                Ok(html) => HbpResponse::html(&html, None),
-                Err(e) => e.into(),
-            }
+            )?;
+
+            Ok(HbpResponse::html(html, None))
         } else {
-            HbpResponse::file(file_path)
+            Ok(HbpResponse::file(file_path))
         };
     }
 
     if let Ok(markdown_data) = Markdown::from_markdown(&file_path) {
-        let html_result = async {
+        let html = async {
             if markdown::is_marp(&markdown_data.content) {
                 markdown::render_marp(&markdown_data).await
             } else {
                 markdown::render_user_markdown(&markdown_data, &jwt, &file_path).await
             }
         }
-        .await;
+        .await?;
 
-        match html_result {
-            Ok(html) => HbpResponse::ok(Some(HbpContent::Html(html))),
-            Err(e) => {
-                error!("{}", e);
-                HbpResponse::internal_server_error()
-            }
-        }
+        Ok(HbpResponse::ok(Some(HbpContent::Html(html))))
     } else {
-        HbpResponse::internal_server_error()
+        Ok(HbpResponse::internal_server_error())
     }
 }
 
@@ -205,11 +191,8 @@ pub fn markdown_routes() -> Vec<Route> {
     ]
 }
 
-fn render_dir(dir_path: &PathBuf, layout_data: IndexLayoutData) -> HbpResponse {
+fn render_dir(dir_path: &PathBuf, layout_data: IndexLayoutData) -> HbpResult<HbpResponse> {
     let markdowns: Vec<MarkdownOrMarkdownDir> = markdown::markdown_from_dir(dir_path).unwrap();
 
-    match render_markdown_list(layout_data, markdowns) {
-        Ok(html) => HbpResponse::html(&html, None),
-        Err(e) => e.into(),
-    }
+    render_markdown_list(layout_data, markdowns).map(|html| HbpResponse::html(html, None))
 }

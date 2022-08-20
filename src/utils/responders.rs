@@ -14,7 +14,7 @@ use std::path::PathBuf;
 
 use super::status_from;
 use super::template::TemplateRenderer;
-use super::types::{HbpError, HbpResult};
+use super::types::HbpResult;
 
 #[allow(dead_code)]
 #[derive(Serialize, Deserialize, JsonSchema)]
@@ -167,15 +167,6 @@ impl From<HbpResponse> for Response<'_> {
         response_builder.status(status);
 
         response_builder.finalize()
-    }
-}
-
-impl From<HbpError> for HbpResponse {
-    fn from(e: HbpError) -> Self {
-        HbpResponse {
-            status_code: e.status_code,
-            content: HbpContent::Plain(e.msg),
-        }
     }
 }
 

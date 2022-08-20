@@ -11,11 +11,8 @@ use crate::{
         execute_stargate_query, execute_stargate_query_for_one, get_keyspace,
         stargate_client_from_env,
     },
-    shared::interfaces::{ApiItemResponse, ApiListResponse},
-    utils::{
-        responders::HbpResponse,
-        types::{HbpError, HbpResult},
-    },
+    shared::interfaces::{ApiError, ApiItem, ApiList},
+    utils::{responders::HbpResponse, types::HbpResult},
 };
 
 #[derive(TryFromRow, Serialize)]
@@ -61,7 +58,7 @@ async fn api_get_shows() -> HbpResult<HbpResponse> {
         None => vec![],
     };
 
-    Ok(ApiListResponse::ok(movies_and_tv).into())
+    Ok(ApiList::ok(movies_and_tv).into())
 }
 
 #[openapi]
@@ -77,8 +74,8 @@ async fn api_get_one(show_id: i64) -> HbpResult<HbpResponse> {
 
     execute_stargate_query_for_one::<MovieOrTv>(client, query)
         .await?
-        .map(|show| ApiItemResponse::ok(show).into())
-        .ok_or_else(HbpError::not_found)
+        .map(|show| ApiItem::ok(show).into())
+        .ok_or_else(ApiError::not_found)
 }
 
 pub fn get_routes_and_docs(settings: &OpenApiSettings) -> (Vec<Route>, OpenApi) {

@@ -11,14 +11,12 @@ use rocket_okapi::{
 
 use crate::{
     data::models::users_model::DbUser,
-    utils::{
-        env, timestamp_now,
-        types::{HbpError, HbpResult},
-    },
+    shared::interfaces::ApiError,
+    utils::{env, timestamp_now, types::HbpResult},
 };
 
 pub mod jwt {
-    use crate::utils::types::{HbpError, HbpResult};
+    use crate::{shared::interfaces::ApiError, utils::types::HbpResult};
     use httpstatus::StatusCode;
     use jsonwebtoken::{encode, EncodingKey, Header};
     use serde::Serialize;
@@ -32,7 +30,7 @@ pub mod jwt {
             &EncodingKey::from_secret(&jwt_secret()),
         )
         .map_err(|e| {
-            HbpError::from_message(
+            ApiError::from_message(
                 &format!("sign_jwt failed: {e}"),
                 StatusCode::InternalServerError,
             )
@@ -56,7 +54,7 @@ pub struct UserPayload {
     pub roles: Vec<String>,
 }
 impl UserPayload {
-    pub fn sign_jwt(&self) -> Result<String, HbpError> {
+    pub fn sign_jwt(&self) -> Result<String, ApiError> {
         jwt::sign_jwt(&self)
     }
 
@@ -136,15 +134,15 @@ impl AuthPayload {
         }
     }
 
-    pub fn decode(token: &str) -> Result<AuthPayload, HbpError> {
+    pub fn decode(token: &str) -> Result<AuthPayload, ApiError> {
         let key = &DecodingKey::from_secret(&jwt_secret());
         let validation = &Validation::default();
 
-        let auth_payload: Result<AuthPayload, HbpError> = UserPayload::decode(token)
+        let auth_payload: Result<AuthPayload, ApiError> = UserPayload::decode(token)
             .map(AuthPayload::User)
             .or_else(|_| decode::<UserResoucePayload>(token, key, validation).map(|val| val.into()))
             .map_err(|_| {
-                HbpError::from_message(
+                ApiError::from_message(
                     &format!("verify_jwt failed for {token}"),
                     StatusCode::Unauthorized,
                 )
@@ -162,27 +160,27 @@ impl AuthPayload {
                 if user_assert(payload, path) {
                     Ok(())
                 } else {
-                    Err(HbpError::forbidden())
+                    Err(ApiError::forbidden())
                 }
             }
             AuthPayload::UserResource(payload) => {
                 let can_access = glob::Pattern::new(&payload.path)
                     .map_err(|e| {
                         error!("{e}");
-                        HbpError::forbidden()
+                        ApiError::forbidden()
                     })?
                     .matches(&path.to_string_lossy());
 
                 if can_access {
                     Ok(())
                 } else {
-                    Err(HbpError::forbidden())
+                    Err(ApiError::forbidden())
                 }
             }
         }
     }
 
-    pub fn sign(&self) -> Result<String, HbpError> {
+    pub fn sign(&self) -> Result<String, ApiError> {
         match self {
             AuthPayload::User(user_payload) => jwt::sign_jwt(user_payload),
             AuthPayload::UserResource(resource_payload) => jwt::sign_jwt(resource_payload),

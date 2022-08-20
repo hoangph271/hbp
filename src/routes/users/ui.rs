@@ -1,13 +1,14 @@
 use crate::data::models::users_model::DbUser;
 use crate::data::user_orm::UserOrm;
 use crate::routes::users::shared::{LoginBody, SignupBody};
+use crate::shared::interfaces::ApiError;
 use crate::utils::auth::{AuthPayload, UserPayload};
 use crate::utils::constants::cookies;
 use crate::utils::env::{from_env, EnvKey};
 use crate::utils::responders::HbpResponse;
 use crate::utils::template;
 use crate::utils::template::{IndexLayoutData, TemplateRenderer};
-use crate::utils::types::{HbpError, HbpResult};
+use crate::utils::types::HbpResult;
 use log::*;
 use rocket::form::Form;
 use rocket::http::{Cookie, CookieJar};
@@ -58,7 +59,7 @@ pub async fn post_login(login_body: Form<LoginBody>, jar: &CookieJar<'_>) -> Hbp
     match attemp_signin(&login_body.username, &login_body.password).await {
         Err(e) => {
             error!("attemp_signin() failed: {e}");
-            HbpError::internal_server_error().into()
+            ApiError::internal_server_error().into()
         }
         Ok(user) => match user {
             Some(user) => {
@@ -91,7 +92,7 @@ pub async fn post_login(login_body: Form<LoginBody>, jar: &CookieJar<'_>) -> Hbp
 #[post("/signup", data = "<signup_body>")]
 pub async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
     if let Err(e) = signup_body.validate() {
-        error!("{}", e);
+        error!("{e:?}");
         return HbpResponse::redirect(uri!("/users", signup));
     }
 

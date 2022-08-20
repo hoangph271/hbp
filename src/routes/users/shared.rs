@@ -5,7 +5,8 @@ use serde::Deserialize;
 
 use crate::{
     data::{lib::DbResult, models::users_model::DbUser, user_orm::UserOrm},
-    utils::types::{HbpError, HbpResult},
+    shared::interfaces::ApiError,
+    utils::types::HbpResult,
 };
 
 pub async fn attemp_signin(username: &str, password: &str) -> DbResult<Option<DbUser>> {
@@ -38,17 +39,17 @@ pub struct SignupBody {
 impl SignupBody {
     pub fn validate(&self) -> HbpResult<()> {
         if self.username.is_empty() {
-            HbpResult::Err(HbpError::from_message(
+            HbpResult::Err(ApiError::from_message(
                 "username can NOT be empty",
                 BadRequest,
             ))
         } else if self.password.is_empty() {
-            HbpResult::Err(HbpError::from_message(
+            HbpResult::Err(ApiError::from_message(
                 "password can NOT be empty",
                 BadRequest,
             ))
         } else if self.password.ne(&self.password_confirm) {
-            HbpResult::Err(HbpError::from_message(
+            HbpResult::Err(ApiError::from_message(
                 "password & password_confirm does NOT mactch",
                 BadRequest,
             ))

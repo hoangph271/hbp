@@ -85,7 +85,7 @@ pub mod post_orm {
 }
 
 use crate::{
-    shared::interfaces::ApiErrorResponse,
+    shared::interfaces::ApiError,
     utils::env::{from_env, EnvKey},
 };
 
@@ -108,9 +108,9 @@ impl DbError {
         }
     }
 }
-impl From<DbError> for ApiErrorResponse {
+impl From<DbError> for ApiError {
     fn from(db_error: DbError) -> Self {
-        ApiErrorResponse {
+        ApiError {
             status_code: db_error.status_code,
             errors: vec![db_error.message],
         }

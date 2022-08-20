@@ -1,7 +1,8 @@
 use crate::shared::entities::markdown::*;
+use crate::shared::interfaces::ApiError;
 use crate::utils::markdown::render_markdown_list;
 use crate::utils::template::{IndexLayoutData, MoveUpUrl, TemplateRenderer};
-use crate::utils::types::{HbpError, HbpResult};
+use crate::utils::types::HbpResult;
 use crate::utils::{
     auth::{AuthPayload, UserPayload},
     markdown,
@@ -35,7 +36,7 @@ async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpResult
     let file_path = PathBuf::from("markdown").join(sub_path.clone());
 
     if !file_path.exists() {
-        return Err(HbpError::not_found());
+        return Err(ApiError::not_found());
     }
 
     if !markdown::is_markdown(&sub_path) {
@@ -164,7 +165,6 @@ async fn user_markdown_file(
 
 #[get("/users", rank = 1)]
 async fn user_default(jwt: AuthPayload) -> HbpResponse {
-    // FIXME: `/markdown` is hard coded
     let uri = uri!(
         "/markdown",
         user_markdown_file(jwt.username(), PathBuf::new())

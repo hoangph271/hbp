@@ -4,18 +4,17 @@ use rocket::{get, Route};
 use rocket_okapi::{openapi, openapi_get_routes_spec, settings::OpenApiSettings};
 
 use crate::{
-    data::{lib::DbError, profile_orm::ProfileOrm, user_orm::UserOrm},
-    shared::interfaces::{ApiErrorResponse, ApiItemResponse},
-    utils::{
-        auth::UserPayload,
-        responders::{wrap_api_handler, HbpResponse},
+    data::{
+        lib::DbError, models::profiles_model::DbProfile, profile_orm::ProfileOrm, user_orm::UserOrm,
     },
+    shared::interfaces::{ApiItem, ApiResult},
+    utils::{auth::UserPayload, responders::wrap_api_handler},
 };
 
 #[openapi]
 #[get("/")]
-pub async fn api_get_profile(jwt: UserPayload) -> HbpResponse {
-    let maybe_profile = wrap_api_handler(|| async {
+pub async fn api_get_profile(jwt: UserPayload) -> ApiResult<ApiItem<DbProfile>> {
+    let profile = wrap_api_handler(|| async {
         let profile_orm = ProfileOrm::default();
 
         let mut maybe_profile = profile_orm.find_one(&jwt.sub).await?;
@@ -40,12 +39,9 @@ pub async fn api_get_profile(jwt: UserPayload) -> HbpResponse {
             .into()
         })
     })
-    .await;
+    .await?;
 
-    match maybe_profile {
-        Ok(profile) => ApiItemResponse::ok(profile).into(),
-        Err(e) => ApiErrorResponse::from_hbp_error(e).into(),
-    }
+    Ok(ApiItem::ok(profile))
 }
 
 pub fn get_routes_and_docs(settings: &OpenApiSettings) -> (Vec<Route>, OpenApi) {

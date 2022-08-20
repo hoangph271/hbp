@@ -1,5 +1,6 @@
+use crate::shared::interfaces::ApiError;
 use crate::utils::string::url_encode_path;
-use crate::utils::types::{HbpError, HbpResult};
+use crate::utils::types::HbpResult;
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use httpstatus::StatusCode;
@@ -73,13 +74,13 @@ impl Markdown {
     pub fn from_markdown(path: &Path) -> HbpResult<Markdown> {
         if !path.exists() {
             let msg = format!("{} NOT exists", path.to_string_lossy());
-            return Err(HbpError::from_message(&msg, StatusCode::BadRequest));
+            return Err(ApiError::from_message(&msg, StatusCode::BadRequest));
         }
 
         let mut markdown = Markdown {
             // TODO: Abstract this map_err
             content: fs::read_to_string(path)
-                .map_err(|e| HbpError::from_io_error(e, StatusCode::InternalServerError))?,
+                .map_err(|e| ApiError::from_io_error(e, StatusCode::InternalServerError))?,
             file_name: path
                 .file_name()
                 .unwrap_or_default()
@@ -142,12 +143,12 @@ impl Markdown {
                     path.metadata()
                         // TODO: Abstract this map_err
                         .map_err(|e| {
-                            HbpError::from_io_error(e, StatusCode::InternalServerError)
+                            ApiError::from_io_error(e, StatusCode::InternalServerError)
                         })?
                         .created()
                         // TODO: Abstract this map_err
                         .map_err(|e| {
-                            HbpError::from_io_error(e, StatusCode::InternalServerError)
+                            ApiError::from_io_error(e, StatusCode::InternalServerError)
                         })?
                 )
                 .date()

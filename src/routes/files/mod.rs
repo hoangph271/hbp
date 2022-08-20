@@ -7,22 +7,20 @@ use log::error;
 use mime_guess::Mime;
 use okapi::openapi3::OpenApi;
 use rand::{seq::SliceRandom, thread_rng};
-use rocket::{get, Route};
+use rocket::{get, uri, Route};
 use rocket_okapi::{openapi, openapi_get_routes_spec, settings::OpenApiSettings};
 use std::path::Path;
 use std::str::FromStr;
 
-use crate::{
-    shared::interfaces::ApiErrorResponse,
-    utils::{
-        auth::AuthPayload,
-        env::{is_root, public_files_root},
-        responders::HbpResponse,
-        types::{HbpError, HbpResult},
-    },
+use crate::shared::interfaces::{ApiError, ApiResult};
+use crate::utils::types::HbpResult;
+use crate::utils::{
+    auth::AuthPayload,
+    env::{is_root, public_files_root},
+    responders::HbpResponse,
 };
 
-fn attemp_access(path: &Path, jwt: &Option<AuthPayload>) -> HbpResult<()> {
+fn attemp_access(path: &Path, jwt: &Option<AuthPayload>) -> ApiResult<()> {
     fn is_private(path: &Path) -> bool {
         let is_in_public_folder = path.starts_with(public_files_root());
         if is_in_public_folder {
@@ -43,21 +41,36 @@ fn attemp_access(path: &Path, jwt: &Option<AuthPayload>) -> HbpResult<()> {
                 |_, _| is_root(jwt.username()), // TODO: User jwt
             )
         }
-        None => Err(HbpError::not_found()),
+        None => Err(ApiError::forbidden()),
+    }
+}
+
+fn assert_raw_file(path: &Path) -> ApiResult<&Path> {
+    if path.is_dir() {
+        Err(ApiError {
+            status_code: StatusCode::UnprocessableEntity,
+            errors: vec!["requested file at {path:?} is NOT a file".to_owned()],
+        })
+    } else if !path.exists() {
+        println!("!");
+        Err(ApiError::not_found())
+    } else {
+        Ok(path)
     }
 }
 
 #[openapi]
-#[get("/random/raw?<mime>")]
+#[get("/random/raw?<mime>&<preview>")]
 pub async fn api_get_random_raw_file(
     mime: Option<String>,
     jwt: Option<AuthPayload>,
-) -> HbpResult<HbpResponse> {
+    preview: Option<bool>,
+) -> ApiResult<HbpResponse> {
     let root = public_files_root();
     let mime = if let Some(mime) = mime {
         let mime = Mime::from_str(&mime).map_err(|e| {
             error!("{e:?}");
-            HbpError::bad_request("file_type is malformed".to_owned())
+            ApiError::bad_request(vec!["file_type is malformed".to_owned()])
         })?;
 
         Some(mime)
@@ -65,9 +78,9 @@ pub async fn api_get_random_raw_file(
         None
     };
 
-    fn hbp_error_mapper(e: std::io::Error) -> HbpError {
+    fn hbp_error_mapper(e: std::io::Error) -> ApiError {
         error!("{e:?}");
-        HbpError::from_io_error(e, StatusCode::InternalServerError)
+        ApiError::from_io_error(e, StatusCode::InternalServerError)
     }
 
     #[async_recursion]
@@ -132,38 +145,49 @@ pub async fn api_get_random_raw_file(
     files.shuffle(&mut thread_rng());
 
     match files.first() {
-        Some(file) => Ok(HbpResponse::file(file.as_path().to_owned().into())),
-        None => Err(HbpError::not_found()),
+        Some(file_path) => {
+            let file_path = file_path.to_string_lossy().to_string();
+            let uri = if preview.unwrap_or(false) {
+                uri!("/api/v1/files", api_get_preview_file(path = file_path))
+            } else {
+                uri!("/api/v1/files", api_get_raw_file(path = file_path))
+            };
+
+            Ok(HbpResponse::redirect(uri))
+        }
+        None => Err(ApiError::not_found()),
     }
 }
 
 #[openapi]
+#[get("/preview?<path>")]
+pub async fn api_get_preview_file(
+    jwt: Option<AuthPayload>,
+    path: String,
+) -> HbpResult<HbpResponse> {
+    let path = Path::new(&path);
+
+    attemp_access(path, &jwt)?;
+    assert_raw_file(path)?;
+
+    Ok(HbpResponse::file(path.to_path_buf()))
+}
+
+#[openapi]
 #[get("/raw?<path>")]
-pub async fn api_get_raw_file(jwt: Option<AuthPayload>, path: Option<String>) -> HbpResponse {
-    if let Some(path) = path {
-        let path = Path::new(&path);
+pub async fn api_get_raw_file(jwt: Option<AuthPayload>, path: String) -> ApiResult<HbpResponse> {
+    let path = Path::new(&path);
 
-        if path.is_dir() {
-            return ApiErrorResponse {
-                status_code: StatusCode::UnprocessableEntity,
-                errors: vec![format!("requested file at {path:?} is NOT a file")],
-            }
-            .into();
-        }
+    attemp_access(path, &jwt)?;
+    assert_raw_file(path)?;
 
-        if !path.exists() {
-            return ApiErrorResponse::not_found().into();
-        }
-
-        return match attemp_access(path, &jwt) {
-            Ok(_) => HbpResponse::file(path.to_path_buf()),
-            Err(e) => e.into(),
-        };
-    }
-
-    ApiErrorResponse::not_found().into()
+    Ok(HbpResponse::file(path.to_path_buf()))
 }
 
 pub fn get_routes_and_docs(openapi_settings: &OpenApiSettings) -> (Vec<Route>, OpenApi) {
-    openapi_get_routes_spec![openapi_settings: api_get_raw_file, api_get_random_raw_file]
+    openapi_get_routes_spec![
+        openapi_settings: api_get_raw_file,
+        api_get_preview_file,
+        api_get_random_raw_file
+    ]
 }

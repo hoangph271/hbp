@@ -1,9 +1,9 @@
 use crate::data::models::users_model::PutUser;
 use crate::data::user_orm::UserOrm;
-use crate::shared::interfaces::{ApiErrorResponse, ApiItemResponse};
+use crate::shared::interfaces::{ApiError, ApiItem, ApiResult};
 use crate::utils::auth::UserPayload;
 use crate::utils::responders::{wrap_api_handler, HbpResponse};
-use crate::utils::types::{HbpError, HbpResult};
+use crate::utils::types::HbpResult;
 use httpstatus::StatusCode::BadRequest;
 use rocket::serde::json::{Error as JsonError, Json};
 use rocket::{post, put};
@@ -21,12 +21,12 @@ pub struct SignupApiPayload {
 impl SignupApiPayload {
     fn validate(&self) -> HbpResult<()> {
         if self.username.is_empty() {
-            HbpResult::Err(HbpError::from_message(
+            HbpResult::Err(ApiError::from_message(
                 "username can NOT be empty",
                 BadRequest,
             ))
         } else if self.password.is_empty() {
-            HbpResult::Err(HbpError::from_message(
+            HbpResult::Err(ApiError::from_message(
                 "password can NOT be empty",
                 BadRequest,
             ))
@@ -40,17 +40,17 @@ impl SignupApiPayload {
 #[post("/signup", data = "<signup_payload>")]
 pub async fn api_post_signup(
     signup_payload: Result<Json<SignupApiPayload>, JsonError<'_>>,
-) -> HbpResponse {
+) -> ApiResult<HbpResponse> {
     use crate::data::models::users_model::DbUser;
 
-    let maybe_user = wrap_api_handler(|| async {
+    let user = wrap_api_handler(|| async {
         let signup_body = signup_payload.map_err(|e| {
             let error = match e {
                 JsonError::Io(_) => "Can not read JSON".to_owned(),
                 JsonError::Parse(_, e) => e.to_string(),
             };
 
-            HbpError::bad_request(error)
+            ApiError::bad_request(vec![error])
         })?;
 
         signup_body.validate()?;
@@ -66,26 +66,23 @@ pub async fn api_post_signup(
 
         Ok(new_user)
     })
-    .await;
+    .await?;
 
-    match maybe_user {
-        Ok(user) => ApiItemResponse::ok(user).into(),
-        Err(e) => ApiErrorResponse::from_hbp_error(e).into(),
-    }
+    Ok(ApiItem::ok(user).into())
 }
 
 #[openapi]
 #[put("/<username>", data = "<user>")]
 pub async fn api_put_user(username: String, user: Json<PutUser>, jwt: UserPayload) -> HbpResponse {
     if username.ne(&jwt.sub) {
-        return ApiErrorResponse::forbidden().into();
+        return ApiError::forbidden().into();
     }
 
     let user = user.into_inner();
 
     match UserOrm::default().update_user(user.clone()).await {
-        Ok(_) => ApiItemResponse::ok(user).into(),
-        Err(e) => ApiErrorResponse {
+        Ok(_) => ApiItem::ok(user).into(),
+        Err(e) => ApiError {
             status_code: e.status_code,
             errors: vec![e.message],
         }
@@ -95,20 +92,17 @@ pub async fn api_put_user(username: String, user: Json<PutUser>, jwt: UserPayloa
 
 #[openapi]
 #[post("/signin", data = "<signin_body>")]
-pub async fn api_post_signin(signin_body: Json<LoginBody>) -> HbpResponse {
-    let maybe_jwt: HbpResult<String> = wrap_api_handler(|| async {
+pub async fn api_post_signin(signin_body: Json<LoginBody>) -> ApiResult<ApiItem<String>> {
+    let jwt: String = wrap_api_handler(|| async {
         let user = attemp_signin(&signin_body.username, &signin_body.password)
             .await?
-            .ok_or_else(HbpError::unauthorized)?;
+            .ok_or_else(ApiError::unauthorized)?;
 
         let user_jwt: UserPayload = user.into();
 
-        user_jwt.sign_jwt()
+        Ok(user_jwt.sign_jwt())
     })
-    .await;
+    .await??;
 
-    match maybe_jwt {
-        Ok(jwt) => ApiItemResponse::ok(jwt).into(),
-        Err(e) => ApiErrorResponse::from_hbp_error(e).into(),
-    }
+    Ok(ApiItem::ok(jwt))
 }

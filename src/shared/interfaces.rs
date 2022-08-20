@@ -1,9 +1,12 @@
 use httpstatus::StatusCode;
+use log::error;
 use okapi::openapi3::Responses;
+use rocket::response::Responder;
 use rocket_okapi::{gen::OpenApiGenerator, response::OpenApiResponderInner};
 use serde::{Serialize, Serializer};
+use std::error::Error;
 
-use crate::utils::{responders::HbpResponse, types::HbpError};
+use crate::utils::responders::HbpResponse;
 
 fn status_code_serialize<S>(val: &StatusCode, s: S) -> Result<S::Ok, S::Error>
 where
@@ -12,36 +15,42 @@ where
     s.serialize_u16(val.as_u16())
 }
 
-#[derive(Serialize, Clone)]
-pub struct ApiErrorResponse {
+#[derive(Serialize, Clone, Debug)]
+pub struct ApiError {
     #[serde(serialize_with = "status_code_serialize")]
     pub status_code: StatusCode,
     pub errors: Vec<String>,
 }
 
-impl From<ApiErrorResponse> for HbpResponse {
-    fn from(api_error_response: ApiErrorResponse) -> HbpResponse {
+impl From<ApiError> for HbpResponse {
+    fn from(api_error_response: ApiError) -> HbpResponse {
         let status_code = api_error_response.status_code.clone();
         HbpResponse::json(api_error_response, Some(status_code))
     }
 }
-impl From<ApiErrorResponse> for HbpError {
-    fn from(api_error_response: ApiErrorResponse) -> HbpError {
-        HbpError {
-            msg: api_error_response.errors.join(";"),
-            status_code: api_error_response.status_code,
-        }
+impl From<reqwest::Error> for ApiError {
+    fn from(e: reqwest::Error) -> Self {
+        error!("[reqwest::Error]: {e}");
+
+        let msg = match e.source() {
+            Some(source) => format!("{:?}", source),
+            None => "Unknown error".to_owned(),
+        };
+
+        ApiError::from_message(
+            &msg,
+            if let Some(status_code) = e.status() {
+                status_code.as_u16().into()
+            } else {
+                StatusCode::InternalServerError
+            },
+        )
     }
 }
-impl ApiErrorResponse {
-    pub fn from_hbp_error(e: HbpError) -> Self {
-        Self {
-            status_code: e.status_code,
-            errors: vec![e.msg],
-        }
-    }
-    pub fn bad_request(errors: Vec<String>) -> ApiErrorResponse {
-        ApiErrorResponse {
+
+impl ApiError {
+    pub fn bad_request(errors: Vec<String>) -> ApiError {
+        ApiError {
             status_code: StatusCode::BadRequest,
             errors,
         }
@@ -54,33 +63,45 @@ impl ApiErrorResponse {
         }
     }
 
-    pub fn unauthorized() -> ApiErrorResponse {
+    pub fn from_message(msg: &str, status_code: StatusCode) -> ApiError {
+        ApiError {
+            status_code,
+            errors: vec![msg.to_owned()],
+        }
+    }
+
+    pub fn from_io_error(std_error: std::io::Error, status_code: StatusCode) -> ApiError {
+        error!("{}", std_error);
+        ApiError::from_message("IO Error", status_code)
+    }
+
+    pub fn unauthorized() -> ApiError {
         Self::from_status(StatusCode::Unauthorized)
     }
 
-    pub fn not_implemented() -> ApiErrorResponse {
+    pub fn not_implemented() -> ApiError {
         Self::from_status(StatusCode::NotImplemented)
     }
 
-    pub fn not_found() -> ApiErrorResponse {
+    pub fn not_found() -> ApiError {
         Self::from_status(StatusCode::NotFound)
     }
 
-    pub fn forbidden() -> ApiErrorResponse {
+    pub fn forbidden() -> ApiError {
         Self::from_status(StatusCode::Forbidden)
     }
 
-    pub fn internal_server_error() -> ApiErrorResponse {
+    pub fn internal_server_error() -> ApiError {
         Self::from_status(StatusCode::InternalServerError)
     }
 }
 
-impl<'r> rocket::response::Responder<'r, 'static> for ApiErrorResponse {
+impl<'r> rocket::response::Responder<'r, 'static> for ApiError {
     fn respond_to(self, _: &'r rocket::Request<'_>) -> rocket::response::Result<'static> {
         Ok(HbpResponse::json(self.clone(), Some(self.status_code)).into())
     }
 }
-impl OpenApiResponderInner for ApiErrorResponse {
+impl OpenApiResponderInner for ApiError {
     fn responses(_gen: &mut OpenApiGenerator) -> rocket_okapi::Result<Responses> {
         Ok(Responses {
             ..Default::default()
@@ -89,7 +110,7 @@ impl OpenApiResponderInner for ApiErrorResponse {
 }
 
 #[derive(Serialize)]
-pub struct ApiItemResponse<T>
+pub struct ApiItem<T>
 where
     T: Serialize,
 {
@@ -98,21 +119,40 @@ where
     item: T,
 }
 
-impl<T> From<ApiItemResponse<T>> for HbpResponse
+impl<'r, T> Responder<'r, 'static> for ApiItem<T>
 where
     T: Serialize,
 {
-    fn from(api_item_response: ApiItemResponse<T>) -> HbpResponse {
+    fn respond_to(self, _: &'r rocket::Request<'_>) -> rocket::response::Result<'static> {
+        Ok(HbpResponse::from(self).into())
+    }
+}
+impl<T> OpenApiResponderInner for ApiItem<T>
+where
+    T: Serialize,
+{
+    fn responses(_: &mut OpenApiGenerator) -> rocket_okapi::Result<Responses> {
+        Ok(Responses {
+            ..Default::default()
+        })
+    }
+}
+
+impl<T> From<ApiItem<T>> for HbpResponse
+where
+    T: Serialize,
+{
+    fn from(api_item_response: ApiItem<T>) -> HbpResponse {
         let status_code = api_item_response.status_code.clone();
         HbpResponse::json(api_item_response, Some(status_code))
     }
 }
-impl<T> ApiItemResponse<T>
+impl<T> ApiItem<T>
 where
     T: Serialize,
 {
-    pub fn ok(item: T) -> ApiItemResponse<T> {
-        ApiItemResponse {
+    pub fn ok(item: T) -> ApiItem<T> {
+        ApiItem {
             status_code: StatusCode::Ok,
             item,
         }
@@ -120,7 +160,7 @@ where
 }
 
 #[derive(Serialize)]
-pub struct ApiListResponse<T>
+pub struct ApiList<T>
 where
     T: Serialize,
 {
@@ -129,23 +169,25 @@ where
     items: Vec<T>,
 }
 
-impl<T> From<ApiListResponse<T>> for HbpResponse
+impl<T> From<ApiList<T>> for HbpResponse
 where
     T: Serialize,
 {
-    fn from(api_item_response: ApiListResponse<T>) -> HbpResponse {
+    fn from(api_item_response: ApiList<T>) -> HbpResponse {
         let status_code = api_item_response.status_code.clone();
         HbpResponse::json(api_item_response, Some(status_code))
     }
 }
-impl<T> ApiListResponse<T>
+impl<T> ApiList<T>
 where
     T: Serialize,
 {
-    pub fn ok(items: Vec<T>) -> ApiListResponse<T> {
-        ApiListResponse {
+    pub fn ok(items: Vec<T>) -> ApiList<T> {
+        ApiList {
             status_code: StatusCode::Ok,
             items,
         }
     }
 }
+
+pub type ApiResult<T> = Result<T, ApiError>;

@@ -1,4 +1,4 @@
-use crate::{shared::interfaces::ApiErrorResponse, utils::responders::HbpResponse};
+use crate::{shared::interfaces::ApiError, utils::responders::HbpResponse};
 use httpstatus::StatusCode;
 use rocket::{catch, catchers, http::Status, Catcher, Request};
 
@@ -13,7 +13,7 @@ fn default(status: Status, req: &Request) -> HbpResponse {
     }
 
     match status_code {
-        StatusCode::NotFound => ApiErrorResponse {
+        StatusCode::NotFound => ApiError {
             status_code: status_code.clone(),
             errors: vec![format!(
                 "{} - Most likely the api endpoint does NOT exist",
@@ -21,7 +21,7 @@ fn default(status: Status, req: &Request) -> HbpResponse {
             )],
         }
         .into(),
-        _ => ApiErrorResponse::from_status(status_code).into(),
+        _ => ApiError::from_status(status_code).into(),
     }
 }
 

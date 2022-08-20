@@ -111,7 +111,7 @@ impl HbpError {
         }
     }
 
-    pub fn from_std_error(std_error: std::io::Error, status_code: StatusCode) -> HbpError {
+    pub fn from_io_error(std_error: std::io::Error, status_code: StatusCode) -> HbpError {
         error!("{}", std_error);
         HbpError::from_message("IO Error", status_code)
     }
@@ -138,6 +138,7 @@ impl HbpError {
             status_code: StatusCode::BadRequest,
         }
     }
+
     pub fn internal_server_error() -> HbpError {
         Self::from_status(StatusCode::InternalServerError)
     }

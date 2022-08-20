@@ -79,7 +79,7 @@ impl Markdown {
         let mut markdown = Markdown {
             // TODO: Abstract this map_err
             content: fs::read_to_string(path)
-                .map_err(|e| HbpError::from_std_error(e, StatusCode::InternalServerError))?,
+                .map_err(|e| HbpError::from_io_error(e, StatusCode::InternalServerError))?,
             file_name: path
                 .file_name()
                 .unwrap_or_default()
@@ -142,12 +142,12 @@ impl Markdown {
                     path.metadata()
                         // TODO: Abstract this map_err
                         .map_err(|e| {
-                            HbpError::from_std_error(e, StatusCode::InternalServerError)
+                            HbpError::from_io_error(e, StatusCode::InternalServerError)
                         })?
                         .created()
                         // TODO: Abstract this map_err
                         .map_err(|e| {
-                            HbpError::from_std_error(e, StatusCode::InternalServerError)
+                            HbpError::from_io_error(e, StatusCode::InternalServerError)
                         })?
                 )
                 .date()

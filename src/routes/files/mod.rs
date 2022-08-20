@@ -1,6 +1,6 @@
 use async_recursion::async_recursion;
 use async_std::fs::{read_dir, ReadDir};
-use async_std::path::PathBuf;
+use async_std::path::PathBuf as AsyncPathBuf;
 use async_std::prelude::*;
 use httpstatus::StatusCode;
 use log::error;
@@ -9,25 +9,37 @@ use okapi::openapi3::OpenApi;
 use rand::{seq::SliceRandom, thread_rng};
 use rocket::{get, uri, Route};
 use rocket_okapi::{openapi, openapi_get_routes_spec, settings::OpenApiSettings};
-use std::path::Path;
+use std::fs::File;
+use std::io::BufReader;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
+use thumbnailer::error::ThumbError;
+use thumbnailer::{create_thumbnails, ThumbnailSize};
 
 use crate::shared::interfaces::{ApiError, ApiResult};
-use crate::utils::types::HbpResult;
 use crate::utils::{
     auth::AuthPayload,
-    env::{is_root, public_files_root},
+    env::{files_root, is_root, public_files_root},
     responders::HbpResponse,
 };
 
-fn attemp_access(path: &Path, jwt: &Option<AuthPayload>) -> ApiResult<()> {
+fn attempt_access(path: &Path, jwt: &Option<AuthPayload>) -> ApiResult<()> {
     fn is_private(path: &Path) -> bool {
         let is_in_public_folder = path.starts_with(public_files_root());
+
         if is_in_public_folder {
             return false;
         }
 
         true
+    }
+
+    if !path.starts_with(files_root()) {
+        return Err(if jwt.is_some() {
+            ApiError::forbidden()
+        } else {
+            ApiError::unauthorized()
+        });
     }
 
     if !is_private(path) {
@@ -52,7 +64,7 @@ fn assert_raw_file(path: &Path) -> ApiResult<&Path> {
             errors: vec!["requested file at {path:?} is NOT a file".to_owned()],
         })
     } else if !path.exists() {
-        println!("!");
+        println!("{path:?}");
         Err(ApiError::not_found())
     } else {
         Ok(path)
@@ -61,12 +73,11 @@ fn assert_raw_file(path: &Path) -> ApiResult<&Path> {
 
 #[openapi]
 #[get("/random/raw?<mime>&<preview>")]
-pub async fn api_get_random_raw_file(
+pub async fn api_get_random_file(
     mime: Option<String>,
     jwt: Option<AuthPayload>,
     preview: Option<bool>,
 ) -> ApiResult<HbpResponse> {
-    let root = public_files_root();
     let mime = if let Some(mime) = mime {
         let mime = Mime::from_str(&mime).map_err(|e| {
             error!("{e:?}");
@@ -78,26 +89,21 @@ pub async fn api_get_random_raw_file(
         None
     };
 
-    fn hbp_error_mapper(e: std::io::Error) -> ApiError {
-        error!("{e:?}");
-        ApiError::from_io_error(e, StatusCode::InternalServerError)
-    }
-
     #[async_recursion]
     async fn get_matched_files(
         path: &Path,
         jwt: &Option<AuthPayload>,
         mime: &Option<Mime>,
-    ) -> HbpResult<Vec<PathBuf>> {
+    ) -> ApiResult<Vec<AsyncPathBuf>> {
         let mut matched_files = vec![];
 
-        let mut entries: ReadDir = read_dir(path).await.map_err(hbp_error_mapper)?;
+        let mut entries: ReadDir = read_dir(path).await?;
 
         while let Some(entry) = entries.next().await {
-            let entry = entry.map_err(hbp_error_mapper)?;
-            let meta_data = entry.metadata().await.map_err(hbp_error_mapper)?;
+            let entry = entry?;
+            let meta_data = entry.metadata().await?;
 
-            let can_access = attemp_access(entry.path().as_path().into(), jwt)
+            let can_access = attempt_access(entry.path().as_path().into(), jwt)
                 .map(|()| true)
                 .unwrap_or(false);
 
@@ -140,17 +146,25 @@ pub async fn api_get_random_raw_file(
         Ok(matched_files)
     }
 
+    let root = public_files_root();
     let mut files = get_matched_files(&root, &jwt, &mime).await?;
 
     files.shuffle(&mut thread_rng());
 
     match files.first() {
         Some(file_path) => {
-            let file_path = file_path.to_string_lossy().to_string();
+            let file_path = PathBuf::from(file_path);
+
             let uri = if preview.unwrap_or(false) {
-                uri!("/api/v1/files", api_get_preview_file(path = file_path))
+                uri!(
+                    "/api/v1/files",
+                    api_get_preview_file(path = file_path, from_root = Some(true))
+                )
             } else {
-                uri!("/api/v1/files", api_get_raw_file(path = file_path))
+                uri!(
+                    "/api/v1/files",
+                    api_get_raw_file(path = file_path, from_root = Some(true))
+                )
             };
 
             Ok(HbpResponse::redirect(uri))
@@ -159,35 +173,83 @@ pub async fn api_get_random_raw_file(
     }
 }
 
-#[openapi]
-#[get("/preview?<path>")]
-pub async fn api_get_preview_file(
-    jwt: Option<AuthPayload>,
-    path: String,
-) -> HbpResult<HbpResponse> {
-    let path = Path::new(&path);
+impl From<ThumbError> for ApiError {
+    fn from(e: ThumbError) -> Self {
+        error!("{e}");
 
-    attemp_access(path, &jwt)?;
-    assert_raw_file(path)?;
-
-    Ok(HbpResponse::file(path.to_path_buf()))
+        match e {
+            thumbnailer::error::ThumbError::IO(e) => {
+                ApiError::from_message(&format!("{e}"), StatusCode::InternalServerError)
+            }
+            thumbnailer::error::ThumbError::Image(e) => {
+                ApiError::from_message(&format!("{e}"), StatusCode::UnprocessableEntity)
+            }
+            thumbnailer::error::ThumbError::Decode => ApiError::internal_server_error(),
+            thumbnailer::error::ThumbError::Unsupported(e) => {
+                ApiError::from_message(&format!("{e}"), StatusCode::UnprocessableEntity)
+            }
+            thumbnailer::error::ThumbError::NullVideo => ApiError::unprocessable_entity(),
+            thumbnailer::error::ThumbError::FFMPEG(e) => {
+                ApiError::from_message(&format!("{e}"), StatusCode::InternalServerError)
+            }
+        }
+    }
 }
 
 #[openapi]
-#[get("/raw?<path>")]
-pub async fn api_get_raw_file(jwt: Option<AuthPayload>, path: String) -> ApiResult<HbpResponse> {
-    let path = Path::new(&path);
+#[get("/preview/<path..>?<from_root>")]
+pub async fn api_get_preview_file(
+    jwt: Option<AuthPayload>,
+    path: PathBuf,
+    from_root: Option<bool>,
+) -> ApiResult<HbpResponse> {
+    let path = if from_root.unwrap_or(false) {
+        PathBuf::from("/").join(path)
+    } else {
+        path
+    };
 
-    attemp_access(path, &jwt)?;
-    assert_raw_file(path)?;
+    attempt_access(&path, &jwt)?;
+    assert_raw_file(&path)?;
 
-    Ok(HbpResponse::file(path.to_path_buf()))
+    let file = File::open(path.clone())?;
+    let reader = BufReader::new(file);
+    let mime = mime_guess::from_path(path).first_or_text_plain();
+    let mut thumbnail = tempfile::Builder::new().suffix(".jpeg").tempfile()?;
+
+    create_thumbnails(reader, mime, [ThumbnailSize::Large])?
+        .pop()
+        .ok_or_else(ApiError::unprocessable_entity)?
+        .write_jpeg(&mut thumbnail, 50)?;
+
+    Ok(HbpResponse::temp_file(thumbnail))
+}
+
+#[openapi]
+#[get("/raw/<path..>?<from_root>", rank = 2)]
+pub async fn api_get_raw_file(
+    jwt: Option<AuthPayload>,
+    path: PathBuf,
+    from_root: Option<bool>,
+) -> ApiResult<HbpResponse> {
+    let path = if from_root.unwrap_or(false) {
+        PathBuf::from("/").join(path)
+    } else {
+        path
+    };
+
+    let path = files_root().join(path);
+
+    attempt_access(&path, &jwt)?;
+    assert_raw_file(&path)?;
+
+    Ok(HbpResponse::file(path))
 }
 
 pub fn get_routes_and_docs(openapi_settings: &OpenApiSettings) -> (Vec<Route>, OpenApi) {
     openapi_get_routes_spec![
         openapi_settings: api_get_raw_file,
         api_get_preview_file,
-        api_get_random_raw_file
+        api_get_random_file
     ]
 }

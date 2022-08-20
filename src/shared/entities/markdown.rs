@@ -79,8 +79,7 @@ impl Markdown {
 
         let mut markdown = Markdown {
             // TODO: Abstract this map_err
-            content: fs::read_to_string(path)
-                .map_err(|e| ApiError::from_io_error(e, StatusCode::InternalServerError))?,
+            content: fs::read_to_string(path)?,
             file_name: path
                 .file_name()
                 .unwrap_or_default()
@@ -139,20 +138,9 @@ impl Markdown {
         if markdown.dob.is_empty() {
             markdown.dob = format!(
                 "{}",
-                DateTime::<Utc>::from(
-                    path.metadata()
-                        // TODO: Abstract this map_err
-                        .map_err(|e| {
-                            ApiError::from_io_error(e, StatusCode::InternalServerError)
-                        })?
-                        .created()
-                        // TODO: Abstract this map_err
-                        .map_err(|e| {
-                            ApiError::from_io_error(e, StatusCode::InternalServerError)
-                        })?
-                )
-                .date()
-                .format("%m/%d/%Y")
+                DateTime::<Utc>::from(path.metadata()?.created()?)
+                    .date()
+                    .format("%m/%d/%Y")
             );
         }
 

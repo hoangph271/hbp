@@ -6,7 +6,7 @@ use rocket_okapi::{gen::OpenApiGenerator, response::OpenApiResponderInner};
 use serde::{Serialize, Serializer};
 use std::error::Error;
 
-use crate::utils::responders::HbpResponse;
+use crate::utils::responders::{build_json_response, HbpResponse};
 
 fn status_code_serialize<S>(val: &StatusCode, s: S) -> Result<S::Ok, S::Error>
 where
@@ -47,6 +47,14 @@ impl From<reqwest::Error> for ApiError {
         )
     }
 }
+impl From<std::io::Error> for ApiError {
+    fn from(e: std::io::Error) -> Self {
+        Self {
+            status_code: StatusCode::InternalServerError,
+            errors: vec![format!("{e}")],
+        }
+    }
+}
 
 impl ApiError {
     pub fn bad_request(errors: Vec<String>) -> ApiError {
@@ -70,11 +78,6 @@ impl ApiError {
         }
     }
 
-    pub fn from_io_error(std_error: std::io::Error, status_code: StatusCode) -> ApiError {
-        error!("{}", std_error);
-        ApiError::from_message("IO Error", status_code)
-    }
-
     pub fn unauthorized() -> ApiError {
         Self::from_status(StatusCode::Unauthorized)
     }
@@ -91,6 +94,10 @@ impl ApiError {
         Self::from_status(StatusCode::Forbidden)
     }
 
+    pub fn unprocessable_entity() -> ApiError {
+        Self::from_status(StatusCode::UnprocessableEntity)
+    }
+
     pub fn internal_server_error() -> ApiError {
         Self::from_status(StatusCode::InternalServerError)
     }
@@ -98,7 +105,7 @@ impl ApiError {
 
 impl<'r> rocket::response::Responder<'r, 'static> for ApiError {
     fn respond_to(self, _: &'r rocket::Request<'_>) -> rocket::response::Result<'static> {
-        Ok(HbpResponse::json(self.clone(), Some(self.status_code)).into())
+        Ok(build_json_response(self))
     }
 }
 impl OpenApiResponderInner for ApiError {
@@ -110,47 +117,31 @@ impl OpenApiResponderInner for ApiError {
 }
 
 #[derive(Serialize)]
-pub struct ApiItem<T>
-where
-    T: Serialize,
-{
+pub struct ApiItem<T: Serialize> {
     #[serde(serialize_with = "status_code_serialize")]
     status_code: StatusCode,
     item: T,
 }
 
-impl<'r, T> Responder<'r, 'static> for ApiItem<T>
-where
-    T: Serialize,
-{
+impl<'r, T: Serialize> Responder<'r, 'static> for ApiItem<T> {
     fn respond_to(self, _: &'r rocket::Request<'_>) -> rocket::response::Result<'static> {
-        Ok(HbpResponse::from(self).into())
+        Ok(build_json_response(self))
     }
 }
-impl<T> OpenApiResponderInner for ApiItem<T>
-where
-    T: Serialize,
-{
+impl<T: Serialize> OpenApiResponderInner for ApiItem<T> {
     fn responses(_: &mut OpenApiGenerator) -> rocket_okapi::Result<Responses> {
         Ok(Responses {
             ..Default::default()
         })
     }
 }
-
-impl<T> From<ApiItem<T>> for HbpResponse
-where
-    T: Serialize,
-{
-    fn from(api_item_response: ApiItem<T>) -> HbpResponse {
-        let status_code = api_item_response.status_code.clone();
-        HbpResponse::json(api_item_response, Some(status_code))
+impl<T: Serialize> From<ApiItem<T>> for HbpResponse {
+    fn from(item: ApiItem<T>) -> HbpResponse {
+        let status_code = item.status_code.clone();
+        HbpResponse::json(item, Some(status_code))
     }
 }
-impl<T> ApiItem<T>
-where
-    T: Serialize,
-{
+impl<T: Serialize> ApiItem<T> {
     pub fn ok(item: T) -> ApiItem<T> {
         ApiItem {
             status_code: StatusCode::Ok,
@@ -160,33 +151,33 @@ where
 }
 
 #[derive(Serialize)]
-pub struct ApiList<T>
-where
-    T: Serialize,
-{
+pub struct ApiList<T: Serialize> {
     #[serde(serialize_with = "status_code_serialize")]
     status_code: StatusCode,
     items: Vec<T>,
 }
 
-impl<T> From<ApiList<T>> for HbpResponse
-where
-    T: Serialize,
-{
-    fn from(api_item_response: ApiList<T>) -> HbpResponse {
-        let status_code = api_item_response.status_code.clone();
-        HbpResponse::json(api_item_response, Some(status_code))
-    }
-}
-impl<T> ApiList<T>
-where
-    T: Serialize,
-{
+impl<T: Serialize> ApiList<T> {
     pub fn ok(items: Vec<T>) -> ApiList<T> {
         ApiList {
             status_code: StatusCode::Ok,
             items,
         }
+    }
+}
+
+impl<'r, T: Serialize> Responder<'r, 'static> for ApiList<T> {
+    fn respond_to(self, _: &'r rocket::Request<'_>) -> rocket::response::Result<'static> {
+        Ok(build_json_response(self))
+    }
+}
+impl<T: Serialize> OpenApiResponderInner for ApiList<T> {
+    fn responses(
+        _: &mut rocket_okapi::gen::OpenApiGenerator,
+    ) -> rocket_okapi::Result<okapi::openapi3::Responses> {
+        Ok(Responses {
+            ..Default::default()
+        })
     }
 }
 

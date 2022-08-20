@@ -11,7 +11,7 @@ use crate::{
         execute_stargate_query, execute_stargate_query_for_one, get_keyspace,
         stargate_client_from_env,
     },
-    shared::interfaces::{ApiError, ApiItem, ApiList},
+    shared::interfaces::{ApiError, ApiItem, ApiList, ApiResult},
     utils::{responders::HbpResponse, types::HbpResult},
 };
 
@@ -23,7 +23,7 @@ struct MovieOrTv {
 
 #[openapi]
 #[get("/")]
-async fn api_get_shows() -> HbpResult<HbpResponse> {
+async fn api_get_shows() -> ApiResult<ApiList<MovieOrTv>> {
     let query = Query::builder()
         .keyspace(get_keyspace())
         .query("SELECT title, show_id FROM movies_and_tv")
@@ -58,7 +58,7 @@ async fn api_get_shows() -> HbpResult<HbpResponse> {
         None => vec![],
     };
 
-    Ok(ApiList::ok(movies_and_tv).into())
+    Ok(ApiList::ok(movies_and_tv))
 }
 
 #[openapi]

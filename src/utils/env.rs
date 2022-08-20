@@ -11,6 +11,7 @@ pub enum EnvKey {
     AstraBearerToken,
     AstraKeySpace,
     PublicFilesRoot,
+    FilesRoot,
     RootUser,
 }
 
@@ -32,14 +33,16 @@ pub fn from_env(env_key: EnvKey) -> &'static str {
         EnvKey::AstraBearerToken => dotenv!("ASTRA_BEARER_TOKEN"),
         EnvKey::AstraKeySpace => dotenv!("ASTRA_KEY_SPACE"),
         EnvKey::PublicFilesRoot => dotenv!("PUBLIC_FILES_ROOT"),
+        EnvKey::FilesRoot => dotenv!("FILES_ROOT"),
         EnvKey::RootUser => dotenv!("ROOT_USER"),
     }
 }
 
 pub fn public_files_root() -> PathBuf {
-    let path: PathBuf = from_env(EnvKey::PublicFilesRoot).into();
-
-    path
+    from_env(EnvKey::PublicFilesRoot).into()
+}
+pub fn files_root() -> PathBuf {
+    from_env(EnvKey::FilesRoot).into()
 }
 pub fn is_root(sub: &str) -> bool {
     if sub.is_empty() {

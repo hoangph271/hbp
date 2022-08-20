@@ -58,6 +58,10 @@ impl ApiErrorResponse {
         Self::from_status(StatusCode::Unauthorized)
     }
 
+    pub fn not_implemented() -> ApiErrorResponse {
+        Self::from_status(StatusCode::NotImplemented)
+    }
+
     pub fn not_found() -> ApiErrorResponse {
         Self::from_status(StatusCode::NotFound)
     }

@@ -1,5 +1,6 @@
 pub mod blogs;
 pub mod catchers;
+pub mod files;
 pub mod index;
 pub mod markdown;
 pub mod movies_and_tv;

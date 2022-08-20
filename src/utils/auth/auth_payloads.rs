@@ -1,5 +1,8 @@
+use std::path::Path;
+
 use httpstatus::StatusCode;
 use jsonwebtoken::{decode, errors::Error, DecodingKey, TokenData, Validation};
+use log::error;
 use rocket::serde::{Deserialize, Serialize};
 use rocket_okapi::{
     gen::OpenApiGenerator,
@@ -8,7 +11,10 @@ use rocket_okapi::{
 
 use crate::{
     data::models::users_model::DbUser,
-    utils::{env, timestamp_now, types::HbpError},
+    utils::{
+        env, timestamp_now,
+        types::{HbpError, HbpResult},
+    },
 };
 
 pub mod jwt {
@@ -147,22 +153,32 @@ impl AuthPayload {
         auth_payload
     }
 
-    pub fn match_path<F>(&self, path: &str, user_assert: Option<F>) -> bool
+    pub fn match_path<F>(&self, path: &Path, user_assert: F) -> HbpResult<()>
     where
-        F: FnOnce(&UserPayload, &str) -> bool,
+        F: FnOnce(&UserPayload, &Path) -> bool,
     {
         match self {
             AuthPayload::User(payload) => {
-                if let Some(user_assert) = user_assert {
-                    user_assert(payload, path)
+                if user_assert(payload, path) {
+                    Ok(())
                 } else {
-                    false
+                    Err(HbpError::forbidden())
                 }
             }
-            AuthPayload::UserResource(payload) => match glob::Pattern::new(&payload.path) {
-                Ok(pattern) => pattern.matches(path),
-                Err(_) => false,
-            },
+            AuthPayload::UserResource(payload) => {
+                let can_access = glob::Pattern::new(&payload.path)
+                    .map_err(|e| {
+                        error!("{e}");
+                        HbpError::forbidden()
+                    })?
+                    .matches(&path.to_string_lossy());
+
+                if can_access {
+                    Ok(())
+                } else {
+                    Err(HbpError::forbidden())
+                }
+            }
         }
     }
 
@@ -182,5 +198,14 @@ impl From<TokenData<UserPayload>> for AuthPayload {
 impl From<TokenData<UserResoucePayload>> for AuthPayload {
     fn from(token_data: TokenData<UserResoucePayload>) -> Self {
         AuthPayload::UserResource(token_data.claims)
+    }
+}
+impl<'r> OpenApiFromRequest<'r> for AuthPayload {
+    fn from_request_input(
+        _gen: &mut OpenApiGenerator,
+        _name: String,
+        _required: bool,
+    ) -> rocket_okapi::Result<RequestHeaderInput> {
+        Ok(RequestHeaderInput::None)
     }
 }

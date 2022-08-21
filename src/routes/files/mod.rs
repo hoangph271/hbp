@@ -9,14 +9,11 @@ use okapi::openapi3::OpenApi;
 use rand::{seq::SliceRandom, thread_rng};
 use rocket::{get, uri, Route};
 use rocket_okapi::{openapi, openapi_get_routes_spec, settings::OpenApiSettings};
-use std::fs::File;
-use std::io::BufReader;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
-use thumbnailer::error::ThumbError;
-use thumbnailer::{create_thumbnails, ThumbnailSize};
 
 use crate::shared::interfaces::{ApiError, ApiResult};
+use crate::utils::create_thumbnail;
 use crate::utils::{
     auth::AuthPayload,
     env::{files_root, is_root, public_files_root},
@@ -173,29 +170,6 @@ pub async fn api_get_random_file(
     }
 }
 
-impl From<ThumbError> for ApiError {
-    fn from(e: ThumbError) -> Self {
-        error!("{e}");
-
-        match e {
-            thumbnailer::error::ThumbError::IO(e) => {
-                ApiError::from_message(&format!("{e}"), StatusCode::InternalServerError)
-            }
-            thumbnailer::error::ThumbError::Image(e) => {
-                ApiError::from_message(&format!("{e}"), StatusCode::UnprocessableEntity)
-            }
-            thumbnailer::error::ThumbError::Decode => ApiError::internal_server_error(),
-            thumbnailer::error::ThumbError::Unsupported(e) => {
-                ApiError::from_message(&format!("{e}"), StatusCode::UnprocessableEntity)
-            }
-            thumbnailer::error::ThumbError::NullVideo => ApiError::unprocessable_entity(),
-            thumbnailer::error::ThumbError::FFMPEG(e) => {
-                ApiError::from_message(&format!("{e}"), StatusCode::InternalServerError)
-            }
-        }
-    }
-}
-
 #[openapi]
 #[get("/preview/<path..>?<from_root>")]
 pub async fn api_get_preview_file(
@@ -212,17 +186,7 @@ pub async fn api_get_preview_file(
     attempt_access(&path, &jwt)?;
     assert_raw_file(&path)?;
 
-    let file = File::open(path.clone())?;
-    let reader = BufReader::new(file);
-    let mime = mime_guess::from_path(path).first_or_text_plain();
-    let mut thumbnail = tempfile::Builder::new().suffix(".jpeg").tempfile()?;
-
-    create_thumbnails(reader, mime, [ThumbnailSize::Large])?
-        .pop()
-        .ok_or_else(ApiError::unprocessable_entity)?
-        .write_jpeg(&mut thumbnail, 50)?;
-
-    Ok(HbpResponse::temp_file(thumbnail))
+    Ok(HbpResponse::temp_file(create_thumbnail(&path)?))
 }
 
 #[openapi]

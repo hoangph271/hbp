@@ -69,6 +69,12 @@ impl ApiErrorResponse {
     pub fn internal_server_error() -> ApiErrorResponse {
         Self::from_status(StatusCode::InternalServerError)
     }
+
+    pub fn append_error(mut self, error: String) -> Self {
+        self.errors.push(error);
+
+        self
+    }
 }
 
 impl<'r> rocket::response::Responder<'r, 'static> for ApiErrorResponse {

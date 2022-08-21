@@ -61,7 +61,6 @@ fn assert_raw_file(path: &Path) -> ApiResult<&Path> {
             errors: vec![format!("requested file at {path:?} is NOT a file")],
         })
     } else if !path.exists() {
-        println!("{path:?}");
         Err(ApiError::not_found())
     } else {
         Ok(path)
@@ -163,18 +162,13 @@ pub async fn api_get_random_file(
 
     match files.first() {
         Some(file_path) => {
-            let file_path = PathBuf::from(file_path);
+            let file_path = &file_path.to_string_lossy()[files_root().to_string_lossy().len()..];
+            let file_path: PathBuf = file_path.into();
 
             let uri = if preview.unwrap_or(false) {
-                uri!(
-                    "/api/v1/files",
-                    api_get_preview_file(path = file_path, from_root = Some(true))
-                )
+                uri!("/api/v1/files", api_get_preview_file(path = file_path))
             } else {
-                uri!(
-                    "/api/v1/files",
-                    api_get_raw_file(path = file_path, from_root = Some(true))
-                )
+                uri!("/api/v1/files", api_get_raw_file(path = file_path))
             };
 
             Ok(HbpResponse::redirect(uri))
@@ -184,17 +178,12 @@ pub async fn api_get_random_file(
 }
 
 #[openapi]
-#[get("/preview/<path..>?<from_root>")]
+#[get("/preview/<path..>")]
 pub async fn api_get_preview_file(
     jwt: Option<AuthPayload>,
     path: PathBuf,
-    from_root: Option<bool>,
 ) -> ApiResult<HbpResponse> {
-    let path = if from_root.unwrap_or(false) {
-        PathBuf::from("/").join(path)
-    } else {
-        path
-    };
+    let path = files_root().join(path);
 
     attempt_access(&path, &jwt)?;
     assert_raw_file(&path)?;
@@ -203,18 +192,8 @@ pub async fn api_get_preview_file(
 }
 
 #[openapi]
-#[get("/raw/<path..>?<from_root>", rank = 2)]
-pub async fn api_get_raw_file(
-    jwt: Option<AuthPayload>,
-    path: PathBuf,
-    from_root: Option<bool>,
-) -> ApiResult<HbpResponse> {
-    let path = if from_root.unwrap_or(false) {
-        PathBuf::from("/").join(path)
-    } else {
-        path
-    };
-
+#[get("/raw/<path..>", rank = 2)]
+pub async fn api_get_raw_file(jwt: Option<AuthPayload>, path: PathBuf) -> ApiResult<HbpResponse> {
     let path = files_root().join(path);
 
     attempt_access(&path, &jwt)?;

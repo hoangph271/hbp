@@ -1,5 +1,6 @@
+use crate::shared::interfaces::ApiError;
 use crate::utils::string::url_encode_path;
-use crate::utils::types::{HbpError, HbpResult};
+use crate::utils::types::HbpResult;
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use httpstatus::StatusCode;
@@ -36,7 +37,9 @@ impl From<Markdown> for Data {
             if let Some(tags) = markdown.tags {
                 map_builder = map_builder.insert_vec("tags", |mut builder| {
                     for tag in &tags[..] {
-                        builder = builder.push(tag).unwrap();
+                        builder = builder
+                            .push(tag)
+                            .unwrap_or_else(|e| panic!("push tag failed: {e:?}"));
                     }
 
                     builder
@@ -46,7 +49,7 @@ impl From<Markdown> for Data {
             Ok(map_builder.build())
         };
 
-        insert_fields().unwrap()
+        insert_fields().unwrap_or_else(|e| panic!("insert_fields fail: {e}"))
     }
 }
 
@@ -71,14 +74,17 @@ impl Markdown {
     pub fn from_markdown(path: &Path) -> HbpResult<Markdown> {
         if !path.exists() {
             let msg = format!("{} NOT exists", path.to_string_lossy());
-            return Err(HbpError::from_message(&msg, StatusCode::BadRequest));
+            return Err(ApiError::from_message(&msg, StatusCode::BadRequest));
         }
 
         let mut markdown = Markdown {
             // TODO: Abstract this map_err
-            content: fs::read_to_string(path)
-                .map_err(|e| HbpError::from_std_error(e, StatusCode::InternalServerError))?,
-            file_name: path.file_name().unwrap().to_string_lossy().into_owned(),
+            content: fs::read_to_string(path)?,
+            file_name: path
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .into_owned(),
             url: url_encode_path(&path.to_string_lossy()),
             ..Markdown::default()
         };
@@ -88,7 +94,9 @@ impl Markdown {
                 .trim()
                 .split('\n')
                 .map(|line| {
-                    let colon_index = line.find(':').unwrap();
+                    let colon_index = line
+                        .find(':')
+                        .expect("header_comment value lines MUST contain a colon");
 
                     (
                         (&line[..colon_index]).trim().to_string(),
@@ -130,20 +138,9 @@ impl Markdown {
         if markdown.dob.is_empty() {
             markdown.dob = format!(
                 "{}",
-                DateTime::<Utc>::from(
-                    path.metadata()
-                        // TODO: Abstract this map_err
-                        .map_err(|e| {
-                            HbpError::from_std_error(e, StatusCode::InternalServerError)
-                        })?
-                        .created()
-                        // TODO: Abstract this map_err
-                        .map_err(|e| {
-                            HbpError::from_std_error(e, StatusCode::InternalServerError)
-                        })?
-                )
-                .date()
-                .format("%m/%d/%Y")
+                DateTime::<Utc>::from(path.metadata()?.created()?)
+                    .date()
+                    .format("%m/%d/%Y")
             );
         }
 

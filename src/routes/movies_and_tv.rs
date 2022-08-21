@@ -1,3 +1,4 @@
+use log::error;
 use okapi::openapi3::OpenApi;
 use rocket::{get, Route};
 use rocket_okapi::{openapi, openapi_get_routes_spec, settings::OpenApiSettings};
@@ -10,11 +11,8 @@ use crate::{
         execute_stargate_query, execute_stargate_query_for_one, get_keyspace,
         stargate_client_from_env,
     },
-    shared::interfaces::{ApiItemResponse, ApiListResponse},
-    utils::{
-        responders::HbpResponse,
-        types::{HbpError, HbpResult},
-    },
+    shared::interfaces::{ApiError, ApiItem, ApiList, ApiResult},
+    utils::{responders::HbpResponse, types::HbpResult},
 };
 
 #[derive(TryFromRow, Serialize)]
@@ -25,31 +23,42 @@ struct MovieOrTv {
 
 #[openapi]
 #[get("/")]
-async fn api_get_shows() -> HbpResult<HbpResponse> {
+async fn api_get_shows() -> ApiResult<ApiList<MovieOrTv>> {
     let query = Query::builder()
         .keyspace(get_keyspace())
         .query("SELECT title, show_id FROM movies_and_tv")
         .build();
 
     let client = stargate_client_from_env().await?;
-    let result_set: ResultSet = execute_stargate_query(client, query)
-        .await
-        .unwrap()
-        .unwrap();
+    let result_set: Option<ResultSet> = execute_stargate_query(client, query).await?;
 
-    let mapper = result_set.mapper().unwrap();
+    let movies_and_tv: Vec<MovieOrTv> = match result_set {
+        Some(result_set) => {
+            let mapper = result_set.mapper().unwrap_or_else(|e| {
+                error!("{e}");
+                panic!("result_set.mapper() failed")
+            });
 
-    let movies_and_tv: Vec<MovieOrTv> = result_set
-        .rows
-        .into_iter()
-        .map(|row| {
-            let movie_or_tv: MovieOrTv = mapper.try_unpack(row).unwrap();
+            let movies_and_tv: Vec<MovieOrTv> = result_set
+                .rows
+                .into_iter()
+                .filter_map(|row| {
+                    mapper
+                        .try_unpack(row)
+                        .map_err(|e| {
+                            error!("try_unpack failed: {:?}", e);
+                            e
+                        })
+                        .ok()
+                })
+                .collect();
 
-            movie_or_tv
-        })
-        .collect();
+            movies_and_tv
+        }
+        None => vec![],
+    };
 
-    Ok(ApiListResponse::ok(movies_and_tv).into())
+    Ok(ApiList::ok(movies_and_tv))
 }
 
 #[openapi]
@@ -65,8 +74,8 @@ async fn api_get_one(show_id: i64) -> HbpResult<HbpResponse> {
 
     execute_stargate_query_for_one::<MovieOrTv>(client, query)
         .await?
-        .map(|show| ApiItemResponse::ok(show).into())
-        .ok_or_else(HbpError::not_found)
+        .map(|show| ApiItem::ok(show).into())
+        .ok_or_else(ApiError::not_found)
 }
 
 pub fn get_routes_and_docs(settings: &OpenApiSettings) -> (Vec<Route>, OpenApi) {

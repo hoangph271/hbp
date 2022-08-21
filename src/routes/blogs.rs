@@ -24,7 +24,7 @@ pub fn index(jwt: Option<AuthPayload>) -> HbpResponse {
         IndexLayoutData::default().title("Blogs").maybe_auth(jwt),
         markdowns,
     ) {
-        Ok(html) => HbpResponse::html(&html, None),
+        Ok(html) => HbpResponse::html(html, None),
         Err(e) => e.into(),
     }
 }

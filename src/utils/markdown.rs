@@ -1,9 +1,11 @@
 use crate::shared::entities::markdown::*;
+use crate::shared::interfaces::ApiError;
 use crate::utils::marper;
 use crate::utils::string::url_encode_path;
 use crate::utils::template::TemplateRenderer;
-use crate::utils::types::{HbpError, HbpResult};
+use crate::utils::types::HbpResult;
 use httpstatus::StatusCode::BadRequest;
+use log::error;
 use pulldown_cmark::{html, Options, Parser};
 use std::collections::HashMap;
 use std::fs::read_dir;
@@ -37,7 +39,7 @@ pub fn is_markdown(file_path: &Path) -> bool {
 
 pub async fn render_marp(markdown: &Markdown) -> HbpResult<String> {
     if !marper::is_marp(&markdown.content) {
-        return Err(HbpError::from_message(
+        return Err(ApiError::from_message(
             &format!("NOT a marp: {}", markdown.file_name),
             BadRequest,
         ));
@@ -87,7 +89,10 @@ pub async fn render_user_markdown(
 
 pub fn markdown_from_dir<P: AsRef<Path>>(path: &P) -> HbpResult<Vec<MarkdownOrMarkdownDir>> {
     let markdowns = read_dir(path)
-        .unwrap()
+        .map_err(|e| {
+            error!("read_dir failed: {e:?}");
+            ApiError::internal_server_error()
+        })?
         .filter_map(|entry| {
             let entry = entry.ok()?;
             let title = match entry.path().file_name() {

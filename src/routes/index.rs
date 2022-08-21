@@ -1,7 +1,5 @@
 use std::path::PathBuf;
 
-use httpstatus::StatusCode;
-use log::*;
 use rocket::http::Status;
 use rocket::response::Redirect;
 use rocket::{delete, get, post, put, routes, Route};
@@ -10,38 +8,27 @@ use crate::shared::entities::markdown::Markdown;
 use crate::utils::markdown;
 use crate::utils::responders::HbpResponse;
 use crate::utils::template::IndexLayoutData;
+use crate::utils::types::HbpResult;
 
 #[get("/README.md")]
-async fn readme_md() -> HbpResponse {
+async fn readme_md() -> HbpResult<HbpResponse> {
     let file_path = PathBuf::from("README.md");
+    let markdown_data = Markdown::from_markdown(&file_path)?;
 
-    match Markdown::from_markdown(&file_path) {
-        Ok(markdown_data) => {
-            let html_result = async {
-                if markdown::is_marp(&markdown_data.content) {
-                    markdown::render_marp(&markdown_data).await
-                } else {
-                    markdown::render_markdown(
-                        &markdown_data,
-                        IndexLayoutData::default().title(&markdown_data.title),
-                    )
-                    .await
-                }
-            };
+    let html_result = async {
+        if markdown::is_marp(&markdown_data.content) {
+            markdown::render_marp(&markdown_data).await
+        } else {
+            markdown::render_markdown(
+                &markdown_data,
+                IndexLayoutData::default().title(&markdown_data.title),
+            )
+            .await
+        }
+    };
 
-            match html_result.await {
-                Ok(html) => HbpResponse::html(&html, None),
-                Err(e) => {
-                    error!("{}", e);
-                    HbpResponse::status(StatusCode::InternalServerError)
-                }
-            }
-        }
-        Err(e) => {
-            error!("{e}");
-            HbpResponse::status(StatusCode::InternalServerError)
-        }
-    }
+    let html = html_result.await?;
+    Ok(HbpResponse::html(html, None))
 }
 
 #[get("/")]

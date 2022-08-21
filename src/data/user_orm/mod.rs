@@ -1,44 +1,28 @@
 #[cfg(test)]
 mod user_orm_test;
 
-use crate::{
-    data::{lib::*, models::users_model::*},
-    utils::env::{from_env, EnvKey},
-};
+use crate::data::{lib::*, models::users_model::*};
 use httpstatus::StatusCode;
-use stargate_grpc::{Query, StargateClient};
+use log::error;
+use rocket::async_trait;
+use stargate_grpc::Query;
 
+use super::{OrmConfig, OrmInit};
+
+#[derive(Default)]
 pub struct UserOrm {
-    pub keyspace: String,
-    pub astra_uri: String,
-    pub bearer_token: String,
+    orm_config: OrmConfig,
 }
 
-impl UserOrm {
-    #[cfg(test)]
-    pub fn from_test_env() -> Self {
-        Self {
-            keyspace: dotenv!("TEST_ASTRA_KEY_SPACE").to_owned(),
-            astra_uri: dotenv!("TEST_ASTRA_URI").to_owned(),
-            bearer_token: dotenv!("TEST_ASTRA_BEARER_TOKEN").to_owned(),
-        }
+#[async_trait]
+impl OrmInit for UserOrm {
+    fn orm_config(&self) -> &OrmConfig {
+        &self.orm_config
     }
 
-    pub fn from_env() -> Self {
-        Self {
-            keyspace: from_env(EnvKey::AstraKeySpace).to_owned(),
-            astra_uri: from_env(EnvKey::AstraUri).to_owned(),
-            bearer_token: from_env(EnvKey::AstraBearerToken).to_owned(),
-        }
-    }
-
-    async fn build_stargate_client(&self) -> Result<StargateClient, DbError> {
-        build_stargate_client(&self.astra_uri, &self.bearer_token).await
-    }
-
-    pub async fn init_users_table(&self) -> Result<(), DbError> {
+    async fn init_table(&self) -> Result<(), DbError> {
         let create_users_table = stargate_grpc::Query::builder()
-            .keyspace(&self.keyspace)
+            .keyspace(&self.orm_config.keyspace)
             .query(
                 "CREATE TABLE IF NOT EXISTS users (
                     username text PRIMARY KEY,
@@ -48,12 +32,12 @@ impl UserOrm {
             )
             .build();
 
-        self.build_stargate_client()
+        self.stargate_client()
             .await?
             .execute_query(create_users_table)
             .await
             .map_err(|e| {
-                let msg = format!("init_users_table failed at .execute_query(): {e:?}");
+                let msg = format!("init_table() users failed at .execute_query(): {e:?}");
 
                 DbError::internal_server_error(msg)
             })?;
@@ -61,20 +45,20 @@ impl UserOrm {
         println!("created users table");
         Ok(())
     }
+
     #[cfg(test)]
-    #[allow(dead_code)]
-    pub async fn drop_users_table(&self) -> Result<(), DbError> {
+    async fn drop_table(&self) -> Result<(), DbError> {
         let create_users_table = stargate_grpc::Query::builder()
-            .keyspace(&self.keyspace)
+            .keyspace(&self.orm_config.keyspace)
             .query("DROP TABLE IF EXISTS users")
             .build();
 
-        self.build_stargate_client()
+        self.stargate_client()
             .await?
             .execute_query(create_users_table)
             .await
             .map_err(|e| {
-                let msg = format!("drop_users_table failed at .execute_query(): {e:?}");
+                let msg = format!("drop_table() users failed at .execute_query(): {e:?}");
 
                 DbError::internal_server_error(msg)
             })?;
@@ -82,25 +66,25 @@ impl UserOrm {
         println!("dropped users table");
         Ok(())
     }
+}
 
+impl UserOrm {
     pub async fn find_one(&self, username: &str) -> Result<Option<DbUser>, DbError> {
         let user_query = Query::builder()
-            .keyspace(&self.keyspace)
+            .keyspace(&self.orm_config.keyspace)
             .query("SELECT * FROM users WHERE username = :username")
             .bind_name("username", username)
             .build();
 
-        let client = self.build_stargate_client().await?;
+        let client = self.stargate_client().await?;
         let maybe_user: Option<DbUser> = execute_stargate_query_for_one(client, user_query).await?;
 
         Ok(maybe_user)
     }
 
-    pub async fn create_user(&self, new_user: NewUser) -> Result<DbUser, DbError> {
-        let new_user: InsertableNewUser = new_user.into();
-
-        let user_query = Query::builder()
-            .keyspace(&self.keyspace)
+    pub async fn create_user(&self, new_user: DbUser) -> Result<DbUser, DbError> {
+        let insert_query = Query::builder()
+            .keyspace(&self.orm_config.keyspace)
             .query(
                 "
                 INSERT INTO users(username, hashed_password, title)
@@ -110,11 +94,19 @@ impl UserOrm {
             .bind(new_user.clone())
             .build();
 
-        let client = self.build_stargate_client().await?;
-        let mut result_set = execute_stargate_query(client, user_query).await?.unwrap();
+        let client = self.stargate_client().await?;
+        let mut result_set = execute_stargate_query(client, insert_query)
+            .await?
+            .expect("result_set must NOT be None");
 
-        let mut row = result_set.rows.pop().unwrap();
-        let inserted: bool = row.try_take(0).unwrap();
+        let mut row = result_set.rows.pop().expect("result_set MUST has one row");
+        let inserted: bool = row.try_take(0).map_err(|e| {
+            let message = format!("Can't read inserted: {e}");
+
+            error!("{message}");
+
+            DbError::internal_server_error(message)
+        })?;
 
         if inserted {
             match self.find_one(&new_user.username).await? {
@@ -133,7 +125,7 @@ impl UserOrm {
 
     pub async fn update_user(&self, user: PutUser) -> Result<(), DbError> {
         let user_query = Query::builder()
-            .keyspace(&self.keyspace)
+            .keyspace(&self.orm_config.keyspace)
             .query(
                 "
                 UPDATE users
@@ -143,7 +135,7 @@ impl UserOrm {
             .bind(user.clone())
             .build();
 
-        let client = self.build_stargate_client().await?;
+        let client = self.stargate_client().await?;
         let res = execute_stargate_query(client, user_query).await?;
         println!("{res:?}");
 

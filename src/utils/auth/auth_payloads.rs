@@ -1,5 +1,8 @@
+use std::path::Path;
+
 use httpstatus::StatusCode;
 use jsonwebtoken::{decode, errors::Error, DecodingKey, TokenData, Validation};
+use log::error;
 use rocket::serde::{Deserialize, Serialize};
 use rocket_okapi::{
     gen::OpenApiGenerator,
@@ -8,11 +11,12 @@ use rocket_okapi::{
 
 use crate::{
     data::models::users_model::DbUser,
-    utils::{env, timestamp_now, types::HbpError},
+    shared::interfaces::ApiError,
+    utils::{env, timestamp_now, types::HbpResult},
 };
 
 pub mod jwt {
-    use crate::utils::types::{HbpError, HbpResult};
+    use crate::{shared::interfaces::ApiError, utils::types::HbpResult};
     use httpstatus::StatusCode;
     use jsonwebtoken::{encode, EncodingKey, Header};
     use serde::Serialize;
@@ -26,7 +30,7 @@ pub mod jwt {
             &EncodingKey::from_secret(&jwt_secret()),
         )
         .map_err(|e| {
-            HbpError::from_message(
+            ApiError::from_message(
                 &format!("sign_jwt failed: {e}"),
                 StatusCode::InternalServerError,
             )
@@ -38,7 +42,7 @@ fn jwt_expires_in_ms() -> i64 {
     const MS_PER_HOUR: i64 = 60 * 60 * 1000;
     let jwt_expires_in_hours: i64 = env::from_env(env::EnvKey::JwtExpiresInHours)
         .parse()
-        .unwrap();
+        .expect("JWT_EXPRIES_IN_HOURS must be an integer");
 
     jwt_expires_in_hours * MS_PER_HOUR
 }
@@ -50,7 +54,7 @@ pub struct UserPayload {
     pub roles: Vec<String>,
 }
 impl UserPayload {
-    pub fn sign_jwt(&self) -> Result<String, HbpError> {
+    pub fn sign_jwt(&self) -> Result<String, ApiError> {
         jwt::sign_jwt(&self)
     }
 
@@ -130,15 +134,15 @@ impl AuthPayload {
         }
     }
 
-    pub fn decode(token: &str) -> Result<AuthPayload, HbpError> {
+    pub fn decode(token: &str) -> Result<AuthPayload, ApiError> {
         let key = &DecodingKey::from_secret(&jwt_secret());
         let validation = &Validation::default();
 
-        let auth_payload: Result<AuthPayload, HbpError> = UserPayload::decode(token)
+        let auth_payload: Result<AuthPayload, ApiError> = UserPayload::decode(token)
             .map(AuthPayload::User)
             .or_else(|_| decode::<UserResoucePayload>(token, key, validation).map(|val| val.into()))
             .map_err(|_| {
-                HbpError::from_message(
+                ApiError::from_message(
                     &format!("verify_jwt failed for {token}"),
                     StatusCode::Unauthorized,
                 )
@@ -147,26 +151,36 @@ impl AuthPayload {
         auth_payload
     }
 
-    pub fn match_path<F>(&self, path: &str, user_assert: Option<F>) -> bool
+    pub fn match_path<F>(&self, path: &Path, user_assert: F) -> HbpResult<()>
     where
-        F: FnOnce(&UserPayload, &str) -> bool,
+        F: FnOnce(&UserPayload, &Path) -> bool,
     {
         match self {
             AuthPayload::User(payload) => {
-                if let Some(user_assert) = user_assert {
-                    user_assert(payload, path)
+                if user_assert(payload, path) {
+                    Ok(())
                 } else {
-                    false
+                    Err(ApiError::forbidden())
                 }
             }
-            AuthPayload::UserResource(payload) => match glob::Pattern::new(&payload.path) {
-                Ok(pattern) => pattern.matches(path),
-                Err(_) => false,
-            },
+            AuthPayload::UserResource(payload) => {
+                let can_access = glob::Pattern::new(&payload.path)
+                    .map_err(|e| {
+                        error!("{e}");
+                        ApiError::forbidden()
+                    })?
+                    .matches(&path.to_string_lossy());
+
+                if can_access {
+                    Ok(())
+                } else {
+                    Err(ApiError::forbidden())
+                }
+            }
         }
     }
 
-    pub fn sign(&self) -> Result<String, HbpError> {
+    pub fn sign(&self) -> Result<String, ApiError> {
         match self {
             AuthPayload::User(user_payload) => jwt::sign_jwt(user_payload),
             AuthPayload::UserResource(resource_payload) => jwt::sign_jwt(resource_payload),
@@ -182,5 +196,14 @@ impl From<TokenData<UserPayload>> for AuthPayload {
 impl From<TokenData<UserResoucePayload>> for AuthPayload {
     fn from(token_data: TokenData<UserResoucePayload>) -> Self {
         AuthPayload::UserResource(token_data.claims)
+    }
+}
+impl<'r> OpenApiFromRequest<'r> for AuthPayload {
+    fn from_request_input(
+        _gen: &mut OpenApiGenerator,
+        _name: String,
+        _required: bool,
+    ) -> rocket_okapi::Result<RequestHeaderInput> {
+        Ok(RequestHeaderInput::None)
     }
 }

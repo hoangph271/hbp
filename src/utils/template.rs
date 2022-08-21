@@ -1,5 +1,7 @@
 use crate::shared::entities::markdown::Markdown;
+use crate::shared::interfaces::ApiError;
 use crate::utils::types::HbpResult;
+use httpstatus::StatusCode;
 use mustache::Template;
 use serde::Serialize;
 use std::path::{Path, PathBuf};
@@ -141,6 +143,27 @@ impl MarkdownRenderData {
             markdown_html: markdown_to_html(&markdown.content),
             markdown_title: markdown.title.clone(),
             markdown_signed_url: signed_url.unwrap_or_default(),
+        }
+    }
+}
+
+impl From<std::str::Utf8Error> for ApiError {
+    fn from(e: std::str::Utf8Error) -> Self {
+        ApiError::from_message(
+            &format!("UTF8 Issue: , {e}"),
+            StatusCode::InternalServerError,
+        )
+    }
+}
+impl From<mustache::Error> for ApiError {
+    fn from(e: mustache::Error) -> Self {
+        ApiError {
+            errors: vec![e.to_string()],
+            status_code: match e {
+                mustache::Error::InvalidStr => StatusCode::UnprocessableEntity,
+                mustache::Error::NoFilename => StatusCode::NotFound,
+                _ => StatusCode::InternalServerError,
+            },
         }
     }
 }

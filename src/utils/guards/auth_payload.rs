@@ -1,6 +1,7 @@
+use crate::shared::interfaces::ApiError;
 use crate::utils::auth::{AuthPayload, UserPayload};
-use crate::utils::constants;
-use crate::utils::types::{HbpError, HbpResult};
+use crate::utils::types::HbpResult;
+use crate::utils::{constants, status_from};
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
 
@@ -39,30 +40,30 @@ fn get_jwt(req: &Request) -> HbpResult<AuthPayload> {
 
     match jwt_str {
         Some(token) => AuthPayload::decode(&token),
-        None => Err(HbpError::unauthorized()),
+        None => Err(ApiError::unauthorized()),
     }
 }
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for AuthPayload {
-    type Error = HbpError;
+    type Error = ApiError;
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         match get_jwt(req) {
             Ok(jwt) => Outcome::Success(jwt),
-            Err(e) => Outcome::Failure((Status::from_code(e.status_code.as_u16()).unwrap(), e)),
+            Err(e) => Outcome::Failure((status_from(e.status_code.clone()), e)),
         }
     }
 }
 
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for UserPayload {
-    type Error = HbpError;
+    type Error = ApiError;
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         match get_user_jwt(req) {
             Some(jwt) => Outcome::Success(jwt),
-            None => Outcome::Failure((Status::Unauthorized, HbpError::unauthorized())),
+            None => Outcome::Failure((Status::Unauthorized, ApiError::unauthorized())),
         }
     }
 }

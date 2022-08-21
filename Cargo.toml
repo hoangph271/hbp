@@ -43,6 +43,10 @@ schemars = "0.8.10"
 okapi = { version = "0.7.0-rc.1" }
 rocket_okapi = { version = "0.8.0-rc.2", features = ["swagger"] }
 thiserror = "1.0.32"
+async-recursion = "1.0.0"
+rand = "0.8.5"
+image = "0.24.3"
+mime_guess = "2.0.4"
 
 [profile.dev]
 overflow-checks = true

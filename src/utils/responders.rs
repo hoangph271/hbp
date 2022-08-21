@@ -4,25 +4,29 @@ use httpstatus::StatusCode;
 use okapi::openapi3::Responses;
 use rocket::fs::NamedFile;
 use rocket::http::{ContentType, Header, Status};
-use rocket::response::{Responder, Response, Result as ResResult};
+use rocket::response::{Responder, Response};
 use rocket_okapi::gen::OpenApiGenerator;
 use rocket_okapi::response::OpenApiResponderInner;
 use rocket_okapi::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::io::Cursor;
 use std::path::PathBuf;
+use tempfile::NamedTempFile;
 
+use super::status_from;
 use super::template::TemplateRenderer;
-use super::types::{HbpError, HbpResult};
+use super::types::HbpResult;
 
 #[allow(dead_code)]
-#[derive(Serialize, Deserialize, JsonSchema)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug)]
 pub enum HbpContent {
     Plain(String),
     Html(String),
     Json(String),
     Found(String),
     File(Box<PathBuf>),
+    #[serde(skip_serializing, skip_deserializing)]
+    NamedTempFile(Box<NamedTempFile>),
 }
 
 pub struct HbpResponse {
@@ -39,10 +43,10 @@ impl OpenApiResponderInner for HbpResponse {
 }
 
 impl HbpResponse {
-    pub fn html(html: &str, status_code: Option<StatusCode>) -> HbpResponse {
+    pub fn html(html: String, status_code: Option<StatusCode>) -> HbpResponse {
         HbpResponse {
             status_code: status_code.unwrap_or(StatusCode::Ok),
-            content: HbpContent::Html(html.to_owned()),
+            content: HbpContent::Html(html),
         }
     }
 
@@ -65,23 +69,18 @@ impl HbpResponse {
             action_html: String,
         }
 
-        let html = TemplateRenderer::new("static/error.html".into())
-            .to_html_page(
-                RenderData {
-                    error_text: format!(
-                        "{} | {}",
-                        status_code.as_u16(),
-                        status_code.reason_phrase()
-                    ),
-                    action_html: action_html_for(&status_code),
-                },
-                IndexLayoutData::default().title(status_code.reason_phrase()),
-            )
-            .unwrap();
-
-        HbpResponse {
-            status_code,
-            content: HbpContent::Html(html),
+        match TemplateRenderer::new("static/error.html".into()).to_html_page(
+            RenderData {
+                error_text: format!("{} | {}", status_code.as_u16(), status_code.reason_phrase()),
+                action_html: action_html_for(&status_code),
+            },
+            IndexLayoutData::default().title(status_code.reason_phrase()),
+        ) {
+            Ok(html) => HbpResponse {
+                status_code,
+                content: HbpContent::Html(html),
+            },
+            Err(e) => e.into(),
         }
     }
 
@@ -89,13 +88,9 @@ impl HbpResponse {
         HbpResponse::status(StatusCode::Forbidden)
     }
 
-    pub fn json<T: serde::Serialize>(content: T, status_code: Option<StatusCode>) -> HbpResponse {
+    pub fn json<T: Serialize>(content: T, status_code: Option<StatusCode>) -> HbpResponse {
+        let status_code = status_code.unwrap_or(StatusCode::Ok);
         let json = serde_json::to_string(&content).expect("Stringify JSON failed");
-
-        let status_code = match status_code {
-            Some(status_code) => status_code,
-            None => httpstatus::StatusCode::Ok,
-        };
 
         HbpResponse {
             status_code,
@@ -121,14 +116,18 @@ impl HbpResponse {
     pub fn file(path: PathBuf) -> HbpResponse {
         HbpResponse::ok(Some(HbpContent::File(Box::new(path))))
     }
+
+    pub fn temp_file(temp_file: NamedTempFile) -> HbpResponse {
+        HbpResponse::ok(Some(HbpContent::NamedTempFile(Box::new(temp_file))))
+    }
 }
 
 impl<'r> Responder<'r, 'r> for HbpResponse {
     // ! FIXME: Change `respond_to` into async when async Traits roll out...!
-    fn respond_to(self, request: &rocket::Request<'_>) -> ResResult<'r> {
+    fn respond_to(self, request: &rocket::Request<'_>) -> rocket::response::Result<'r> {
         let mut response_builder = Response::build();
 
-        let status = Status::from_code(self.status_code.as_u16()).unwrap();
+        let status = status_from(self.status_code);
         response_builder.status(status);
 
         match self.content {
@@ -157,6 +156,10 @@ impl<'r> Responder<'r, 'r> for HbpResponse {
                 return futures::executor::block_on(NamedFile::open(&*file_path))
                     .respond_to(request)
             }
+            HbpContent::NamedTempFile(tempfile) => {
+                return futures::executor::block_on(NamedFile::open(tempfile.into_temp_path()))
+                    .respond_to(request)
+            }
         }
 
         Ok(response_builder.finalize())
@@ -167,19 +170,10 @@ impl From<HbpResponse> for Response<'_> {
     fn from(hbp_response: HbpResponse) -> Response<'static> {
         let mut response_builder = Response::build();
 
-        let status = Status::from_code(hbp_response.status_code.as_u16()).unwrap();
+        let status = status_from(hbp_response.status_code);
         response_builder.status(status);
 
         response_builder.finalize()
-    }
-}
-
-impl From<HbpError> for HbpResponse {
-    fn from(e: HbpError) -> Self {
-        HbpResponse {
-            status_code: e.status_code,
-            content: HbpContent::Plain(e.msg),
-        }
     }
 }
 
@@ -212,4 +206,14 @@ where
             Err(e)
         }
     }
+}
+
+pub fn build_json_response<T: Serialize>(json: T) -> Response<'static> {
+    let json = serde_json::to_string(&json)
+        .unwrap_or_else(|e| panic!("serde_json::to_string fail: {e:?}"));
+
+    Response::build()
+        .header(ContentType::JSON)
+        .sized_body(json.len(), Cursor::new(json))
+        .finalize()
 }

@@ -33,7 +33,7 @@ fn attempt_access(path: &Path, jwt: &Option<AuthPayload>) -> ApiResult<()> {
 
     if !path.starts_with(files_root()) {
         return Err(if jwt.is_some() {
-            ApiError::forbidden()
+            ApiError::forbidden().append_error(format!("{path:?} should be within files_root()"))
         } else {
             ApiError::unauthorized()
         });
@@ -58,7 +58,7 @@ fn assert_raw_file(path: &Path) -> ApiResult<&Path> {
     if path.is_dir() {
         Err(ApiError {
             status_code: StatusCode::UnprocessableEntity,
-            errors: vec!["requested file at {path:?} is NOT a file".to_owned()],
+            errors: vec![format!("requested file at {path:?} is NOT a file")],
         })
     } else if !path.exists() {
         println!("{path:?}");

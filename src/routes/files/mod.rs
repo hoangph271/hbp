@@ -1,5 +1,5 @@
 use async_recursion::async_recursion;
-use async_std::fs::{read_dir, ReadDir};
+use async_std::fs::read_dir;
 use async_std::path::PathBuf as AsyncPathBuf;
 use async_std::prelude::*;
 use httpstatus::StatusCode;
@@ -94,49 +94,62 @@ pub async fn api_get_random_file(
     ) -> ApiResult<Vec<AsyncPathBuf>> {
         let mut matched_files = vec![];
 
-        let mut entries: ReadDir = read_dir(path).await?;
+        match read_dir(path).await {
+            Ok(mut entries) => {
+                while let Some(entry) = entries.next().await {
+                    let entry = entry?;
+                    let meta_data = entry.metadata().await?;
 
-        while let Some(entry) = entries.next().await {
-            let entry = entry?;
-            let meta_data = entry.metadata().await?;
+                    let can_access = attempt_access(entry.path().as_path().into(), jwt)
+                        .map(|()| true)
+                        .unwrap_or(false);
 
-            let can_access = attempt_access(entry.path().as_path().into(), jwt)
-                .map(|()| true)
-                .unwrap_or(false);
-
-            if !can_access {
-                continue;
-            }
-
-            if meta_data.is_file() {
-                let match_file_type = mime_guess::from_path(entry.path()).iter().any(|item| {
-                    let (item_type, item_sub_type) =
-                        (item.type_().as_str(), item.subtype().as_str());
-
-                    if let Some(file_mime) = mime {
-                        let (sup_type, sub_type) =
-                            (file_mime.type_().as_str(), file_mime.subtype().as_str());
-
-                        if !sup_type.is_empty() && sup_type.ne("*") && item_type != sup_type {
-                            return false;
-                        }
-
-                        if !sub_type.is_empty() && sub_type.ne("*") && item_sub_type != sub_type {
-                            return false;
-                        }
-
-                        true
-                    } else {
-                        true
+                    if !can_access {
+                        continue;
                     }
-                });
 
-                if match_file_type {
-                    matched_files.push(entry.path());
+                    if meta_data.is_file() {
+                        let match_file_type =
+                            mime_guess::from_path(entry.path()).iter().any(|item| {
+                                let (item_type, item_sub_type) =
+                                    (item.type_().as_str(), item.subtype().as_str());
+
+                                if let Some(file_mime) = mime {
+                                    let (sup_type, sub_type) =
+                                        (file_mime.type_().as_str(), file_mime.subtype().as_str());
+
+                                    if !sup_type.is_empty()
+                                        && sup_type.ne("*")
+                                        && item_type != sup_type
+                                    {
+                                        return false;
+                                    }
+
+                                    if !sub_type.is_empty()
+                                        && sub_type.ne("*")
+                                        && item_sub_type != sub_type
+                                    {
+                                        return false;
+                                    }
+
+                                    true
+                                } else {
+                                    true
+                                }
+                            });
+
+                        if match_file_type {
+                            matched_files.push(entry.path());
+                        }
+                    } else {
+                        matched_files.extend(
+                            get_matched_files(entry.path().as_path().into(), jwt, mime).await?,
+                        );
+                    }
                 }
-            } else {
-                matched_files
-                    .extend(get_matched_files(entry.path().as_path().into(), jwt, mime).await?);
+            }
+            Err(e) => {
+                println!("{e}");
             }
         }
 

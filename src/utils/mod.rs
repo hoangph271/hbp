@@ -35,7 +35,7 @@ pub fn status_from(status_code: StatusCode) -> Status {
 
 impl From<ImageError> for ApiError {
     fn from(e: ImageError) -> Self {
-        error!("{e}");
+        error!("ImageError: {e}");
 
         match e {
             ImageError::Decoding(e) => {

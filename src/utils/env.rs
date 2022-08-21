@@ -13,6 +13,7 @@ pub enum EnvKey {
     PublicFilesRoot,
     FilesRoot,
     RootUser,
+    DeployEnv,
 }
 
 pub fn from_env(env_key: EnvKey) -> &'static str {
@@ -35,6 +36,7 @@ pub fn from_env(env_key: EnvKey) -> &'static str {
         EnvKey::PublicFilesRoot => dotenv!("PUBLIC_FILES_ROOT"),
         EnvKey::FilesRoot => dotenv!("FILES_ROOT"),
         EnvKey::RootUser => dotenv!("ROOT_USER"),
+        EnvKey::DeployEnv => dotenv!("DEPLOY_ENV"),
     }
 }
 
@@ -52,4 +54,8 @@ pub fn is_root(sub: &str) -> bool {
     let root_user = from_env(EnvKey::RootUser);
 
     root_user.eq(sub)
+}
+
+pub fn is_prod() -> bool {
+    from_env(EnvKey::DeployEnv).eq("PROD")
 }

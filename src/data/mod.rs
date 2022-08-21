@@ -3,7 +3,7 @@ use stargate_grpc::StargateClient;
 
 use crate::{
     data::{lib::post_orm::PostOrm, profile_orm::ProfileOrm, user_orm::UserOrm},
-    utils::env::{from_env, EnvKey},
+    utils::env::{from_env, is_prod, EnvKey},
 };
 
 use self::lib::{stargate_client_from, DbError};
@@ -15,6 +15,10 @@ pub mod profile_orm;
 pub mod user_orm;
 
 pub fn init_db() {
+    if !is_prod() {
+        return;
+    }
+
     use async_std::task;
     use std::thread::{sleep, spawn};
     use std::time::Duration;

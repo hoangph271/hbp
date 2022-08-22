@@ -1,4 +1,3 @@
-use crate::utils::template::IndexLayoutData;
 use futures::Future;
 use httpstatus::StatusCode;
 use okapi::openapi3::Responses;
@@ -14,10 +13,9 @@ use std::path::PathBuf;
 use tempfile::NamedTempFile;
 
 use super::status_from;
-use super::template::TemplateRenderer;
+use super::template::{action_html_for_401, ErrorPageData, IndexLayoutData, TemplateRenderer};
 use super::types::HbpResult;
 
-#[allow(dead_code)]
 #[derive(Serialize, Deserialize, JsonSchema, Debug)]
 pub enum HbpContent {
     Plain(String),
@@ -60,32 +58,40 @@ impl HbpResponse {
         }
     }
 
-    pub fn status(status_code: StatusCode) -> HbpResponse {
-        let status_code = StatusCode::from(status_code.as_u16());
-
-        #[derive(Serialize, Debug)]
-        struct RenderData {
-            error_text: String,
-            action_html: String,
-        }
-
-        match TemplateRenderer::new("static/error.html".into()).to_html_page(
-            RenderData {
-                error_text: format!("{} | {}", status_code.as_u16(), status_code.reason_phrase()),
-                action_html: action_html_for(&status_code),
-            },
-            IndexLayoutData::default().title(status_code.reason_phrase()),
-        ) {
-            Ok(html) => HbpResponse {
-                status_code,
-                content: HbpContent::Html(html),
-            },
-            Err(e) => e.into(),
+    pub fn from_status(status_code: StatusCode) -> Self {
+        Self {
+            content: HbpContent::Plain(status_code.reason_phrase().to_owned()),
+            status_code,
         }
     }
 
+    pub fn from_error_status(status_code: StatusCode) -> HbpResponse {
+        let status_code = StatusCode::from(status_code.as_u16());
+
+        TemplateRenderer::error_page()
+            .to_html_page(
+                ErrorPageData::from_status(&status_code),
+                IndexLayoutData::default().title(status_code.reason_phrase().to_owned()),
+            )
+            .map(|html| HbpResponse::html(html, None))
+            .unwrap_or_else(HbpResponse::from)
+    }
+
+    pub fn unauthorized(redirect_url: Option<String>) -> HbpResponse {
+        let status_code = StatusCode::Unauthorized;
+
+        let render_data =
+            ErrorPageData::from_status(&status_code).action_html(action_html_for_401(redirect_url));
+        let layout_data = IndexLayoutData::from_title(status_code.reason_phrase().to_owned());
+
+        TemplateRenderer::error_page()
+            .to_html_page(render_data, layout_data)
+            .map(|html| HbpResponse::html(html, Some(status_code)))
+            .unwrap_or_else(HbpResponse::from)
+    }
+
     pub fn forbidden() -> HbpResponse {
-        HbpResponse::status(StatusCode::Forbidden)
+        HbpResponse::from_error_status(StatusCode::Forbidden)
     }
 
     pub fn json<T: Serialize>(content: T, status_code: Option<StatusCode>) -> HbpResponse {
@@ -99,11 +105,11 @@ impl HbpResponse {
     }
 
     pub fn internal_server_error() -> HbpResponse {
-        HbpResponse::status(StatusCode::InternalServerError)
+        HbpResponse::from_error_status(StatusCode::InternalServerError)
     }
 
     pub fn not_found() -> HbpResponse {
-        HbpResponse::status(StatusCode::NotFound)
+        HbpResponse::from_error_status(StatusCode::NotFound)
     }
 
     pub fn redirect(uri: rocket::http::uri::Origin) -> HbpResponse {
@@ -175,24 +181,6 @@ impl From<HbpResponse> for Response<'_> {
 
         response_builder.finalize()
     }
-}
-
-fn action_html_for(status_code: &StatusCode) -> String {
-    match status_code {
-        StatusCode::Unauthorized => {
-            r#"
-        <p>
-            Click <a href="/users/login">here</a> to signin...!
-        </p>"#
-        }
-        _ => {
-            r#"
-        <p>
-            Click <a href="/">here</a> to get home...!
-        </p>"#
-        }
-    }
-    .to_owned()
 }
 
 pub async fn wrap_api_handler<R, T>(handler: impl FnOnce() -> R) -> HbpResult<T>

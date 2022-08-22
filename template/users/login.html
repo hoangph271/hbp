@@ -1,5 +1,5 @@
 <link rel="stylesheet" href="/static/css/auth.css">
-<form action="/users/login" method="post">
+<form action="/users/login?{{#redirect_url}}redirect_url={{.}}{{/redirect_url}}" method="post">
   <input type="text" name="username" id="username" placeholder="username">
   <input type="password" name="password" id="password" placeholder="password">
   <button type="submit">Login</button>

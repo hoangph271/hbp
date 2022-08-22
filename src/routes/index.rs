@@ -21,7 +21,7 @@ async fn readme_md() -> HbpResult<HbpResponse> {
         } else {
             markdown::render_markdown(
                 &markdown_data,
-                IndexLayoutData::default().title(&markdown_data.title),
+                IndexLayoutData::from_title(markdown_data.title.to_owned()),
             )
             .await
         }

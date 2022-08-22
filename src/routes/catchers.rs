@@ -4,12 +4,16 @@ use rocket::{catch, catchers, http::Status, Catcher, Request};
 
 #[catch(default)]
 fn default(status: Status, req: &Request) -> HbpResponse {
-    let path = req.uri().path();
-    let is_api = path.starts_with("/api/");
+    let path = req.uri().path().to_string();
     let status_code = StatusCode::from(status.code);
 
+    let is_api = path.starts_with("/api/");
+
     if !is_api {
-        return HbpResponse::status(status_code);
+        return match status_code {
+            StatusCode::Unauthorized => HbpResponse::unauthorized(Some(path)),
+            _ => HbpResponse::from_error_status(status_code),
+        };
     }
 
     match status_code {

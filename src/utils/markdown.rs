@@ -64,7 +64,7 @@ pub async fn render_user_markdown(
     file_path: &Path,
 ) -> HbpResult<String> {
     let layout_data = IndexLayoutData::default()
-        .title(&markdown.title)
+        .title(markdown.title.to_owned())
         .username(jwt.username())
         .moveup_urls(MoveUpUrl::from_path(file_path));
 

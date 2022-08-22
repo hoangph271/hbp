@@ -45,10 +45,11 @@ async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpResult
                 .moveup_urls(MoveUpUrl::from_path(&file_path))
                 .maybe_auth(jwt)
                 .title(
-                    &file_path
+                    file_path
                         .file_name()
                         .map(|file_name| file_name.to_string_lossy())
-                        .unwrap_or_else(|| file_path.to_string_lossy()),
+                        .unwrap_or_else(|| file_path.to_string_lossy())
+                        .to_string(),
                 );
 
             render_dir(&file_path, layout_data)
@@ -66,7 +67,7 @@ async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpResult
             markdown::render_markdown(
                 &markdown_data,
                 IndexLayoutData::default()
-                    .title(&markdown_data.title)
+                    .title(markdown_data.title.to_owned())
                     .maybe_auth(jwt)
                     .moveup_urls(MoveUpUrl::from_path(&file_path)),
             )
@@ -113,7 +114,7 @@ async fn user_markdown_file(
         return render_dir(
             &file_path,
             IndexLayoutData::default()
-                .title(&file_path_str)
+                .title(file_path_str)
                 .username(username)
                 .moveup_urls(moveup_urls),
         );
@@ -135,7 +136,7 @@ async fn user_markdown_file(
 
             let html = render_markdown_list(
                 IndexLayoutData::default()
-                    .title(&file_path_str)
+                    .title(file_path_str)
                     .maybe_auth(Some(jwt))
                     .moveup_urls(moveup_urls),
                 markdowns,

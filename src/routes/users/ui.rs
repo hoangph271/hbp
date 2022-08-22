@@ -11,6 +11,7 @@ use crate::utils::template::{IndexLayoutData, TemplateRenderer};
 use crate::utils::types::HbpResult;
 use log::*;
 use rocket::form::Form;
+use rocket::http::uri::{Origin, Uri};
 use rocket::http::{Cookie, CookieJar};
 use rocket::time::{Duration, OffsetDateTime};
 use rocket::{get, post, uri};
@@ -37,10 +38,17 @@ pub fn index(jwt: AuthPayload) -> HbpResult<HbpResponse> {
     Ok(HbpResponse::html(html, None))
 }
 
-#[get("/login")]
-pub fn login() -> HbpResult<HbpResponse> {
+#[get("/login?<redirect_url>")]
+pub fn login(redirect_url: Option<String>) -> HbpResult<HbpResponse> {
+    #[derive(Serialize, Debug)]
+    struct RenderData {
+        redirect_url: String,
+    }
+
     let html = TemplateRenderer::new("users/login.html".into()).to_html_page(
-        (),
+        RenderData {
+            redirect_url: redirect_url.unwrap_or_default(),
+        },
         template::IndexLayoutData::from_title("Login".to_owned()),
     )?;
 
@@ -57,8 +65,12 @@ pub fn signup() -> HbpResult<HbpResponse> {
     Ok(HbpResponse::html(html, None))
 }
 
-#[post("/login", data = "<login_body>")]
-pub async fn post_login(login_body: Form<LoginBody>, jar: &CookieJar<'_>) -> HbpResponse {
+#[post("/login?<redirect_url>", data = "<login_body>")]
+pub async fn post_login(
+    login_body: Form<LoginBody>,
+    jar: &CookieJar<'_>,
+    redirect_url: Option<String>,
+) -> HbpResponse {
     match attemp_signin(&login_body.username, &login_body.password).await {
         Err(e) => {
             error!("attemp_signin() failed: {e}");
@@ -82,12 +94,25 @@ pub async fn post_login(login_body: Form<LoginBody>, jar: &CookieJar<'_>) -> Hbp
 
                         jar.add_private(cookie);
 
-                        HbpResponse::redirect(uri!("/users", index))
+                        let redirect_url = redirect_url.unwrap_or_else(|| "/users/".to_owned());
+
+                        let uri = Uri::parse::<Origin>(&redirect_url)
+                            .map(|uri| {
+                                uri.origin()
+                                    .map(|uri| uri.to_owned())
+                                    .unwrap_or_else(|| uri!("/users", index))
+                            })
+                            .unwrap_or_else(|e| {
+                                error!("Uri::parse() `{redirect_url}` failed: {e}");
+                                uri!("/users", index)
+                            });
+
+                        HbpResponse::redirect(uri)
                     }
                     Err(e) => e.into(),
                 }
             }
-            None => HbpResponse::redirect(uri!("/users", login)),
+            None => HbpResponse::redirect(uri!("/users", login(redirect_url = redirect_url))),
         },
     }
 }
@@ -107,7 +132,7 @@ pub async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
     };
 
     if UserOrm::default().create_user(new_user).await.is_ok() {
-        HbpResponse::redirect(uri!("/users", login))
+        HbpResponse::redirect(uri!("/users", login(_)))
     } else {
         HbpResponse::redirect(uri!("/users", signup))
     }

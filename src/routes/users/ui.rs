@@ -30,7 +30,7 @@ pub fn index(jwt: AuthPayload) -> HbpResult<HbpResponse> {
             username: jwt.username().to_owned(),
         },
         IndexLayoutData::default()
-            .title(jwt.username())
+            .title(jwt.username().to_owned())
             .username(jwt.username()),
     )?;
 
@@ -38,18 +38,21 @@ pub fn index(jwt: AuthPayload) -> HbpResult<HbpResponse> {
 }
 
 #[get("/login")]
-pub fn login() -> HbpResponse {
-    let html = TemplateRenderer::new("users/login.html".into())
-        .to_html_page((), template::IndexLayoutData::default().title("Login"))
-        .expect("render users/login.html failed");
+pub fn login() -> HbpResult<HbpResponse> {
+    let html = TemplateRenderer::new("users/login.html".into()).to_html_page(
+        (),
+        template::IndexLayoutData::from_title("Login".to_owned()),
+    )?;
 
-    HbpResponse::html(html, None)
+    Ok(HbpResponse::html(html, None))
 }
 
 #[get("/signup")]
 pub fn signup() -> HbpResult<HbpResponse> {
-    let html = TemplateRenderer::new("users/signup.html".into())
-        .to_html_page((), template::IndexLayoutData::default().title("Signup"))?;
+    let html = TemplateRenderer::new("users/signup.html".into()).to_html_page(
+        (),
+        template::IndexLayoutData::from_title("Signup".to_owned()),
+    )?;
 
     Ok(HbpResponse::html(html, None))
 }

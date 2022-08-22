@@ -25,6 +25,10 @@ impl TemplateRenderer {
         TemplateRenderer { template_path }
     }
 
+    pub fn error_page() -> Self {
+        TemplateRenderer::new("static/error.html".into())
+    }
+
     pub fn to_html(&self, data: impl Serialize) -> HbpResult<String> {
         let template = compile_template(&self.template_path)?;
 
@@ -99,11 +103,16 @@ pub struct IndexLayoutData {
 }
 
 impl IndexLayoutData {
-    pub fn title(mut self, title: &str) -> Self {
-        self.title = title.to_owned();
+    pub fn from_title(title: String) -> Self {
+        Self::default().title(title)
+    }
+
+    pub fn title(mut self, title: String) -> Self {
+        self.title = title;
 
         self
     }
+
     pub fn maybe_auth(mut self, jwt: Option<AuthPayload>) -> Self {
         let username = if let Some(jwt) = jwt {
             match jwt {
@@ -118,11 +127,13 @@ impl IndexLayoutData {
 
         self
     }
+
     pub fn username(mut self, username: &str) -> Self {
         self.username = username.to_owned();
 
         self
     }
+
     pub fn moveup_urls(mut self, moveup_urls: Vec<MoveUpUrl>) -> Self {
         self.moveup_urls = moveup_urls;
 
@@ -166,4 +177,50 @@ impl From<mustache::Error> for ApiError {
             },
         }
     }
+}
+
+#[derive(Serialize, Debug)]
+pub struct ErrorPageData {
+    pub error_text: String,
+    pub action_html: String,
+}
+
+impl ErrorPageData {
+    pub fn from_status(status_code: &StatusCode) -> Self {
+        Self {
+            error_text: format!("{} | {}", status_code.as_u16(), status_code.reason_phrase()),
+            action_html: action_html_from(status_code),
+        }
+    }
+
+    pub fn action_html(mut self, action_html: String) -> Self {
+        self.action_html = action_html;
+        self
+    }
+}
+
+fn action_html_from(status_code: &StatusCode) -> String {
+    match status_code {
+        StatusCode::Unauthorized => action_html_for_401(None),
+        _ => r#"
+            <p>
+                Click <a href="/">here</a> to get home...!
+            </p>"#
+            .to_owned(),
+    }
+}
+
+pub fn action_html_for_401(redirect_url: Option<String>) -> String {
+    let href = if let Some(redirect_url) = redirect_url {
+        format!("/users/login?redirect_url={redirect_url}")
+    } else {
+        "/users/login".to_owned()
+    };
+
+    format!(
+        "
+        <p>
+            Click <a href=\"{href}\">here</a> to signin...!
+        </p>"
+    )
 }

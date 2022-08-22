@@ -18,7 +18,7 @@ pub async fn find_one(post_id: String) -> HbpResponse {
     match post_orm::get_one(&post_id) {
         Ok(post) => HbpResponse::json(post, None),
         Err(e) => match e {
-            OrmError::NotFound => HbpResponse::status(StatusCode::NotFound),
+            OrmError::NotFound => HbpResponse::from_error_status(StatusCode::NotFound),
         },
     }
 }
@@ -27,7 +27,7 @@ pub async fn find_one(post_id: String) -> HbpResponse {
 pub async fn delete_one(post_id: String) -> HbpResponse {
     lib::post_orm::delete_one(&post_id);
     // TODO: Skip on 404, handle errors
-    HbpResponse::status(StatusCode::Ok)
+    HbpResponse::from_error_status(StatusCode::Ok)
 }
 
 #[post("/", data = "<new_post>")]
@@ -46,9 +46,9 @@ pub async fn update(updated_post: Json<posts_model::UpdatedPost>) -> HbpResponse
     use lib::{post_orm, OrmError};
 
     match post_orm::update_one(updated_post.into_inner()) {
-        Ok(_) => HbpResponse::status(StatusCode::Ok),
+        Ok(_) => HbpResponse::from_error_status(StatusCode::Ok), // FIME: error_status is NOT correct
         Err(e) => match e {
-            OrmError::NotFound => HbpResponse::status(StatusCode::NotFound),
+            OrmError::NotFound => HbpResponse::from_error_status(StatusCode::NotFound),
         },
     }
 }

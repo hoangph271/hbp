@@ -22,4 +22,4 @@ jobs:
             username: ${{ secrets.USERNAME }}
             KEY: ${{ secrets.KEY }}
             port: ${{ secrets.PORT }}
-            script: cd {{ secrets.HBP_LOCATION }} && git pull
+            script: cd ${{ secrets.HBP_LOCATION }} && git pull

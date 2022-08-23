@@ -50,3 +50,6 @@ mime_guess = "2.0.4"
 
 [profile.dev]
 overflow-checks = true
+
+[profile.release]
+overflow-checks = true

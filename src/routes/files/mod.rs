@@ -188,7 +188,9 @@ pub async fn api_get_preview_file(
     attempt_access(&path, &jwt)?;
     assert_raw_file(&path)?;
 
-    Ok(HbpResponse::temp_file(create_thumbnail(&path)?))
+    let thumbnail = create_thumbnail(&path)?;
+
+    Ok(HbpResponse::temp_file(thumbnail))
 }
 
 #[openapi]

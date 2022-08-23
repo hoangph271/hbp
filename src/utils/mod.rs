@@ -60,11 +60,15 @@ impl From<ImageError> for ApiError {
     }
 }
 pub fn create_thumbnail(path: &Path) -> ApiResult<NamedTempFile> {
-    let mut thumbnail = tempfile::Builder::new().suffix(".jpeg").tempfile()?;
+    let suffix = ImageFormat::Png.extensions_str().first().unwrap_or(&"png");
+
+    let mut thumbnail = tempfile::Builder::new()
+        .suffix(&format!(".{suffix}"))
+        .tempfile()?;
 
     image::open(path)?
         .thumbnail(512, 512)
-        .write_to(&mut thumbnail, ImageFormat::Jpeg)?;
+        .write_to(&mut thumbnail, ImageFormat::Png)?;
 
     Ok(thumbnail)
 }

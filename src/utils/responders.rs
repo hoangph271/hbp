@@ -24,6 +24,8 @@ pub enum HbpContent {
     Found(String),
     File(Box<PathBuf>),
     #[serde(skip_serializing, skip_deserializing)]
+    Bytes(Vec<u8>, Box<Option<ContentType>>),
+    #[serde(skip_serializing, skip_deserializing)]
     NamedTempFile(Box<NamedTempFile>),
 }
 
@@ -165,6 +167,11 @@ impl<'r> Responder<'r, 'r> for HbpResponse {
             HbpContent::NamedTempFile(tempfile) => {
                 return futures::executor::block_on(NamedFile::open(tempfile.into_temp_path()))
                     .respond_to(request)
+            }
+            HbpContent::Bytes(body, content_type) => {
+                response_builder
+                    .header(content_type.unwrap_or(ContentType::Binary))
+                    .sized_body(body.len(), Cursor::new(body));
             }
         }
 

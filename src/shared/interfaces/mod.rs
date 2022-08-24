@@ -1,7 +1,6 @@
 mod api_error;
 mod api_item;
 mod api_list;
-mod utils;
 
 pub use api_error::*;
 pub use api_item::*;

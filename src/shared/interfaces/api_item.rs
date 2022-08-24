@@ -4,9 +4,7 @@ use rocket::response::Responder;
 use rocket_okapi::{gen::OpenApiGenerator, response::OpenApiResponderInner};
 use serde::Serialize;
 
-use crate::utils::responders::{build_json_response, HbpResponse};
-
-use super::utils::status_code_serialize;
+use crate::utils::{responders::HbpResponse, status_code_serialize};
 
 #[derive(Serialize)]
 pub struct ApiItem<T: Serialize> {
@@ -15,11 +13,6 @@ pub struct ApiItem<T: Serialize> {
     item: T,
 }
 
-impl<'r, T: Serialize> Responder<'r, 'static> for ApiItem<T> {
-    fn respond_to(self, _: &'r rocket::Request<'_>) -> rocket::response::Result<'static> {
-        Ok(build_json_response(&self.status_code.clone(), self))
-    }
-}
 impl<T: Serialize> OpenApiResponderInner for ApiItem<T> {
     fn responses(_: &mut OpenApiGenerator) -> rocket_okapi::Result<Responses> {
         Ok(Responses {
@@ -39,5 +32,11 @@ impl<T: Serialize> ApiItem<T> {
             status_code: StatusCode::Ok,
             item,
         }
+    }
+}
+
+impl<'r, T: Serialize> Responder<'r, 'r> for ApiItem<T> {
+    fn respond_to(self, req: &'r rocket::Request<'_>) -> rocket::response::Result<'r> {
+        HbpResponse::from(self).respond_to(req)
     }
 }

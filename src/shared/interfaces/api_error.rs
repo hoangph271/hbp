@@ -5,9 +5,7 @@ use rocket_okapi::{gen::OpenApiGenerator, response::OpenApiResponderInner};
 use serde::Serialize;
 use std::error::Error;
 
-use crate::utils::responders::HbpResponse;
-
-use super::utils::status_code_serialize;
+use crate::utils::{responders::HbpResponse, status_code_serialize};
 
 #[derive(Serialize, Clone, Debug)]
 pub struct ApiError {

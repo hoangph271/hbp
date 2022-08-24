@@ -204,17 +204,3 @@ where
         }
     }
 }
-
-pub fn build_json_response<T: Serialize>(status: &StatusCode, json: T) -> Response<'static> {
-    let json = serde_json::to_string(&json)
-        .unwrap_or_else(|e| panic!("serde_json::to_string fail: {e:?}"));
-
-    let status = Status::from_code(status.as_u16())
-        .unwrap_or_else(|| panic!("{:?} is NOT a valid status", status));
-
-    Response::build()
-        .status(status)
-        .header(ContentType::JSON)
-        .sized_body(json.len(), Cursor::new(json))
-        .finalize()
-}

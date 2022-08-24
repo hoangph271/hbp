@@ -189,7 +189,7 @@ pub struct ErrorPageData {
 impl ErrorPageData {
     pub fn from_status(status_code: &StatusCode) -> Self {
         Self {
-            error_text: format!("{} | {}", status_code.as_u16(), status_code.reason_phrase()),
+            error_text: status_text(status_code),
             action_html: action_html_from(status_code),
         }
     }
@@ -224,4 +224,8 @@ pub fn action_html_for_401(redirect_url: Option<String>) -> String {
             Click <a href=\"{href}\">here</a> to signin...!
         </p>"
     )
+}
+
+pub fn status_text(status_code: &StatusCode) -> String {
+    format!("{} | {}", status_code.as_u16(), status_code.reason_phrase())
 }

@@ -1,3 +1,5 @@
+[![Deploy latest](https://github.com/hoangph271/hbp/actions/workflows/deploy-latest.yml/badge.svg)](https://github.com/hoangph271/hbp/actions/workflows/deploy-latest.yml)
+
 > To be abandoned `Rocket.rs` website
 
 It's actually live [here](https://alpha-sneu.xyz/)

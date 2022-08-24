@@ -18,6 +18,7 @@ fn default(status: Status, req: &Request) -> HbpResponse {
 
     match status_code {
         StatusCode::NotFound => ApiError {
+            with_ui: false,
             status_code: status_code.clone(),
             errors: vec![format!(
                 "{} - Most likely the api endpoint does NOT exist",

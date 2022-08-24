@@ -36,7 +36,7 @@ async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpResult
     let file_path = PathBuf::from("markdown").join(sub_path.clone());
 
     if !file_path.exists() {
-        return Err(ApiError::not_found());
+        return Err(ApiError::not_found().with_ui());
     }
 
     if !markdown::is_markdown(&sub_path) {

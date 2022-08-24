@@ -26,7 +26,7 @@ impl<T: Serialize> ApiList<T> {
 
 impl<'r, T: Serialize> Responder<'r, 'static> for ApiList<T> {
     fn respond_to(self, _: &'r rocket::Request<'_>) -> rocket::response::Result<'static> {
-        Ok(build_json_response(self))
+        Ok(build_json_response(&self.status_code.clone(), self))
     }
 }
 impl<T: Serialize> OpenApiResponderInner for ApiList<T> {

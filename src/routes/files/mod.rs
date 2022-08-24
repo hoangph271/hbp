@@ -57,6 +57,7 @@ fn attempt_access(path: &Path, jwt: &Option<AuthPayload>) -> ApiResult<()> {
 fn assert_raw_file(path: &Path) -> ApiResult<&Path> {
     if path.is_dir() {
         Err(ApiError {
+            with_ui: false,
             status_code: StatusCode::UnprocessableEntity,
             errors: vec![format!("requested file at {path:?} is NOT a file")],
         })

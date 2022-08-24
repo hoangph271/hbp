@@ -13,7 +13,9 @@ use std::path::PathBuf;
 use tempfile::NamedTempFile;
 
 use super::status_from;
-use super::template::{action_html_for_401, ErrorPageData, IndexLayoutData, TemplateRenderer};
+use super::template::{
+    action_html_for_401, status_text, ErrorPageData, IndexLayoutData, TemplateRenderer,
+};
 use super::types::HbpResult;
 
 #[derive(Serialize, Deserialize, JsonSchema, Debug)]
@@ -68,13 +70,11 @@ impl HbpResponse {
     }
 
     pub fn from_error_status(status_code: StatusCode) -> HbpResponse {
-        let status_code = StatusCode::from(status_code.as_u16());
+        let render_data = ErrorPageData::from_status(&status_code);
+        let layout_data = IndexLayoutData::default().title(status_text(&status_code));
 
         TemplateRenderer::error_page()
-            .to_html_page(
-                ErrorPageData::from_status(&status_code),
-                IndexLayoutData::default().title(status_code.reason_phrase().to_owned()),
-            )
+            .to_html_page(render_data, layout_data)
             .map(|html| HbpResponse::html(html, status_code))
             .unwrap_or_else(HbpResponse::from)
     }
@@ -84,7 +84,7 @@ impl HbpResponse {
 
         let render_data =
             ErrorPageData::from_status(&status_code).action_html(action_html_for_401(redirect_url));
-        let layout_data = IndexLayoutData::from_title(status_code.reason_phrase().to_owned());
+        let layout_data = IndexLayoutData::from_title(status_text(&status_code));
 
         TemplateRenderer::error_page()
             .to_html_page(render_data, layout_data)
@@ -138,7 +138,6 @@ impl<'r> Responder<'r, 'r> for HbpResponse {
         let status = status_from(self.status_code);
         builder.status(status);
 
-        println!("{:?}", self.content);
         match self.content {
             HbpContent::Plain(text) => {
                 builder

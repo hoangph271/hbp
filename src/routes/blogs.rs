@@ -1,3 +1,4 @@
+use httpstatus::StatusCode;
 use log::error;
 use rocket::get;
 
@@ -24,7 +25,7 @@ pub fn index(jwt: Option<AuthPayload>) -> HbpResponse {
         IndexLayoutData::from_title("Blogs".to_owned()).maybe_auth(jwt),
         markdowns,
     ) {
-        Ok(html) => HbpResponse::html(html, None),
+        Ok(html) => HbpResponse::html(html, StatusCode::Ok),
         Err(e) => e.into(),
     }
 }

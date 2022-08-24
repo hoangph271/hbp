@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use httpstatus::StatusCode;
 use rocket::http::Status;
 use rocket::response::Redirect;
 use rocket::{delete, get, post, put, routes, Route};
@@ -28,7 +29,7 @@ async fn readme_md() -> HbpResult<HbpResponse> {
     };
 
     let html = html_result.await?;
-    Ok(HbpResponse::html(html, None))
+    Ok(HbpResponse::html(html, StatusCode::Ok))
 }
 
 #[get("/")]

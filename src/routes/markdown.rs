@@ -8,6 +8,7 @@ use crate::utils::{
     markdown,
     responders::{HbpContent, HbpResponse},
 };
+use httpstatus::StatusCode;
 use log::*;
 use rocket::{get, routes, uri, Route};
 use serde::Serialize;
@@ -76,7 +77,7 @@ async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpResult
     }
     .await?;
 
-    Ok(HbpResponse::html(html, None))
+    Ok(HbpResponse::html(html, StatusCode::Ok))
 }
 
 #[get("/_edit/<sub_path..>")]
@@ -142,7 +143,7 @@ async fn user_markdown_file(
                 markdowns,
             )?;
 
-            Ok(HbpResponse::html(html, None))
+            Ok(HbpResponse::html(html, StatusCode::Ok))
         } else {
             Ok(HbpResponse::file(file_path))
         };
@@ -193,5 +194,5 @@ pub fn markdown_routes() -> Vec<Route> {
 fn render_dir(dir_path: &PathBuf, layout_data: IndexLayoutData) -> HbpResult<HbpResponse> {
     let markdowns: Vec<MarkdownOrMarkdownDir> = markdown::markdown_from_dir(dir_path)?;
 
-    render_markdown_list(layout_data, markdowns).map(|html| HbpResponse::html(html, None))
+    render_markdown_list(layout_data, markdowns).map(|html| HbpResponse::html(html, StatusCode::Ok))
 }

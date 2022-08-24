@@ -43,9 +43,9 @@ impl OpenApiResponderInner for HbpResponse {
 }
 
 impl HbpResponse {
-    pub fn html(html: String, status_code: Option<StatusCode>) -> HbpResponse {
+    pub fn html(html: String, status_code: StatusCode) -> HbpResponse {
         HbpResponse {
-            status_code: status_code.unwrap_or(StatusCode::Ok),
+            status_code,
             content: HbpContent::Html(html),
         }
     }
@@ -75,7 +75,7 @@ impl HbpResponse {
                 ErrorPageData::from_status(&status_code),
                 IndexLayoutData::default().title(status_code.reason_phrase().to_owned()),
             )
-            .map(|html| HbpResponse::html(html, None))
+            .map(|html| HbpResponse::html(html, status_code))
             .unwrap_or_else(HbpResponse::from)
     }
 
@@ -88,7 +88,7 @@ impl HbpResponse {
 
         TemplateRenderer::error_page()
             .to_html_page(render_data, layout_data)
-            .map(|html| HbpResponse::html(html, Some(status_code)))
+            .map(|html| HbpResponse::html(html, status_code))
             .unwrap_or_else(HbpResponse::from)
     }
 
@@ -138,6 +138,7 @@ impl<'r> Responder<'r, 'r> for HbpResponse {
         let status = status_from(self.status_code);
         builder.status(status);
 
+        println!("{:?}", self.content);
         match self.content {
             HbpContent::Plain(text) => {
                 builder
@@ -145,6 +146,8 @@ impl<'r> Responder<'r, 'r> for HbpResponse {
                     .sized_body(text.len(), Cursor::new(text));
             }
             HbpContent::Html(html) => {
+                println!("{html}");
+
                 builder
                     .header(ContentType::HTML)
                     .sized_body(html.len(), Cursor::new(html));

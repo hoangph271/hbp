@@ -119,12 +119,9 @@ impl From<std::io::Error> for ApiError {
     }
 }
 
-impl<'r> rocket::response::Responder<'r, 'static> for ApiError {
-    fn respond_to(self, _: &'r rocket::Request<'_>) -> rocket::response::Result<'static> {
-        Ok(crate::utils::responders::build_json_response(
-            &self.status_code,
-            self.clone(),
-        ))
+impl<'r> rocket::response::Responder<'r, 'r> for ApiError {
+    fn respond_to(self, req: &'r rocket::Request<'_>) -> rocket::response::Result<'r> {
+        HbpResponse::from(self).respond_to(req)
     }
 }
 

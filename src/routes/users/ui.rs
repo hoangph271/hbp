@@ -9,6 +9,7 @@ use crate::utils::responders::HbpResponse;
 use crate::utils::template;
 use crate::utils::template::{IndexLayoutData, TemplateRenderer};
 use crate::utils::types::HbpResult;
+use httpstatus::StatusCode;
 use log::*;
 use rocket::form::Form;
 use rocket::http::uri::{Origin, Uri};
@@ -35,7 +36,7 @@ pub fn index(jwt: AuthPayload) -> HbpResult<HbpResponse> {
             .username(jwt.username()),
     )?;
 
-    Ok(HbpResponse::html(html, None))
+    Ok(HbpResponse::html(html, StatusCode::Ok))
 }
 
 #[get("/login?<redirect_url>")]
@@ -52,7 +53,7 @@ pub fn login(redirect_url: Option<String>) -> HbpResult<HbpResponse> {
         template::IndexLayoutData::from_title("Login".to_owned()),
     )?;
 
-    Ok(HbpResponse::html(html, None))
+    Ok(HbpResponse::html(html, StatusCode::Ok))
 }
 
 #[get("/signup")]
@@ -62,7 +63,7 @@ pub fn signup() -> HbpResult<HbpResponse> {
         template::IndexLayoutData::from_title("Signup".to_owned()),
     )?;
 
-    Ok(HbpResponse::html(html, None))
+    Ok(HbpResponse::html(html, StatusCode::Ok))
 }
 
 #[post("/login?<redirect_url>", data = "<login_body>")]

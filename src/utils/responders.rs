@@ -43,9 +43,9 @@ impl OpenApiResponderInner for HbpResponse {
 }
 
 impl HbpResponse {
-    pub fn html(html: String, status_code: Option<StatusCode>) -> HbpResponse {
+    pub fn html(html: String, status_code: StatusCode) -> HbpResponse {
         HbpResponse {
-            status_code: status_code.unwrap_or(StatusCode::Ok),
+            status_code,
             content: HbpContent::Html(html),
         }
     }
@@ -75,7 +75,7 @@ impl HbpResponse {
                 ErrorPageData::from_status(&status_code),
                 IndexLayoutData::default().title(status_code.reason_phrase().to_owned()),
             )
-            .map(|html| HbpResponse::html(html, None))
+            .map(|html| HbpResponse::html(html, status_code))
             .unwrap_or_else(HbpResponse::from)
     }
 
@@ -88,7 +88,7 @@ impl HbpResponse {
 
         TemplateRenderer::error_page()
             .to_html_page(render_data, layout_data)
-            .map(|html| HbpResponse::html(html, Some(status_code)))
+            .map(|html| HbpResponse::html(html, status_code))
             .unwrap_or_else(HbpResponse::from)
     }
 
@@ -133,29 +133,32 @@ impl HbpResponse {
 impl<'r> Responder<'r, 'r> for HbpResponse {
     // ! FIXME: Change `respond_to` into async when async Traits roll out...!
     fn respond_to(self, request: &rocket::Request<'_>) -> rocket::response::Result<'r> {
-        let mut response_builder = Response::build();
+        let mut builder = Response::build();
 
         let status = status_from(self.status_code);
-        response_builder.status(status);
+        builder.status(status);
 
+        println!("{:?}", self.content);
         match self.content {
             HbpContent::Plain(text) => {
-                response_builder
+                builder
                     .header(ContentType::Plain)
                     .sized_body(text.len(), Cursor::new(text));
             }
             HbpContent::Html(html) => {
-                response_builder
+                println!("{html}");
+
+                builder
                     .header(ContentType::HTML)
                     .sized_body(html.len(), Cursor::new(html));
             }
             HbpContent::Json(json) => {
-                response_builder
+                builder
                     .header(ContentType::JSON)
                     .sized_body(json.len(), Cursor::new(json));
             }
             HbpContent::Found(path) => {
-                response_builder
+                builder
                     .header(ContentType::HTML)
                     .status(Status::Found)
                     .header(Header::new("Location", path));
@@ -169,13 +172,13 @@ impl<'r> Responder<'r, 'r> for HbpResponse {
                     .respond_to(request)
             }
             HbpContent::Bytes(body, content_type) => {
-                response_builder
+                builder
                     .header(content_type.unwrap_or(ContentType::Binary))
                     .sized_body(body.len(), Cursor::new(body));
             }
         }
 
-        Ok(response_builder.finalize())
+        Ok(builder.finalize())
     }
 }
 
@@ -203,11 +206,15 @@ where
     }
 }
 
-pub fn build_json_response<T: Serialize>(json: T) -> Response<'static> {
+pub fn build_json_response<T: Serialize>(status: &StatusCode, json: T) -> Response<'static> {
     let json = serde_json::to_string(&json)
         .unwrap_or_else(|e| panic!("serde_json::to_string fail: {e:?}"));
 
+    let status = Status::from_code(status.as_u16())
+        .unwrap_or_else(|| panic!("{:?} is NOT a valid status", status));
+
     Response::build()
+        .status(status)
         .header(ContentType::JSON)
         .sized_body(json.len(), Cursor::new(json))
         .finalize()

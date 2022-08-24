@@ -113,6 +113,7 @@ impl From<DbError> for ApiError {
         ApiError {
             status_code: db_error.status_code,
             errors: vec![db_error.message],
+            with_ui: false,
         }
     }
 }

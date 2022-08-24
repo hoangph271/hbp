@@ -5,7 +5,7 @@ use rocket_okapi::{gen::OpenApiGenerator, response::OpenApiResponderInner};
 use serde::Serialize;
 use std::error::Error;
 
-use crate::utils::responders::{build_json_response, HbpResponse};
+use crate::utils::responders::HbpResponse;
 
 use super::utils::status_code_serialize;
 
@@ -14,18 +14,22 @@ pub struct ApiError {
     #[serde(serialize_with = "status_code_serialize")]
     pub status_code: StatusCode,
     pub errors: Vec<String>,
+    #[serde(skip_serializing)]
+    pub with_ui: bool,
 }
 
 impl ApiError {
-    pub fn bad_request(errors: Vec<String>) -> ApiError {
+    pub fn bad_request(errors: Vec<String>) -> Self {
         ApiError {
             status_code: StatusCode::BadRequest,
             errors,
+            with_ui: false,
         }
     }
 
     pub fn from_status(status_code: StatusCode) -> Self {
         Self {
+            with_ui: false,
             status_code: status_code.clone(),
             errors: vec![status_code.reason_phrase().to_string()],
         }
@@ -33,6 +37,7 @@ impl ApiError {
 
     pub fn from_message(msg: &str, status_code: StatusCode) -> ApiError {
         ApiError {
+            with_ui: false,
             status_code,
             errors: vec![msg.to_owned()],
         }
@@ -67,12 +72,22 @@ impl ApiError {
 
         self
     }
+
+    pub fn with_ui(mut self) -> Self {
+        self.with_ui = true;
+        self
+    }
 }
 
 impl From<ApiError> for HbpResponse {
-    fn from(api_error_response: ApiError) -> HbpResponse {
-        let status_code = api_error_response.status_code.clone();
-        HbpResponse::json(api_error_response, Some(status_code))
+    fn from(error: ApiError) -> HbpResponse {
+        let status_code = error.status_code.clone();
+
+        if error.with_ui {
+            HbpResponse::from_error_status(status_code)
+        } else {
+            HbpResponse::json(error, Some(status_code))
+        }
     }
 }
 impl From<reqwest::Error> for ApiError {
@@ -97,17 +112,19 @@ impl From<reqwest::Error> for ApiError {
 impl From<std::io::Error> for ApiError {
     fn from(e: std::io::Error) -> Self {
         Self {
+            with_ui: false,
             status_code: StatusCode::InternalServerError,
             errors: vec![format!("{e}")],
         }
     }
 }
 
-impl<'r> rocket::response::Responder<'r, 'static> for ApiError {
-    fn respond_to(self, _: &'r rocket::Request<'_>) -> rocket::response::Result<'static> {
-        Ok(build_json_response(self))
+impl<'r> rocket::response::Responder<'r, 'r> for ApiError {
+    fn respond_to(self, req: &'r rocket::Request<'_>) -> rocket::response::Result<'r> {
+        HbpResponse::from(self).respond_to(req)
     }
 }
+
 impl OpenApiResponderInner for ApiError {
     fn responses(_gen: &mut OpenApiGenerator) -> rocket_okapi::Result<Responses> {
         Ok(Responses {

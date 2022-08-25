@@ -46,14 +46,14 @@ pub fn public_files_root() -> PathBuf {
 pub fn files_root() -> PathBuf {
     from_env(EnvKey::FilesRoot).into()
 }
-pub fn is_root(sub: &str) -> bool {
-    if sub.is_empty() {
+pub fn is_root(username: &str) -> bool {
+    if username.is_empty() {
         return false;
     }
 
     let root_user = from_env(EnvKey::RootUser);
 
-    root_user.eq(sub)
+    root_user.eq(username)
 }
 
 pub fn is_prod() -> bool {

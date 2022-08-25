@@ -6,7 +6,7 @@ use crate::shared::entities::markdown::*;
 use crate::utils::auth::AuthPayload;
 use crate::utils::markdown::{markdown_from_dir, render_markdown_list};
 use crate::utils::responders::HbpResponse;
-use crate::utils::template::IndexLayoutData;
+use crate::utils::template::IndexLayout;
 
 #[get("/")]
 pub fn index(jwt: Option<AuthPayload>) -> HbpResponse {
@@ -22,7 +22,7 @@ pub fn index(jwt: Option<AuthPayload>) -> HbpResponse {
     // FIXME: Now with dir, how to sort...?
 
     match render_markdown_list(
-        IndexLayoutData::from_title("Blogs".to_owned()).maybe_auth(jwt),
+        IndexLayout::from_title("Blogs".to_owned()).maybe_auth(jwt),
         markdowns,
     ) {
         Ok(html) => HbpResponse::html(html, StatusCode::Ok),

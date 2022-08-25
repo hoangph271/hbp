@@ -15,9 +15,7 @@ use tempfile::NamedTempFile;
 use crate::shared::interfaces::{ApiError, ApiResult};
 
 use super::status_from;
-use super::template::{
-    action_html_for_401, status_text, ErrorPageData, IndexLayoutData, TemplateRenderer,
-};
+use super::template::{action_html_for_401, status_text, ErrorPage, IndexLayout, Templater};
 use super::types::HbpResult;
 
 #[derive(Serialize, Deserialize, JsonSchema, Debug)]
@@ -72,10 +70,10 @@ impl HbpResponse {
     }
 
     pub fn from_error_status(status_code: StatusCode) -> HbpResponse {
-        let render_data = ErrorPageData::from_status(&status_code);
-        let layout_data = IndexLayoutData::default().title(status_text(&status_code));
+        let render_data = ErrorPage::from_status(&status_code);
+        let layout_data = IndexLayout::default().title(status_text(&status_code));
 
-        TemplateRenderer::error_page()
+        Templater::error_page()
             .to_html_page(render_data, layout_data)
             .map(|html| HbpResponse::html(html, status_code))
             .unwrap_or_else(HbpResponse::from)
@@ -85,10 +83,10 @@ impl HbpResponse {
         let status_code = StatusCode::Unauthorized;
 
         let render_data =
-            ErrorPageData::from_status(&status_code).action_html(action_html_for_401(redirect_url));
-        let layout_data = IndexLayoutData::from_title(status_text(&status_code));
+            ErrorPage::from_status(&status_code).action_html(action_html_for_401(redirect_url));
+        let layout_data = IndexLayout::from_title(status_text(&status_code));
 
-        TemplateRenderer::error_page()
+        Templater::error_page()
             .to_html_page(render_data, layout_data)
             .map(|html| HbpResponse::html(html, status_code))
             .unwrap_or_else(HbpResponse::from)

@@ -7,7 +7,7 @@ use crate::utils::constants::cookies;
 use crate::utils::env::{from_env, EnvKey};
 use crate::utils::responders::HbpResponse;
 use crate::utils::template;
-use crate::utils::template::{IndexLayoutData, TemplateRenderer};
+use crate::utils::template::{IndexLayout, Templater};
 use crate::utils::types::HbpResult;
 use httpstatus::StatusCode;
 use log::*;
@@ -27,11 +27,11 @@ pub fn index(jwt: AuthPayload) -> HbpResult<HbpResponse> {
         username: String,
     }
 
-    let html = TemplateRenderer::new("users/profile.html".into()).to_html_page(
+    let html = Templater::new("users/profile.html".into()).to_html_page(
         RenderData {
             username: jwt.username().to_owned(),
         },
-        IndexLayoutData::default()
+        IndexLayout::default()
             .title(jwt.username().to_owned())
             .username(jwt.username()),
     )?;
@@ -46,11 +46,11 @@ pub fn login(redirect_url: Option<String>) -> HbpResult<HbpResponse> {
         redirect_url: String,
     }
 
-    let html = TemplateRenderer::new("users/login.html".into()).to_html_page(
+    let html = Templater::new("users/login.html".into()).to_html_page(
         RenderData {
             redirect_url: redirect_url.unwrap_or_default(),
         },
-        template::IndexLayoutData::from_title("Login".to_owned()),
+        template::IndexLayout::from_title("Login".to_owned()),
     )?;
 
     Ok(HbpResponse::html(html, StatusCode::Ok))
@@ -58,10 +58,8 @@ pub fn login(redirect_url: Option<String>) -> HbpResult<HbpResponse> {
 
 #[get("/signup")]
 pub fn signup() -> HbpResult<HbpResponse> {
-    let html = TemplateRenderer::new("users/signup.html".into()).to_html_page(
-        (),
-        template::IndexLayoutData::from_title("Signup".to_owned()),
-    )?;
+    let html = Templater::new("users/signup.html".into())
+        .to_html_page((), template::IndexLayout::from_title("Signup".to_owned()))?;
 
     Ok(HbpResponse::html(html, StatusCode::Ok))
 }

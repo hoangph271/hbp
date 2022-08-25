@@ -1,7 +1,7 @@
 use crate::shared::entities::markdown::*;
 use crate::shared::interfaces::ApiError;
 use crate::utils::markdown::render_markdown_list;
-use crate::utils::template::{IndexLayoutData, MoveUpUrl, TemplateRenderer};
+use crate::utils::template::{IndexLayout, MoveUpUrl, Templater};
 use crate::utils::types::HbpResult;
 use crate::utils::{
     auth::{AuthPayload, UserPayload},
@@ -42,7 +42,7 @@ async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpResult
 
     if !markdown::is_markdown(&sub_path) {
         return if file_path.is_dir() {
-            let layout_data = IndexLayoutData::default()
+            let layout_data = IndexLayout::default()
                 .moveup_urls(MoveUpUrl::from_path(&file_path))
                 .maybe_auth(jwt)
                 .title(
@@ -67,7 +67,7 @@ async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpResult
         } else {
             markdown::render_markdown(
                 &markdown_data,
-                IndexLayoutData::default()
+                IndexLayout::default()
                     .title(markdown_data.title.to_owned())
                     .maybe_auth(jwt)
                     .moveup_urls(MoveUpUrl::from_path(&file_path)),
@@ -84,7 +84,7 @@ async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpResult
 async fn user_markdown_editor(sub_path: PathBuf, _jwt: AuthPayload) -> HbpResponse {
     let _file_path_str = PathBuf::from("markdown").join(sub_path);
 
-    match TemplateRenderer::new("markdown/write-markdown.html".into()).to_html(()) {
+    match Templater::new("markdown/write-markdown.html".into()).to_html(()) {
         Ok(_) => todo!(),
         Err(_) => todo!(),
     }
@@ -114,7 +114,7 @@ async fn user_markdown_file(
     if file_path.is_dir() {
         return render_dir(
             &file_path,
-            IndexLayoutData::default()
+            IndexLayout::default()
                 .title(file_path_str)
                 .username(username)
                 .moveup_urls(moveup_urls),
@@ -136,7 +136,7 @@ async fn user_markdown_file(
             // TODO: Sort...! :"<
 
             let html = render_markdown_list(
-                IndexLayoutData::default()
+                IndexLayout::default()
                     .title(file_path_str)
                     .maybe_auth(Some(jwt))
                     .moveup_urls(moveup_urls),
@@ -191,7 +191,7 @@ pub fn markdown_routes() -> Vec<Route> {
     ]
 }
 
-fn render_dir(dir_path: &PathBuf, layout_data: IndexLayoutData) -> HbpResult<HbpResponse> {
+fn render_dir(dir_path: &PathBuf, layout_data: IndexLayout) -> HbpResult<HbpResponse> {
     let markdowns: Vec<MarkdownOrMarkdownDir> = markdown::markdown_from_dir(dir_path)?;
 
     render_markdown_list(layout_data, markdowns).map(|html| HbpResponse::html(html, StatusCode::Ok))

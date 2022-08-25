@@ -4,7 +4,7 @@ use crate::utils::types::HbpResult;
 use reqwest::{multipart, Client};
 use serde::{Deserialize, Serialize};
 
-use super::template::TemplateRenderer;
+use super::template::Templater;
 
 #[derive(Deserialize, Debug)]
 pub struct MarpContent {
@@ -54,5 +54,5 @@ pub async fn render_marp(markdown: &str) -> HbpResult<String> {
         markdown_html: String,
     }
 
-    TemplateRenderer::new("markdown/markdown.html".into()).to_html(RenderData { markdown_html })
+    Templater::new("markdown/markdown.html".into()).to_html(RenderData { markdown_html })
 }

@@ -16,17 +16,17 @@ fn compile_template(path: &PathBuf) -> HbpResult<Template> {
 }
 
 #[derive(Serialize)]
-pub struct TemplateRenderer {
+pub struct Templater {
     template_path: PathBuf,
 }
 
-impl TemplateRenderer {
+impl Templater {
     pub fn new(template_path: PathBuf) -> Self {
-        TemplateRenderer { template_path }
+        Templater { template_path }
     }
 
     pub fn error_page() -> Self {
-        TemplateRenderer::new("static/error.html".into())
+        Templater::new("static/error.html".into())
     }
 
     pub fn to_html(&self, data: impl Serialize) -> HbpResult<String> {
@@ -41,7 +41,7 @@ impl TemplateRenderer {
     pub fn to_html_page(
         &self,
         data: impl Serialize + std::fmt::Debug,
-        layout_data: IndexLayoutData,
+        layout_data: IndexLayout,
     ) -> HbpResult<String> {
         #[derive(Serialize)]
         struct RenderData {
@@ -51,7 +51,7 @@ impl TemplateRenderer {
             username: String,
         }
 
-        TemplateRenderer::new("index.html".into()).to_html(RenderData {
+        Templater::new("index.html".into()).to_html(RenderData {
             raw_content: self.to_html(data)?,
             title: layout_data.title,
             moveup_urls: layout_data.moveup_urls,
@@ -95,14 +95,14 @@ impl MoveUpUrl {
 }
 
 #[derive(Default, Serialize)]
-pub struct IndexLayoutData {
+pub struct IndexLayout {
     title: String,
     username: String,
     moveup_urls: Vec<MoveUpUrl>,
     raw_content: String,
 }
 
-impl IndexLayoutData {
+impl IndexLayout {
     pub fn from_title(title: String) -> Self {
         Self::default().title(title)
     }
@@ -142,15 +142,15 @@ impl IndexLayoutData {
 }
 
 #[derive(Serialize, Debug)]
-pub struct MarkdownRenderData {
+pub struct MarkdownTemplate {
     markdown_html: String,
     markdown_signed_url: String,
     markdown_title: String,
 }
 
-impl MarkdownRenderData {
-    pub fn of(markdown: &Markdown, signed_url: Option<String>) -> MarkdownRenderData {
-        MarkdownRenderData {
+impl MarkdownTemplate {
+    pub fn of(markdown: &Markdown, signed_url: Option<String>) -> MarkdownTemplate {
+        MarkdownTemplate {
             markdown_html: markdown_to_html(&markdown.content),
             markdown_title: markdown.title.clone(),
             markdown_signed_url: signed_url.unwrap_or_default(),
@@ -181,12 +181,12 @@ impl From<mustache::Error> for ApiError {
 }
 
 #[derive(Serialize, Debug)]
-pub struct ErrorPageData {
+pub struct ErrorPage {
     pub error_text: String,
     pub action_html: String,
 }
 
-impl ErrorPageData {
+impl ErrorPage {
     pub fn from_status(status_code: &StatusCode) -> Self {
         Self {
             error_text: status_text(status_code),

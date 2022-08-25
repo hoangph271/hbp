@@ -8,7 +8,7 @@ use rocket::{delete, get, post, put, routes, Route};
 use crate::shared::entities::markdown::Markdown;
 use crate::utils::markdown;
 use crate::utils::responders::HbpResponse;
-use crate::utils::template::IndexLayoutData;
+use crate::utils::template::IndexLayout;
 use crate::utils::types::HbpResult;
 
 #[get("/README.md")]
@@ -22,7 +22,7 @@ async fn readme_md() -> HbpResult<HbpResponse> {
         } else {
             markdown::render_markdown(
                 &markdown_data,
-                IndexLayoutData::from_title(markdown_data.title.to_owned()),
+                IndexLayout::from_title(markdown_data.title.to_owned()),
             )
             .await
         }

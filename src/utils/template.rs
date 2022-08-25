@@ -168,15 +168,13 @@ impl From<std::str::Utf8Error> for ApiError {
 }
 impl From<mustache::Error> for ApiError {
     fn from(e: mustache::Error) -> Self {
-        ApiError {
-            with_ui: false,
-            errors: vec![e.to_string()],
-            status_code: match e {
-                mustache::Error::InvalidStr => StatusCode::UnprocessableEntity,
-                mustache::Error::NoFilename => StatusCode::NotFound,
-                _ => StatusCode::InternalServerError,
-            },
-        }
+        let status_code = match e {
+            mustache::Error::InvalidStr => StatusCode::UnprocessableEntity,
+            mustache::Error::NoFilename => StatusCode::NotFound,
+            _ => StatusCode::InternalServerError,
+        };
+
+        ApiError::new(status_code, vec![e.to_string()])
     }
 }
 

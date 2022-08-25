@@ -17,14 +17,13 @@ fn default(status: Status, req: &Request) -> HbpResponse {
     }
 
     match status_code {
-        StatusCode::NotFound => ApiError {
-            with_ui: false,
-            status_code: status_code.clone(),
-            errors: vec![format!(
+        StatusCode::NotFound => ApiError::new(
+            status_code.clone(),
+            vec![format!(
                 "{} - Most likely the api endpoint does NOT exist",
                 status_code.reason_phrase()
             )],
-        }
+        )
         .into(),
         _ => ApiError::from_status(status_code).into(),
     }

@@ -13,10 +13,18 @@ pub struct ApiError {
     pub status_code: StatusCode,
     pub errors: Vec<String>,
     #[serde(skip_serializing)]
-    pub with_ui: bool,
+    with_ui: bool,
 }
 
 impl ApiError {
+    pub fn new(status_code: StatusCode, errors: Vec<String>) -> Self {
+        Self {
+            status_code,
+            errors,
+            with_ui: false,
+        }
+    }
+
     pub fn bad_request(errors: Vec<String>) -> Self {
         ApiError {
             status_code: StatusCode::BadRequest,

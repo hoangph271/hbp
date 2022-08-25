@@ -149,7 +149,7 @@ pub async fn api_get_random_file(
                 }
             }
             Err(e) => {
-                println!("{e}");
+                error!("get_matched_files() failed: {e}");
             }
         }
 

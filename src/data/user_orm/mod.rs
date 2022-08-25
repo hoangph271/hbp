@@ -3,7 +3,7 @@ mod user_orm_test;
 
 use crate::data::{lib::*, models::users_model::*};
 use httpstatus::StatusCode;
-use log::error;
+use log::{error, info};
 use rocket::async_trait;
 use stargate_grpc::Query;
 
@@ -42,12 +42,14 @@ impl OrmInit for UserOrm {
                 DbError::internal_server_error(msg)
             })?;
 
-        println!("created users table");
+        info!("created users table");
         Ok(())
     }
 
     #[cfg(test)]
     async fn drop_table(&self) -> Result<(), DbError> {
+        use log::info;
+
         let create_users_table = stargate_grpc::Query::builder()
             .keyspace(&self.orm_config.keyspace)
             .query("DROP TABLE IF EXISTS users")
@@ -63,7 +65,7 @@ impl OrmInit for UserOrm {
                 DbError::internal_server_error(msg)
             })?;
 
-        println!("dropped users table");
+        info!("dropped users table");
         Ok(())
     }
 }
@@ -139,8 +141,7 @@ impl UserOrm {
             .build();
 
         let client = self.stargate_client().await?;
-        let res = execute_stargate_query(client, user_query).await?;
-        println!("{res:?}");
+        let _ = execute_stargate_query(client, user_query).await?;
 
         Ok(())
     }

@@ -7,6 +7,7 @@ extern crate mustache;
 extern crate rocket_okapi;
 extern crate serde_derive;
 
+use log::info;
 use rocket::{launch, routes};
 use rocket_okapi::{
     mount_endpoints_and_merged_docs,
@@ -28,7 +29,7 @@ async fn rocket() -> _ {
     data::init_db();
 
     let app_name = utils::env::from_env(utils::env::EnvKey::AppName);
-    println!("{app_name} is starting, my dude...! 🍿🍿🍿");
+    info!("{app_name} is starting, my dude...! 🍿🍿🍿");
 
     launch()
 }

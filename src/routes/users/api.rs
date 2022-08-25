@@ -60,7 +60,7 @@ pub async fn api_post_signup(
                 title: signup_body.username.clone(),
                 username: signup_body.username.clone(),
                 hashed_password: bcrypt::hash(&signup_body.password, bcrypt::DEFAULT_COST)
-                    .expect("Hashing password failed"),
+                    .map_err(|e| ApiError::internal_server_error().append_error(e.to_string()))?,
             })
             .await?;
 

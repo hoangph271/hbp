@@ -94,9 +94,9 @@ impl Markdown {
                 .trim()
                 .split('\n')
                 .map(|line| {
-                    let colon_index = line
-                        .find(':')
-                        .expect("header_comment value lines MUST contain a colon");
+                    let colon_index = line.find(':').unwrap_or_else(|| {
+                        panic!("header_comment value lines MUST contain a colon")
+                    });
 
                     (
                         (&line[..colon_index]).trim().to_string(),

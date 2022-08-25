@@ -103,7 +103,11 @@ impl ProfileOrm {
             .await?
             .unwrap_or_else(|| panic!("result_set must NOT be None"));
 
-        let mut row = result_set.rows.pop().expect("result_set must has one row");
+        let mut row = result_set
+            .rows
+            .pop()
+            .unwrap_or_else(|| panic!("result_set must has one row"));
+
         let inserted: bool = row
             .try_take(0)
             .unwrap_or_else(|_| panic!("inserted must NOT be None"));

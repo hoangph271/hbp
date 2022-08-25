@@ -12,6 +12,8 @@ use std::io::Cursor;
 use std::path::PathBuf;
 use tempfile::NamedTempFile;
 
+use crate::shared::interfaces::{ApiError, ApiResult};
+
 use super::status_from;
 use super::template::{
     action_html_for_401, status_text, ErrorPageData, IndexLayoutData, TemplateRenderer,
@@ -96,14 +98,18 @@ impl HbpResponse {
         HbpResponse::from_error_status(StatusCode::Forbidden)
     }
 
-    pub fn json<T: Serialize>(content: T, status_code: Option<StatusCode>) -> HbpResponse {
+    pub fn json<T: Serialize>(
+        content: T,
+        status_code: Option<StatusCode>,
+    ) -> ApiResult<HbpResponse> {
         let status_code = status_code.unwrap_or(StatusCode::Ok);
-        let json = serde_json::to_string(&content).expect("Stringify JSON failed");
+        let json = serde_json::to_string(&content)
+            .map_err(|e| ApiError::internal_server_error().append_error(e.to_string()))?;
 
-        HbpResponse {
+        Ok(HbpResponse {
             status_code,
             content: HbpContent::Json(json),
-        }
+        })
     }
 
     pub fn internal_server_error() -> HbpResponse {

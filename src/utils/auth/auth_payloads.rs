@@ -42,7 +42,7 @@ fn jwt_expires_in_ms() -> i64 {
     const MS_PER_HOUR: i64 = 60 * 60 * 1000;
     let jwt_expires_in_hours: i64 = env::from_env(env::EnvKey::JwtExpiresInHours)
         .parse()
-        .expect("JWT_EXPRIES_IN_HOURS must be an integer");
+        .unwrap_or_else(|e| panic!("JWT_EXPRIES_IN_HOURS must be an integer: {e}"));
 
     jwt_expires_in_hours * MS_PER_HOUR
 }

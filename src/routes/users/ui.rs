@@ -1,7 +1,7 @@
 use crate::data::models::users_model::DbUser;
 use crate::data::user_orm::UserOrm;
 use crate::routes::users::shared::{LoginBody, SignupBody};
-use crate::shared::interfaces::ApiError;
+use crate::shared::interfaces::{ApiError, ApiResult};
 use crate::utils::auth::{AuthPayload, UserPayload};
 use crate::utils::constants::cookies;
 use crate::utils::env::{from_env, EnvKey};
@@ -119,22 +119,22 @@ pub async fn post_login(
 }
 
 #[post("/signup", data = "<signup_body>")]
-pub async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
+pub async fn post_signup(signup_body: Form<SignupBody>) -> ApiResult<HbpResponse> {
     if let Err(e) = signup_body.validate() {
         error!("{e:?}");
-        return HbpResponse::redirect(uri!("/users", signup));
+        return Ok(HbpResponse::redirect(uri!("/users", signup)));
     }
 
     let new_user = DbUser {
         title: signup_body.username.clone(),
         username: signup_body.username.clone(),
         hashed_password: bcrypt::hash(&signup_body.password, bcrypt::DEFAULT_COST)
-            .expect("Hashing password failed"),
+            .map_err(|e| ApiError::internal_server_error().append_error(e.to_string()))?,
     };
 
     if UserOrm::default().create_user(new_user).await.is_ok() {
-        HbpResponse::redirect(uri!("/users", login(_)))
+        Ok(HbpResponse::redirect(uri!("/users", login(_))))
     } else {
-        HbpResponse::redirect(uri!("/users", signup))
+        Ok(HbpResponse::redirect(uri!("/users", signup)))
     }
 }

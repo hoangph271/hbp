@@ -84,7 +84,10 @@ impl From<ApiError> for HbpResponse {
         if error.with_ui {
             HbpResponse::from_error_status(status_code)
         } else {
-            HbpResponse::json(error, Some(status_code))
+            match HbpResponse::json(error, Some(status_code)) {
+                Ok(json) => json,
+                Err(e) => e.into(),
+            }
         }
     }
 }

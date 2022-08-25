@@ -25,7 +25,7 @@ pub mod types;
 pub fn timestamp_now() -> i64 {
     chrono::Utc::now()
         .checked_add_signed(chrono::Duration::minutes(60))
-        .expect("checked_add_signed() failed")
+        .unwrap_or_else(|| panic!("checked_add_signed() failed"))
         .timestamp()
 }
 

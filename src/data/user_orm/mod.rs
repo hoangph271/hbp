@@ -97,9 +97,12 @@ impl UserOrm {
         let client = self.stargate_client().await?;
         let mut result_set = execute_stargate_query(client, insert_query)
             .await?
-            .expect("result_set must NOT be None");
+            .unwrap_or_else(|| panic!("result_set must NOT be None"));
 
-        let mut row = result_set.rows.pop().expect("result_set MUST has one row");
+        let mut row = result_set
+            .rows
+            .pop()
+            .unwrap_or_else(|| panic!("result_set MUST has one row"));
         let inserted: bool = row.try_take(0).map_err(|e| {
             let message = format!("Can't read inserted: {e}");
 

@@ -7,7 +7,7 @@ fn parse_jwt_from_str() {
     let jwt_str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJoYnAiLCJleHAiOjI1MTYyMzkwMjIsInBhdGgiOiIifQ.VTzEo0XgzK5kV5WySIY0JYvB7h-uHDQ4alAnEb48JbQ";
 
     if let AuthPayload::UserResource(claims) =
-        AuthPayload::decode(jwt_str).expect("jwt_str MUST be a JWT")
+        AuthPayload::decode(jwt_str).unwrap_or_else(|e| panic!("jwt_str MUST be a JWT: {e:?}"))
     {
         assert_eq!(claims.sub, "hbp");
         assert!(claims.exp > timestamp_now());
@@ -24,7 +24,7 @@ fn create_jwt_str_and_parse_again() {
     let jwt_str = UserPayload::default()
         .set_sub("hbp".to_owned())
         .sign_jwt()
-        .expect("sign_jwt() must works");
+        .unwrap_or_else(|e| panic!("sign_jwt() must works, got: {e:?}"));
 
-    AuthPayload::decode(&jwt_str).expect("decode() must works");
+    assert!(AuthPayload::decode(&jwt_str).is_ok());
 }

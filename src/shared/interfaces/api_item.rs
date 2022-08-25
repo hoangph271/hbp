@@ -23,7 +23,7 @@ impl<T: Serialize> OpenApiResponderInner for ApiItem<T> {
 impl<T: Serialize> From<ApiItem<T>> for HbpResponse {
     fn from(item: ApiItem<T>) -> HbpResponse {
         let status_code = item.status_code.clone();
-        HbpResponse::json(item, Some(status_code))
+        HbpResponse::json(item, Some(status_code)).unwrap_or_else(|e| e.into())
     }
 }
 impl<T: Serialize> ApiItem<T> {

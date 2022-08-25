@@ -25,7 +25,7 @@ impl<T: Serialize> ApiList<T> {
 impl<T: Serialize> From<ApiList<T>> for HbpResponse {
     fn from(api_list: ApiList<T>) -> HbpResponse {
         let status_code = api_list.status_code.clone();
-        HbpResponse::json(api_list, Some(status_code))
+        HbpResponse::json(api_list, Some(status_code)).unwrap_or_else(|e| e.into())
     }
 }
 

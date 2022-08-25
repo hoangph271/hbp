@@ -149,8 +149,6 @@ impl<'r> Responder<'r, 'r> for HbpResponse {
                     .sized_body(text.len(), Cursor::new(text));
             }
             HbpContent::Html(html) => {
-                println!("{html}");
-
                 builder
                     .header(ContentType::HTML)
                     .sized_body(html.len(), Cursor::new(html));

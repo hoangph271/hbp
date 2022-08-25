@@ -2,6 +2,7 @@
 mod profile_orm_test;
 
 use httpstatus::StatusCode;
+use log::info;
 use rocket::async_trait;
 use stargate_grpc::Query;
 
@@ -44,12 +45,14 @@ impl OrmInit for ProfileOrm {
                 DbError::internal_server_error(msg)
             })?;
 
-        println!("created profiles table");
+        info!("created profiles table");
         Ok(())
     }
 
     #[cfg(test)]
     async fn drop_table(&self) -> Result<(), DbError> {
+        use log::info;
+
         let create_users_table = stargate_grpc::Query::builder()
             .keyspace(&self.orm_config.keyspace)
             .query("DROP TABLE IF EXISTS profiles")
@@ -65,7 +68,7 @@ impl OrmInit for ProfileOrm {
                 DbError::internal_server_error(msg)
             })?;
 
-        println!("dropped profiles table");
+        info!("dropped profiles table");
         Ok(())
     }
 }

@@ -19,6 +19,7 @@ pub mod post_orm {
     use crate::data::lib::OrmError;
     use crate::data::models::posts_model::*;
     use crate::data::{OrmConfig, OrmInit};
+    use log::info;
     use rocket::async_trait;
     use stargate_grpc::Query;
 
@@ -72,7 +73,7 @@ pub mod post_orm {
                 .await
                 .unwrap_or_else(|e| panic!("execute_query() failed: {:?}", e));
 
-            println!("created posts table");
+            info!("created posts table");
 
             Ok(())
         }

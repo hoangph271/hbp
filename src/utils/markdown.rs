@@ -72,7 +72,6 @@ pub async fn render_user_markdown(
         ..Default::default()
     };
 
-    println!("{jwt:?}");
     // TODO: Maybe permission this, for now only root can sign url
     // TODO: Test if only root can access this feature
     let signed_url = if is_root(jwt.username()) {

@@ -111,11 +111,7 @@ impl DbError {
 }
 impl From<DbError> for ApiError {
     fn from(db_error: DbError) -> Self {
-        ApiError {
-            status_code: db_error.status_code,
-            errors: vec![db_error.message],
-            with_ui: false,
-        }
+        ApiError::new(db_error.status_code, vec![db_error.message])
     }
 }
 

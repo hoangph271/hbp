@@ -82,12 +82,9 @@ pub async fn api_put_user(username: String, user: Json<PutUser>, jwt: UserPayloa
 
     match UserOrm::default().update_user(user.clone()).await {
         Ok(_) => ApiItem::ok(user).into(),
-        Err(e) => ApiError {
-            with_ui: false,
-            status_code: e.status_code,
-            errors: vec![e.message],
-        }
-        .into(),
+        Err(e) => ApiError::from_status(e.status_code)
+            .append_error(e.message)
+            .into(),
     }
 }
 

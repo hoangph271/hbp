@@ -2,7 +2,6 @@ use async_recursion::async_recursion;
 use async_std::fs::read_dir;
 use async_std::path::PathBuf as AsyncPathBuf;
 use async_std::prelude::*;
-use httpstatus::StatusCode;
 use log::error;
 use mime_guess::Mime;
 use okapi::openapi3::OpenApi;
@@ -56,11 +55,8 @@ fn attempt_access(path: &Path, jwt: &Option<AuthPayload>) -> ApiResult<()> {
 
 fn assert_raw_file(path: &Path) -> ApiResult<&Path> {
     if path.is_dir() {
-        Err(ApiError {
-            with_ui: false,
-            status_code: StatusCode::UnprocessableEntity,
-            errors: vec![format!("requested file at {path:?} is NOT a file")],
-        })
+        Err(ApiError::unprocessable_entity()
+            .append_error(format!("requested file at {path:?} is NOT a file")))
     } else if !path.exists() {
         Err(ApiError::not_found())
     } else {

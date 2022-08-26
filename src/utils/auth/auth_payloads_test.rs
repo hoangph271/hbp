@@ -1,6 +1,6 @@
 use crate::utils::timestamp_now;
 
-use super::{AuthPayload, UserPayload};
+use super::{AuthPayload, UserJwt};
 
 #[test]
 fn parse_jwt_from_str() {
@@ -21,7 +21,7 @@ fn create_jwt_str_and_parse_again() {
     use crate::utils::setup_logger;
     setup_logger::setup_logger();
 
-    let jwt_str = UserPayload::default()
+    let jwt_str = UserJwt::default()
         .set_sub("hbp".to_owned())
         .sign_jwt()
         .unwrap_or_else(|e| panic!("sign_jwt() must works, got: {e:?}"));

@@ -2,7 +2,7 @@ use crate::data::models::users_model::DbUser;
 use crate::data::user_orm::UserOrm;
 use crate::routes::users::shared::{LoginBody, SignupBody};
 use crate::shared::interfaces::{ApiError, ApiResult};
-use crate::utils::auth::{AuthPayload, UserPayload};
+use crate::utils::auth::{AuthPayload, UserJwt};
 use crate::utils::constants::cookies;
 use crate::utils::env::{from_env, EnvKey};
 use crate::utils::responders::HbpResponse;
@@ -77,7 +77,7 @@ pub async fn post_login(
         }
         Ok(user) => match user {
             Some(user) => {
-                let jwt = UserPayload::default().set_sub(user.username).sign_jwt();
+                let jwt = UserJwt::default().set_sub(user.username).sign_jwt();
 
                 match jwt {
                     Ok(jwt) => {

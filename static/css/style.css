@@ -55,7 +55,11 @@ body {
 .Box-header,
 footer.Box {
   border: none;
-} */
+}
+
+.hbp-markdown.markdown-body {
+  --color-canvas-default: #f6f8faad;
+}
 /* #endregion */
 
 .block-img {
@@ -69,7 +73,6 @@ footer.Box {
   margin: 0.8rem auto !important;
   border-radius: var(--radius-gentle);
   font-family: var(--sans-serif);
-  --color-canvas-default: #f6f8faad;
 }
 
 .hbp-markdown ul {

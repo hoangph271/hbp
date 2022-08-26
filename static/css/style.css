@@ -13,9 +13,23 @@
   --sans-serif: 'Nunito', sans-serif;
 }
 
-/* * HTML tag restyles */
-/* #region */
-html {
+/* #region HTML tag restyles */
+body {
+  margin: 0;
+  font-size: 16px;
+  min-height: 100vh;
+  font-family: var(--sans-serif);
+}
+
+code {
+  font-family: 'Ubuntu', Courier, monospace;
+}
+
+/* #endregion */
+
+/* #region GitHub Theme restyles */
+/* FIXME: Bad footer constrast */
+/* html {
   background-position: center;
   background-size: cover;
   background-repeat: no-repeat;
@@ -24,20 +38,10 @@ html {
 }
 
 body {
-  margin: 0;
-  font-size: 16px;
-  min-height: 100vh;
-  font-family: var(--sans-serif);
   --color-canvas-default: transparent;
   --color-header-bg: #24292f9e;
   --color-canvas-subtle: #f6f8fa69;
 }
-
-code {
-  font-family: 'Ubuntu', Courier, monospace;
-}
-
-/* #endregion */
 
 .Header-link:hover,
 .Header-link:focus {
@@ -51,7 +55,8 @@ code {
 .Box-header,
 footer.Box {
   border: none;
-}
+} */
+/* #endregion */
 
 .block-img {
   max-width: 100%;

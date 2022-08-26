@@ -13,18 +13,44 @@
   --sans-serif: 'Nunito', sans-serif;
 }
 
-/* * Tag restyles */
+/* * HTML tag restyles */
 /* #region */
+html {
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-color: transparent;
+  background-image: url(https://uselasted.netlify.app/static/media/751400.530ccd0e.png);
+}
+
 body {
   margin: 0;
   font-size: 16px;
   min-height: 100vh;
   font-family: var(--sans-serif);
+  --color-canvas-default: transparent;
+  --color-header-bg: #24292f9e;
+  --color-canvas-subtle: #f6f8fa69;
 }
-/* #endregion */
 
 code {
   font-family: 'Ubuntu', Courier, monospace;
+}
+
+/* #endregion */
+
+.Header-link:hover,
+.Header-link:focus {
+  text-decoration: underline;
+}
+
+.Box-header {
+  background-color: var(--color-canvas-subtle);
+}
+
+.Box-header,
+footer.Box {
+  border: none;
 }
 
 .block-img {
@@ -35,9 +61,10 @@ code {
   width: calc(100vw - 2rem);
   max-width: var(--content-mw);
   padding: var(--padding-small);
-  margin: 0.8rem auto!important;
+  margin: 0.8rem auto !important;
   border-radius: var(--radius-gentle);
   font-family: var(--sans-serif);
+  --color-canvas-default: #f6f8faad;
 }
 
 .hbp-markdown ul {

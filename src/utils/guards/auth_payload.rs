@@ -1,5 +1,5 @@
 use crate::shared::interfaces::ApiError;
-use crate::utils::auth::{AuthPayload, UserPayload};
+use crate::utils::auth::{AuthPayload, UserJwt};
 use crate::utils::types::HbpResult;
 use crate::utils::{constants, status_from};
 use rocket::http::Status;
@@ -15,13 +15,13 @@ fn jwt_str_from_query_params(req: &Request) -> Option<String> {
     }
 }
 
-fn get_user_jwt(req: &Request) -> Option<UserPayload> {
+fn get_user_jwt(req: &Request) -> Option<UserJwt> {
     match jwt_str_from_query_params(req).or_else(|| {
         req.cookies()
             .get_private(constants::cookies::USER_JWT)
             .map(|val| val.value().to_owned())
     }) {
-        Some(token) => UserPayload::decode(&token).ok(),
+        Some(token) => UserJwt::decode(&token).ok(),
         None => None,
     }
 }
@@ -57,7 +57,7 @@ impl<'r> FromRequest<'r> for AuthPayload {
 }
 
 #[rocket::async_trait]
-impl<'r> FromRequest<'r> for UserPayload {
+impl<'r> FromRequest<'r> for UserJwt {
     type Error = ApiError;
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {

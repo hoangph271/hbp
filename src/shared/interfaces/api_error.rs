@@ -7,7 +7,7 @@ use std::error::Error;
 
 use crate::utils::{responders::HbpResponse, status_code_serialize};
 
-#[derive(Serialize, Clone, Debug)]
+#[derive(Serialize, Clone, Debug, PartialEq, Eq)]
 pub struct ApiError {
     #[serde(serialize_with = "status_code_serialize")]
     pub status_code: StatusCode,

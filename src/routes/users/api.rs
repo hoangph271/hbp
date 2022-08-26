@@ -1,7 +1,7 @@
 use crate::data::models::users_model::PutUser;
 use crate::data::user_orm::UserOrm;
 use crate::shared::interfaces::{ApiError, ApiItem, ApiResult};
-use crate::utils::auth::UserPayload;
+use crate::utils::auth::UserJwt;
 use crate::utils::responders::{wrap_api_handler, HbpResponse};
 use crate::utils::types::HbpResult;
 use httpstatus::StatusCode::BadRequest;
@@ -73,7 +73,7 @@ pub async fn api_post_signup(
 
 #[openapi]
 #[put("/<username>", data = "<user>")]
-pub async fn api_put_user(username: String, user: Json<PutUser>, jwt: UserPayload) -> HbpResponse {
+pub async fn api_put_user(username: String, user: Json<PutUser>, jwt: UserJwt) -> HbpResponse {
     if username.ne(&jwt.sub) {
         return ApiError::forbidden().into();
     }
@@ -96,7 +96,7 @@ pub async fn api_post_signin(signin_body: Json<LoginBody>) -> ApiResult<ApiItem<
             .await?
             .ok_or_else(ApiError::unauthorized)?;
 
-        let user_jwt: UserPayload = user.into();
+        let user_jwt: UserJwt = user.into();
 
         Ok(user_jwt.sign_jwt())
     })

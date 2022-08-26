@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use std::fs::read_dir;
 use std::path::Path;
 
-use super::auth::{AuthPayload, UserResoucePayload};
+use super::auth::{AuthPayload, ResourseJwt};
 use super::env::is_root;
 use super::template::{IndexLayout, MarkdownTemplate, MoveUpUrl};
 
@@ -66,7 +66,7 @@ pub async fn render_user_markdown(
         .username(jwt.username())
         .moveup_urls(MoveUpUrl::from_path(file_path));
 
-    let resource_payload = UserResoucePayload {
+    let resource_payload = ResourseJwt {
         sub: jwt.username().to_owned(),
         path: file_path.to_string_lossy().to_string(),
         ..Default::default()

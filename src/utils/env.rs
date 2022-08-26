@@ -55,7 +55,11 @@ pub fn is_root(username: &str) -> bool {
 
     root_user.eq(username)
 }
+pub fn jwt_secret() -> Vec<u8> {
+    let key = from_env(EnvKey::JwtSecret);
 
+    key.as_bytes().into()
+}
 pub fn is_prod() -> bool {
     from_env(EnvKey::DeployEnv).eq("PROD")
 }

@@ -13,19 +13,20 @@ use crate::{
     data::models::users_model::DbUser,
     shared::interfaces::ApiError,
     utils::{
-        env::{self, is_root},
+        env::{self, is_root, jwt_secret},
         timestamp_now,
         types::HbpResult,
     },
 };
 
 pub mod jwt {
-    use crate::{shared::interfaces::ApiError, utils::types::HbpResult};
+    use crate::{
+        shared::interfaces::ApiError,
+        utils::{env::jwt_secret, types::HbpResult},
+    };
     use httpstatus::StatusCode;
     use jsonwebtoken::{encode, EncodingKey, Header};
     use serde::Serialize;
-
-    use super::jwt_secret;
 
     pub fn sign_jwt<T: Serialize>(payload: &T) -> HbpResult<String> {
         encode(
@@ -121,13 +122,6 @@ impl Default for UserResoucePayload {
 pub enum AuthPayload {
     User(UserPayload),
     UserResource(UserResoucePayload),
-}
-
-fn jwt_secret() -> Vec<u8> {
-    use crate::utils::env::{from_env, EnvKey};
-    let key = from_env(EnvKey::JwtSecret);
-
-    key.as_bytes().into()
 }
 
 impl AuthPayload {

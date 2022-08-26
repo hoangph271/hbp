@@ -1,5 +1,5 @@
 use crate::{shared::interfaces::ApiError, utils::responders::HbpResponse};
-use httpstatus::StatusCode;
+use httpstatus::StatusCode::{self, *};
 use rocket::{catch, catchers, http::Status, Catcher, Request};
 
 #[catch(default)]
@@ -17,14 +17,18 @@ fn default(status: Status, req: &Request) -> HbpResponse {
     }
 
     match status_code {
-        StatusCode::NotFound => ApiError::new(
-            status_code.clone(),
-            vec![format!(
+        NotFound => ApiError::from_status(status_code.clone())
+            .append_error(format!(
                 "{} - Most likely the api endpoint does NOT exist",
                 status_code.reason_phrase()
-            )],
-        )
-        .into(),
+            ))
+            .into(),
+        InternalServerError => ApiError::from_status(status_code.clone())
+            .append_error(format!(
+                "{} - Something went wrong on own end",
+                status_code.reason_phrase()
+            ))
+            .into(),
         _ => ApiError::from_status(status_code).into(),
     }
 }

@@ -12,7 +12,11 @@ use rocket_okapi::{
 use crate::{
     data::models::users_model::DbUser,
     shared::interfaces::ApiError,
-    utils::{env, timestamp_now, types::HbpResult},
+    utils::{
+        env::{self, is_root},
+        timestamp_now,
+        types::HbpResult,
+    },
 };
 
 pub mod jwt {
@@ -181,6 +185,11 @@ impl AuthPayload {
     }
 
     pub fn sign(&self) -> Result<String, ApiError> {
+        // FIXME: Maybe permission this, for now only root can sign url
+        if !is_root(self.username()) {
+            return Err(ApiError::forbidden());
+        };
+
         match self {
             AuthPayload::User(user_payload) => jwt::sign_jwt(user_payload),
             AuthPayload::UserResource(resource_payload) => jwt::sign_jwt(resource_payload),
@@ -205,5 +214,40 @@ impl<'r> OpenApiFromRequest<'r> for AuthPayload {
         _required: bool,
     ) -> rocket_okapi::Result<RequestHeaderInput> {
         Ok(RequestHeaderInput::None)
+    }
+}
+
+#[cfg(test)]
+mod auth_payload_tests {
+    use crate::utils::env::{from_env, EnvKey};
+
+    use super::*;
+
+    #[test]
+    fn sign_jwt_as_root() {
+        let root = from_env(EnvKey::RootUser);
+
+        let auth_payload = AuthPayload::User(UserPayload {
+            exp: 0,
+            sub: root.to_owned(),
+            roles: vec![],
+        });
+
+        let jwt = auth_payload.sign().unwrap();
+
+        assert!(jwt.len() != 0)
+    }
+
+    #[test]
+    fn sign_jwt_as_not_root() {
+        let sub = "not-a-root".to_owned();
+
+        let auth_payload = AuthPayload::User(UserPayload {
+            exp: 0,
+            sub,
+            roles: vec![],
+        });
+
+        assert_eq!(auth_payload.sign(), Err(ApiError::forbidden()))
     }
 }

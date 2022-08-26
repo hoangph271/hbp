@@ -8,12 +8,12 @@ use crate::{
         lib::DbError, models::profiles_model::DbProfile, profile_orm::ProfileOrm, user_orm::UserOrm,
     },
     shared::interfaces::{ApiItem, ApiResult},
-    utils::{auth::UserPayload, responders::wrap_api_handler},
+    utils::{auth::UserJwt, responders::wrap_api_handler},
 };
 
 #[openapi]
 #[get("/")]
-pub async fn api_get_profile(jwt: UserPayload) -> ApiResult<ApiItem<DbProfile>> {
+pub async fn api_get_profile(jwt: UserJwt) -> ApiResult<ApiItem<DbProfile>> {
     let profile = wrap_api_handler(|| async {
         let profile_orm = ProfileOrm::default();
 

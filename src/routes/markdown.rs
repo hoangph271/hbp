@@ -4,7 +4,7 @@ use crate::utils::markdown::render_markdown_list;
 use crate::utils::template::{IndexLayout, MoveUpUrl, Templater};
 use crate::utils::types::HbpResult;
 use crate::utils::{
-    auth::{AuthPayload, UserPayload},
+    auth::{AuthPayload, UserJwt},
     markdown,
     responders::{HbpContent, HbpResponse},
 };
@@ -14,7 +14,7 @@ use rocket::{get, routes, uri, Route};
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 
-fn assert_payload_access(payload: &UserPayload, path: &Path) -> bool {
+fn assert_payload_access(payload: &UserJwt, path: &Path) -> bool {
     let prefix = PathBuf::from("markdown")
         .join("users")
         .join(payload.sub.clone())

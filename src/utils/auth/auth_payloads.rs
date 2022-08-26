@@ -53,29 +53,29 @@ fn jwt_expires_in_ms() -> i64 {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct UserPayload {
+pub struct UserJwt {
     pub exp: i64,
     pub sub: String,
     pub roles: Vec<String>,
 }
-impl UserPayload {
+impl UserJwt {
     pub fn sign_jwt(&self) -> Result<String, ApiError> {
         jwt::sign_jwt(&self)
     }
 
-    pub fn set_sub(&mut self, sub: String) -> &UserPayload {
+    pub fn set_sub(&mut self, sub: String) -> &UserJwt {
         self.sub = sub;
         self
     }
 
-    pub fn decode(token: &str) -> Result<UserPayload, Error> {
+    pub fn decode(token: &str) -> Result<UserJwt, Error> {
         let key = &DecodingKey::from_secret(&jwt_secret());
         let validation = &Validation::default();
 
-        decode::<UserPayload>(token, key, validation).map(|val| val.claims)
+        decode::<UserJwt>(token, key, validation).map(|val| val.claims)
     }
 }
-impl Default for UserPayload {
+impl Default for UserJwt {
     fn default() -> Self {
         Self {
             sub: Default::default(),
@@ -84,7 +84,7 @@ impl Default for UserPayload {
         }
     }
 }
-impl<'r> OpenApiFromRequest<'r> for UserPayload {
+impl<'r> OpenApiFromRequest<'r> for UserJwt {
     fn from_request_input(
         _gen: &mut OpenApiGenerator,
         _name: String,
@@ -93,9 +93,9 @@ impl<'r> OpenApiFromRequest<'r> for UserPayload {
         Ok(RequestHeaderInput::None)
     }
 }
-impl From<DbUser> for UserPayload {
+impl From<DbUser> for UserJwt {
     fn from(db_user: DbUser) -> Self {
-        UserPayload {
+        UserJwt {
             sub: db_user.username,
             ..Default::default()
         }
@@ -103,12 +103,12 @@ impl From<DbUser> for UserPayload {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct UserResoucePayload {
+pub struct ResourseJwt {
     pub exp: i64,
     pub sub: String,
     pub path: String,
 }
-impl Default for UserResoucePayload {
+impl Default for ResourseJwt {
     fn default() -> Self {
         Self {
             sub: Default::default(),
@@ -120,8 +120,8 @@ impl Default for UserResoucePayload {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum AuthPayload {
-    User(UserPayload),
-    UserResource(UserResoucePayload),
+    User(UserJwt),
+    UserResource(ResourseJwt),
 }
 
 impl AuthPayload {
@@ -136,9 +136,9 @@ impl AuthPayload {
         let key = &DecodingKey::from_secret(&jwt_secret());
         let validation = &Validation::default();
 
-        let auth_payload: Result<AuthPayload, ApiError> = UserPayload::decode(token)
+        let auth_payload: Result<AuthPayload, ApiError> = UserJwt::decode(token)
             .map(AuthPayload::User)
-            .or_else(|_| decode::<UserResoucePayload>(token, key, validation).map(|val| val.into()))
+            .or_else(|_| decode::<ResourseJwt>(token, key, validation).map(|val| val.into()))
             .map_err(|_| {
                 ApiError::from_message(
                     &format!("verify_jwt failed for {token}"),
@@ -151,7 +151,7 @@ impl AuthPayload {
 
     pub fn match_path<F>(&self, path: &Path, user_assert: F) -> HbpResult<()>
     where
-        F: FnOnce(&UserPayload, &Path) -> bool,
+        F: FnOnce(&UserJwt, &Path) -> bool,
     {
         match self {
             AuthPayload::User(payload) => {
@@ -191,13 +191,13 @@ impl AuthPayload {
     }
 }
 
-impl From<TokenData<UserPayload>> for AuthPayload {
-    fn from(token_data: TokenData<UserPayload>) -> Self {
+impl From<TokenData<UserJwt>> for AuthPayload {
+    fn from(token_data: TokenData<UserJwt>) -> Self {
         AuthPayload::User(token_data.claims)
     }
 }
-impl From<TokenData<UserResoucePayload>> for AuthPayload {
-    fn from(token_data: TokenData<UserResoucePayload>) -> Self {
+impl From<TokenData<ResourseJwt>> for AuthPayload {
+    fn from(token_data: TokenData<ResourseJwt>) -> Self {
         AuthPayload::UserResource(token_data.claims)
     }
 }
@@ -221,7 +221,7 @@ mod auth_payload_tests {
     fn sign_jwt_as_root() {
         let root = from_env(EnvKey::RootUser);
 
-        let auth_payload = AuthPayload::User(UserPayload {
+        let auth_payload = AuthPayload::User(UserJwt {
             exp: 0,
             sub: root.to_owned(),
             roles: vec![],
@@ -236,7 +236,7 @@ mod auth_payload_tests {
     fn sign_jwt_as_not_root() {
         let sub = "not-a-root".to_owned();
 
-        let auth_payload = AuthPayload::User(UserPayload {
+        let auth_payload = AuthPayload::User(UserJwt {
             exp: 0,
             sub,
             roles: vec![],

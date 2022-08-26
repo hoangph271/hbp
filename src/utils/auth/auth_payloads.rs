@@ -229,7 +229,7 @@ mod auth_payload_tests {
 
         let jwt = auth_payload.sign().unwrap();
 
-        assert!(jwt.len() != 0)
+        assert!(!jwt.is_empty())
     }
 
     #[test]

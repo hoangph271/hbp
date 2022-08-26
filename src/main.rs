@@ -37,7 +37,7 @@ async fn rocket() -> _ {
 fn launch() -> rocket::Rocket<rocket::Build> {
     let mut rocket = rocket::build()
         .mount("/", utils::cors::options_routes())
-        .mount("/", routes::index::base_routes())
+        .mount("/", routes::index::index_routes())
         .mount("/dev/null", routes::index::dev_null_routes())
         .mount("/markdown", routes::markdown::markdown_routes())
         .mount("/static", routes![routes::static_files::serve])

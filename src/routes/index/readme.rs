@@ -1,9 +1,8 @@
 use std::path::PathBuf;
 
 use httpstatus::StatusCode;
-use rocket::http::Status;
 use rocket::response::Redirect;
-use rocket::{delete, get, post, put, routes, Route};
+use rocket::{get, routes, Route};
 
 use crate::shared::entities::markdown::Markdown;
 use crate::utils::markdown;
@@ -37,27 +36,6 @@ fn index() -> Redirect {
     Redirect::moved("/README.md")
 }
 
-#[get("/")]
-fn get_dev_null() -> Status {
-    Status::Ok
-}
-#[post("/")]
-fn post_dev_null() -> Status {
-    Status::Ok
-}
-#[put("/")]
-fn put_dev_null() -> Status {
-    Status::Ok
-}
-#[delete("/")]
-fn delete_dev_null() -> Status {
-    Status::Ok
-}
-
-pub fn dev_null_routes() -> Vec<Route> {
-    routes![get_dev_null, post_dev_null, put_dev_null, delete_dev_null]
-}
-
-pub fn base_routes() -> Vec<Route> {
+pub fn index_routes() -> Vec<Route> {
     routes![index, readme_md]
 }

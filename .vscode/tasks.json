@@ -1,43 +1,57 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"type": "cargo",
-			"command": "check",
-			"problemMatcher": [
-				"$rustc"
-			],
-			"group": "build",
-			"label": "Rust: cargo check - hbp"
-		},
-		{
-			"type": "cargo",
-			"command": "run",
-			"problemMatcher": [
-				"$rustc"
-			],
-			"label": "Rust: cargo run - hbp"
-		},
-		{
-			"type": "cargo",
-			"command": "test",
-			"problemMatcher": [
-				"$rustc"
-			],
-			"group": "test",
-			"label": "rust: cargo test"
-		},
-		{
-			"type": "cargo",
-			"command": "test",
-			"problemMatcher": [
-				"$rustc"
-			],
-			"args": [
-				"profile_orm_test"
-			],
-			"group": "test",
-			"label": "rust: cargo profile_orm_test"
-		}
-	]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "cargo",
+      "command": "check",
+      "problemMatcher": [
+        "$rustc"
+      ],
+      "group": "build",
+      "label": "Rust: cargo check - hbp"
+    },
+    {
+      "type": "cargo",
+      "command": "run",
+      "problemMatcher": [
+        "$rustc"
+      ],
+      "label": "Rust: cargo run - hbp"
+    },
+    {
+      "type": "cargo",
+      "command": "test",
+      "problemMatcher": [
+        "$rustc"
+      ],
+      "group": "test",
+      "label": "rust: cargo test"
+    },
+    {
+      "type": "cargo",
+      "command": "test",
+      "problemMatcher": [
+        "$rustc"
+      ],
+      "args": [
+        "profile_orm_test"
+      ],
+      "group": "test",
+      "label": "rust: cargo profile_orm_test"
+    },
+    {
+      "label": "rust: cargo watch -x run",
+      "type": "shell",
+      "command": "cargo",
+      "args": [
+        "watch",
+        "-x",
+        "run"
+      ],
+      "runOptions": {
+        "instanceLimit": 1,
+        "runOn": "folderOpen"
+      }
+    }
+  ]
 }

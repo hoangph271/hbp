@@ -25,7 +25,9 @@ pub async fn attemp_signin(username: &str, password: &str) -> DbResult<Option<Db
 
 #[derive(FromForm, Deserialize, JsonSchema)]
 pub struct LoginBody {
+    #[field(validate = len(2..10))]
     pub username: String,
+    #[field(validate = len(2..10))]
     pub password: String,
 }
 

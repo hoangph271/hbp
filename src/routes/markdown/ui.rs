@@ -4,7 +4,7 @@ use crate::utils::markdown::render_markdown_list;
 use crate::utils::template::{IndexLayout, MoveUpUrl, Templater};
 use crate::utils::types::HbpResult;
 use crate::utils::{
-    auth::{AuthPayload, UserJwt},
+    auth::AuthPayload,
     markdown,
     responders::{HbpContent, HbpResponse},
 };
@@ -12,25 +12,9 @@ use httpstatus::StatusCode;
 use log::*;
 use rocket::{get, routes, uri, Route};
 use serde::Serialize;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
-fn assert_payload_access(payload: &UserJwt, path: &Path) -> bool {
-    let prefix = PathBuf::from("markdown")
-        .join("users")
-        .join(payload.sub.clone())
-        .to_string_lossy()
-        .into_owned();
-
-    path.starts_with(&*prefix)
-}
-fn markdown_path_from(username: &str, sub_path: &Path) -> (String, PathBuf) {
-    let file_path = PathBuf::from("markdown")
-        .join("users")
-        .join(username)
-        .join(sub_path);
-
-    (file_path.to_string_lossy().to_string(), file_path)
-}
+use super::{assert_payload_access, markdown_path_from};
 
 #[get("/<sub_path..>", rank = 2)]
 async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpResult<HbpResponse> {

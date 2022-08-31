@@ -11,7 +11,7 @@ use rocket_okapi::{
 
 use crate::{
     data::models::users_model::DbUser,
-    shared::interfaces::ApiError,
+    shared::interfaces::{ApiError, ApiResult},
     utils::{
         env::{self, is_root, jwt_secret},
         timestamp_now,
@@ -132,7 +132,7 @@ impl AuthPayload {
         }
     }
 
-    pub fn decode(token: &str) -> Result<AuthPayload, ApiError> {
+    pub fn decode(token: &str) -> ApiResult<AuthPayload> {
         let key = &DecodingKey::from_secret(&jwt_secret());
         let validation = &Validation::default();
 
@@ -147,6 +147,14 @@ impl AuthPayload {
             });
 
         auth_payload
+    }
+
+    pub fn assert_username(&self, username: &str) -> ApiResult<()> {
+        if username.eq(self.username()) {
+            Ok(())
+        } else {
+            Err(ApiError::forbidden())
+        }
     }
 
     pub fn match_path<F>(&self, path: &Path, user_assert: F) -> HbpResult<()>

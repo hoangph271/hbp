@@ -40,5 +40,5 @@ pub fn markdown_routes() -> Vec<Route> {
 }
 
 pub fn get_routes_and_docs(settings: &OpenApiSettings) -> (Vec<Route>, OpenApi) {
-    openapi_get_routes_spec![settings: api_user_markdown]
+    openapi_get_routes_spec![settings: api_user_markdowns]
 }

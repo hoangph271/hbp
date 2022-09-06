@@ -1129,7 +1129,7 @@ dependencies = [
 [[package]]
 name = "hbp_types"
 version = "0.1.0"
-source = "git+https://github.com/hoangph271/hbp_types#ddf25913086831f0fa40cbdefa11eb0bdfabde0b"
+source = "git+https://github.com/hoangph271/hbp_types#fddc7e594b535d243bdbf39f3651dadcdf2cc555"
 dependencies = [
  "httpstatus",
  "okapi",

@@ -15,7 +15,7 @@ pub async fn index() -> HbpApiResult<Post> {
 }
 #[get("/<post_id>")]
 pub async fn find_one(post_id: String) -> HbpApiResult<Post> {
-    let post = get_one(&post_id)?;
+    get_one(&post_id)?;
 
     todo!()
 }

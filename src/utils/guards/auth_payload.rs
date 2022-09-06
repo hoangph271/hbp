@@ -49,8 +49,8 @@ fn get_jwt(req: &Request) -> HbpResult<AuthPayload> {
         .or_else(|| get_cookie(req, RESOURCE_JWT));
 
     match jwt_str {
-        Some(token) => AuthPayload::decode(&token),
-        None => Err(ApiError::unauthorized()),
+        Some(token) => AuthPayload::decode(&token).map_err(|e| e.into()),
+        None => Err(ApiError::unauthorized().into()),
     }
 }
 
@@ -61,7 +61,7 @@ impl<'r> FromRequest<'r> for AuthPayload {
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         match get_jwt(req) {
             Ok(jwt) => Outcome::Success(jwt),
-            Err(e) => Outcome::Failure((status_from(e.status_code.clone()), e)),
+            Err(e) => Outcome::Failure((status_from(e.api_error.status_code.clone()), e.api_error)),
         }
     }
 }

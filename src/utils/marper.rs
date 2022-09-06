@@ -1,9 +1,9 @@
 use crate::utils::env::{from_env, EnvKey};
 use crate::utils::marper;
-use crate::utils::types::HbpResult;
 use reqwest::{multipart, Client};
 use serde::{Deserialize, Serialize};
 
+use super::responders::HbpResult;
 use super::template::Templater;
 
 #[derive(Deserialize, Debug)]

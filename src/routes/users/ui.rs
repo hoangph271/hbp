@@ -107,7 +107,7 @@ pub async fn post_login(
 
                         HbpResponse::redirect(uri)
                     }
-                    Err(e) => e.into(),
+                    Err(e) => HbpResponse::from_error_status(e.api_error.status_code),
                 }
             }
             None => HbpResponse::redirect(uri!("/users", login(redirect_url = redirect_url))),

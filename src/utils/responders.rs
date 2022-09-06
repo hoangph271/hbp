@@ -61,7 +61,7 @@ impl HbpResponse {
         Templater::error_page()
             .to_html_page(render_data, layout_data)
             .map(|html| HbpResponse::html(html, status_code))
-            .unwrap_or_else(HbpResponse::from)
+            .unwrap_or_else(|e| HbpResponse::from(e.api_error))
     }
 
     pub fn unauthorized(redirect_url: Option<String>) -> HbpResponse {
@@ -74,7 +74,7 @@ impl HbpResponse {
         Templater::error_page()
             .to_html_page(render_data, layout_data)
             .map(|html| HbpResponse::html(html, status_code))
-            .unwrap_or_else(HbpResponse::from)
+            .unwrap_or_else(|e| HbpResponse::from(e.api_error))
     }
 
     pub fn forbidden() -> HbpResponse {
@@ -206,7 +206,7 @@ mod hbp_response_impls {
     impl<'r> Responder<'r, 'r> for HbpError {
         fn respond_to(self, request: &'r rocket::Request<'_>) -> rocket::response::Result<'r> {
             let res = HbpResponse {
-                status_code: self.api_error.status_code,
+                status_code: self.api_error.status_code.clone(),
                 content: HbpContent::Json(json_stringify(&self.api_error)),
             };
 
@@ -220,8 +220,8 @@ mod hbp_response_impls {
     {
         fn respond_to(self, request: &'r rocket::Request<'_>) -> rocket::response::Result<'r> {
             let (status_code, content) = match self {
-                HbpJson::Item(item) => (item.status_code, json_stringify(&item)),
-                HbpJson::List(list) => (list.status_code, json_stringify(&list)),
+                HbpJson::Item(item) => (item.status_code.clone(), json_stringify(&item)),
+                HbpJson::List(list) => (list.status_code.clone(), json_stringify(&list)),
                 HbpJson::Empty => (StatusCode::Ok, "".to_owned()),
             };
 
@@ -272,7 +272,7 @@ mod hbp_response_impls {
     impl From<ApiError> for HbpResponse {
         fn from(e: ApiError) -> Self {
             HbpResponse {
-                status_code: e.status_code,
+                status_code: e.status_code.clone(),
                 content: HbpContent::Json(json_stringify(&e)),
             }
         }

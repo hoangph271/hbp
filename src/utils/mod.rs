@@ -60,6 +60,7 @@ impl From<ImageError> for ApiError {
         }
     }
 }
+
 pub fn create_thumbnail(path: &Path) -> ApiResult<NamedTempFile> {
     let suffix = ImageFormat::Png.extensions_str().first().unwrap_or(&"png");
 

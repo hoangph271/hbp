@@ -15,14 +15,13 @@ use crate::{
     utils::{
         env::{self, is_root, jwt_secret},
         timestamp_now,
-        types::HbpResult,
     },
 };
 
 pub mod jwt {
     use crate::{
         shared::interfaces::ApiError,
-        utils::{env::jwt_secret, types::HbpResult},
+        utils::{env::jwt_secret, responders::HbpResult},
     };
     use httpstatus::StatusCode;
     use jsonwebtoken::{encode, EncodingKey, Header};

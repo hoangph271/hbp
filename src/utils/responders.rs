@@ -1,4 +1,5 @@
 use futures::Future;
+use hbp_types::{ApiItem, ApiList};
 use httpstatus::StatusCode;
 use rocket::http::ContentType;
 use rocket_okapi::JsonSchema;
@@ -120,14 +121,27 @@ impl HbpResponse {
 
 #[derive(Debug)]
 pub struct HbpError {
-    api_error: ApiError,
+    pub api_error: ApiError,
 }
+
+#[derive(Debug)]
+pub enum HbpJson<T: Serialize> {
+    Item(ApiItem<T>),
+    List(ApiList<T>),
+    Empty,
+}
+
+pub type HbpApiResult<T: Serialize> = Result<HbpJson<T>, HbpError>;
+
 pub type HbpResult<T> = Result<T, HbpError>;
 
 mod hbp_response_impls {
-    use super::{json_stringify, HbpContent, HbpError, HbpResponse};
-    use crate::utils::status_from;
-    use hbp_types::ApiError;
+    use super::{json_stringify, HbpContent, HbpError, HbpJson, HbpResponse};
+    use crate::{data::lib::OrmError, utils::status_from};
+    use hbp_types::{ApiError, ApiItem, ApiList};
+    use httpstatus::StatusCode;
+    use image::ImageError;
+    use log::error;
     use okapi::openapi3::Responses;
     use rocket::{
         fs::NamedFile,
@@ -137,7 +151,8 @@ mod hbp_response_impls {
     };
     use rocket_okapi::gen::OpenApiGenerator;
     use rocket_okapi::response::OpenApiResponderInner;
-    use std::io::Cursor;
+    use serde::Serialize;
+    use std::{error::Error, io::Cursor};
 
     impl<'r> Responder<'r, 'r> for HbpResponse {
         // ! FIXME: Change `respond_to` into async when async Traits roll out...!
@@ -199,6 +214,26 @@ mod hbp_response_impls {
         }
     }
 
+    impl<'r, T> Responder<'r, 'r> for HbpJson<T>
+    where
+        T: Serialize,
+    {
+        fn respond_to(self, request: &'r rocket::Request<'_>) -> rocket::response::Result<'r> {
+            let (status_code, content) = match self {
+                HbpJson::Item(item) => (item.status_code, json_stringify(&item)),
+                HbpJson::List(list) => (list.status_code, json_stringify(&list)),
+                HbpJson::Empty => (StatusCode::Ok, "".to_owned()),
+            };
+
+            let res = HbpResponse {
+                status_code,
+                content: HbpContent::Json(content),
+            };
+
+            res.respond_to(request)
+        }
+    }
+
     impl From<HbpResponse> for Response<'_> {
         fn from(hbp_response: HbpResponse) -> Response<'static> {
             let mut response_builder = Response::build();
@@ -218,12 +253,142 @@ mod hbp_response_impls {
         }
     }
 
+    impl OpenApiResponderInner for HbpError {
+        fn responses(_: &mut OpenApiGenerator) -> rocket_okapi::Result<Responses> {
+            Ok(Responses {
+                ..Default::default()
+            })
+        }
+    }
+
+    impl<T: Serialize> OpenApiResponderInner for HbpJson<T> {
+        fn responses(_: &mut OpenApiGenerator) -> rocket_okapi::Result<Responses> {
+            Ok(Responses {
+                ..Default::default()
+            })
+        }
+    }
+
     impl From<ApiError> for HbpResponse {
         fn from(e: ApiError) -> Self {
             HbpResponse {
                 status_code: e.status_code,
                 content: HbpContent::Json(json_stringify(&e)),
             }
+        }
+    }
+
+    impl From<ApiError> for HbpError {
+        fn from(api_error: ApiError) -> Self {
+            Self { api_error }
+        }
+    }
+
+    impl From<ImageError> for HbpError {
+        fn from(e: ImageError) -> Self {
+            error!("ImageError: {e}");
+
+            match e {
+                ImageError::Decoding(e) => {
+                    ApiError::from_message(&e.to_string(), StatusCode::BadRequest)
+                }
+                ImageError::Encoding(e) => {
+                    ApiError::from_message(&e.to_string(), StatusCode::BadRequest)
+                }
+                ImageError::Parameter(e) => {
+                    ApiError::from_message(&e.to_string(), StatusCode::BadRequest)
+                }
+                ImageError::Limits(e) => {
+                    ApiError::from_message(&e.to_string(), StatusCode::UnprocessableEntity)
+                }
+                ImageError::Unsupported(e) => {
+                    ApiError::from_message(&e.to_string(), StatusCode::UnprocessableEntity)
+                }
+                ImageError::IoError(e) => {
+                    ApiError::from_message(&format!("{e}"), StatusCode::InternalServerError)
+                }
+            }
+            .into()
+        }
+    }
+
+    impl From<std::str::Utf8Error> for HbpError {
+        fn from(e: std::str::Utf8Error) -> Self {
+            ApiError::from_message(
+                &format!("UTF8 Issue: , {e}"),
+                StatusCode::InternalServerError,
+            )
+            .into()
+        }
+    }
+
+    impl From<mustache::Error> for HbpError {
+        fn from(e: mustache::Error) -> Self {
+            let status_code = match e {
+                mustache::Error::InvalidStr => StatusCode::UnprocessableEntity,
+                mustache::Error::NoFilename => StatusCode::NotFound,
+                _ => StatusCode::InternalServerError,
+            };
+
+            ApiError::new(status_code, vec![e.to_string()]).into()
+        }
+    }
+
+    impl From<reqwest::Error> for HbpError {
+        fn from(e: reqwest::Error) -> Self {
+            error!("[reqwest::Error]: {e}");
+
+            let msg = match e.source() {
+                Some(source) => format!("{:?}", source),
+                None => "Unknown error".to_owned(),
+            };
+
+            ApiError::from_message(
+                &msg,
+                if let Some(status_code) = e.status() {
+                    status_code.as_u16().into()
+                } else {
+                    StatusCode::InternalServerError
+                },
+            )
+            .into()
+        }
+    }
+
+    impl From<std::io::Error> for HbpError {
+        fn from(e: std::io::Error) -> Self {
+            ApiError {
+                with_ui: false,
+                status_code: StatusCode::InternalServerError,
+                errors: vec![format!("{e}")],
+            }
+            .into()
+        }
+    }
+
+    impl<T: Serialize> From<ApiItem<T>> for HbpJson<T> {
+        fn from(item: ApiItem<T>) -> Self {
+            HbpJson::Item(item)
+        }
+    }
+
+    impl<T: Serialize> From<ApiList<T>> for HbpJson<T> {
+        fn from(list: ApiList<T>) -> Self {
+            HbpJson::List(list)
+        }
+    }
+
+    impl From<OrmError> for HbpError {
+        fn from(e: OrmError) -> Self {
+            match e {
+                OrmError::NotFound => ApiError::not_found().into(),
+            }
+            // match e {
+            //     Ok(post) => HbpResponse::json(post, None),
+            //     Err(e) => match e {
+            //         OrmError::NotFound => Err(ApiError::from_status(StatusCode::NotFound)),
+            //     },
+            // }
         }
     }
 }

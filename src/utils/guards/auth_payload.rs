@@ -1,6 +1,6 @@
 use crate::shared::interfaces::ApiError;
 use crate::utils::auth::{AuthPayload, UserJwt};
-use crate::utils::types::HbpResult;
+use crate::utils::responders::HbpResult;
 use crate::utils::{
     constants::{cookies::*, headers::*},
     status_from,

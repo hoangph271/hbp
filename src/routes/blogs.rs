@@ -15,7 +15,7 @@ pub fn index(jwt: Option<AuthPayload>) -> HbpResponse {
         Err(e) => {
             error!("markdown_from_dir failed: {:?}", e);
 
-            return e.into();
+            return HbpResponse::from_status(e.api_error.status_code);
         }
     };
 
@@ -26,6 +26,6 @@ pub fn index(jwt: Option<AuthPayload>) -> HbpResponse {
         markdowns,
     ) {
         Ok(html) => HbpResponse::html(html, StatusCode::Ok),
-        Err(e) => e.into(),
+        Err(e) => HbpResponse::from_status(e.api_error.status_code),
     }
 }

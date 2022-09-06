@@ -1,6 +1,6 @@
 use crate::shared::interfaces::ApiError;
+use crate::utils::responders::HbpResult;
 use crate::utils::string::url_encode_path;
-use crate::utils::types::HbpResult;
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use httpstatus::StatusCode;
@@ -74,7 +74,7 @@ impl Markdown {
     pub fn from_markdown(path: &Path) -> HbpResult<Markdown> {
         if !path.exists() {
             let msg = format!("{} NOT exists", path.to_string_lossy());
-            return Err(ApiError::from_message(&msg, StatusCode::BadRequest));
+            return Err(ApiError::from_message(&msg, StatusCode::BadRequest).into());
         }
 
         let mut markdown = Markdown {

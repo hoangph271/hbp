@@ -1,14 +1,13 @@
 use crate::data::models::users_model::DbUser;
 use crate::data::user_orm::UserOrm;
 use crate::routes::users::shared::{LoginBody, SignupBody};
-use crate::shared::interfaces::{ApiError, ApiResult};
+use crate::shared::interfaces::ApiError;
 use crate::utils::auth::{AuthPayload, UserJwt};
 use crate::utils::constants::cookies;
 use crate::utils::env::{from_env, EnvKey};
-use crate::utils::responders::HbpResponse;
+use crate::utils::responders::{HbpResponse, HbpResult};
 use crate::utils::template;
 use crate::utils::template::{IndexLayout, Templater};
-use crate::utils::types::HbpResult;
 use httpstatus::StatusCode;
 use log::*;
 use rocket::form::Form;
@@ -117,22 +116,23 @@ pub async fn post_login(
 }
 
 #[post("/signup", data = "<signup_body>")]
-pub async fn post_signup(signup_body: Form<SignupBody>) -> ApiResult<HbpResponse> {
+pub async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
     if let Err(e) = signup_body.validate() {
         error!("{e:?}");
-        return Ok(HbpResponse::redirect(uri!("/users", signup)));
+        return HbpResponse::redirect(uri!("/users", signup));
     }
 
     let new_user = DbUser {
         title: signup_body.username.clone(),
         username: signup_body.username.clone(),
         hashed_password: bcrypt::hash(&signup_body.password, bcrypt::DEFAULT_COST)
-            .map_err(|e| ApiError::internal_server_error().append_error(e.to_string()))?,
+            .map_err(|e| ApiError::internal_server_error().append_error(e.to_string()))
+            .unwrap_or_else(|e| panic!("bcrypt::hash failed: {e:?}")),
     };
 
     if UserOrm::default().create_user(new_user).await.is_ok() {
-        Ok(HbpResponse::redirect(uri!("/users", login(_))))
+        HbpResponse::redirect(uri!("/users", login(_)))
     } else {
-        Ok(HbpResponse::redirect(uri!("/users", signup)))
+        HbpResponse::redirect(uri!("/users", signup))
     }
 }

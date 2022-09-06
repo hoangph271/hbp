@@ -1,8 +1,9 @@
 use crate::shared::entities::markdown::*;
 use crate::shared::interfaces::ApiError;
 use crate::utils::markdown::render_markdown_list;
+use crate::utils::responders::HbpResult;
 use crate::utils::template::{IndexLayout, MoveUpUrl, Templater};
-use crate::utils::types::HbpResult;
+// use crate::utils::types::HbpResult;
 use crate::utils::{
     auth::AuthPayload,
     markdown,
@@ -24,7 +25,7 @@ pub(super) async fn markdown_file(
     let file_path = PathBuf::from("markdown").join(sub_path.clone());
 
     if !file_path.exists() {
-        return Err(ApiError::not_found().with_ui());
+        return Err(ApiError::not_found().with_ui().into());
     }
 
     if !markdown::is_markdown(&sub_path) {

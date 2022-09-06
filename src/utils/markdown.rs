@@ -3,7 +3,6 @@ use crate::shared::interfaces::ApiError;
 use crate::utils::marper;
 use crate::utils::string::url_encode_path;
 use crate::utils::template::Templater;
-use crate::utils::types::HbpResult;
 use httpstatus::StatusCode::BadRequest;
 use log::error;
 use pulldown_cmark::{html, Options, Parser};
@@ -13,6 +12,7 @@ use std::path::Path;
 
 use super::auth::{AuthPayload, ResourseJwt};
 use super::env::is_root;
+use super::responders::HbpResult;
 use super::template::{IndexLayout, MarkdownTemplate, MoveUpUrl};
 
 pub fn markdown_to_html(markdown: &str) -> String {
@@ -43,7 +43,8 @@ pub async fn render_marp(markdown: &Markdown) -> HbpResult<String> {
         return Err(ApiError::from_message(
             &format!("NOT a marp: {}", markdown.file_name),
             BadRequest,
-        ));
+        )
+        .into());
     }
 
     marper::render_marp(&markdown.content).await

@@ -99,34 +99,6 @@ impl From<ApiError> for HbpResponse {
         }
     }
 }
-impl From<reqwest::Error> for ApiError {
-    fn from(e: reqwest::Error) -> Self {
-        error!("[reqwest::Error]: {e}");
-
-        let msg = match e.source() {
-            Some(source) => format!("{:?}", source),
-            None => "Unknown error".to_owned(),
-        };
-
-        ApiError::from_message(
-            &msg,
-            if let Some(status_code) = e.status() {
-                status_code.as_u16().into()
-            } else {
-                StatusCode::InternalServerError
-            },
-        )
-    }
-}
-impl From<std::io::Error> for ApiError {
-    fn from(e: std::io::Error) -> Self {
-        Self {
-            with_ui: false,
-            status_code: StatusCode::InternalServerError,
-            errors: vec![format!("{e}")],
-        }
-    }
-}
 
 impl<'r> rocket::response::Responder<'r, 'r> for ApiError {
     fn respond_to(self, req: &'r rocket::Request<'_>) -> rocket::response::Result<'r> {

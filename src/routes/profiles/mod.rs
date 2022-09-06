@@ -7,13 +7,16 @@ use crate::{
     data::{
         lib::DbError, models::profiles_model::DbProfile, profile_orm::ProfileOrm, user_orm::UserOrm,
     },
-    shared::interfaces::{ApiItem, ApiResult},
-    utils::{auth::UserJwt, responders::wrap_api_handler},
+    shared::interfaces::ApiItem,
+    utils::{
+        auth::UserJwt,
+        responders::{wrap_api_handler, HbpApiResult, HbpJson},
+    },
 };
 
 #[openapi]
 #[get("/")]
-pub async fn api_get_profile(jwt: UserJwt) -> ApiResult<ApiItem<DbProfile>> {
+pub async fn api_get_profile(jwt: UserJwt) -> HbpApiResult<DbProfile> {
     let profile = wrap_api_handler(|| async {
         let profile_orm = ProfileOrm::default();
 
@@ -41,7 +44,8 @@ pub async fn api_get_profile(jwt: UserJwt) -> ApiResult<ApiItem<DbProfile>> {
     })
     .await?;
 
-    Ok(ApiItem::ok(profile))
+    let item = ApiItem::ok(profile);
+    Ok(HbpJson::Item(item))
 }
 
 pub fn get_routes_and_docs(settings: &OpenApiSettings) -> (Vec<Route>, OpenApi) {

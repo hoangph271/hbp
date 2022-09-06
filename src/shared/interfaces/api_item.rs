@@ -2,15 +2,16 @@ use httpstatus::StatusCode;
 use okapi::openapi3::Responses;
 use rocket::response::Responder;
 use rocket_okapi::{gen::OpenApiGenerator, response::OpenApiResponderInner};
-use serde::Serialize;
+use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::utils::{responders::HbpResponse, status_code_serialize};
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ApiItem<T: Serialize> {
+    #[serde(deserialize_with = "status_code_from_u16")]
     #[serde(serialize_with = "status_code_serialize")]
-    status_code: StatusCode,
-    item: T,
+    pub status_code: StatusCode,
+    pub item: T,
 }
 
 impl<T: Serialize> OpenApiResponderInner for ApiItem<T> {
@@ -39,4 +40,12 @@ impl<'r, T: Serialize> Responder<'r, 'r> for ApiItem<T> {
     fn respond_to(self, req: &'r rocket::Request<'_>) -> rocket::response::Result<'r> {
         HbpResponse::from(self).respond_to(req)
     }
+}
+
+fn status_code_from_u16<'de, D: Deserializer<'de>>(
+    deserializer: D,
+) -> Result<StatusCode, D::Error> {
+    let code: u16 = Deserialize::deserialize(deserializer)?;
+
+    Ok(StatusCode::from(code))
 }

@@ -1,8 +1,9 @@
 use crate::{
-    shared::interfaces::{ApiItem, ApiResult},
+    shared::interfaces::{ApiError, ApiItem, ApiResult},
     utils::auth::AuthPayload,
 };
-
+use async_std::fs::metadata;
+use response_types::*;
 use rocket::get;
 use rocket_okapi::openapi;
 use std::path::PathBuf;
@@ -13,10 +14,36 @@ pub(super) async fn api_user_markdowns(
     username: &str,
     sub_path: PathBuf,
     jwt: AuthPayload,
-) -> ApiResult<ApiItem<String>> {
+) -> ApiResult<ApiItem<MarkdownItem>> {
     jwt.assert_username(username)?;
 
-    todo!()
+    if sub_path.is_dir() {
+        Err(ApiError::bad_request(vec![
+            "markdown directory requests are NOT yet handled".to_owned(),
+        ]))
+    } else {
+        let metadata = metadata(&sub_path).await?;
+        let markdown_item = MarkdownItem {
+            filename: sub_path
+                .file_name()
+                .map(|filename| filename.to_string_lossy())
+                .unwrap_or_else(|| sub_path.to_string_lossy())
+                .to_string(),
+            size: metadata.len(),
+        };
+
+        Ok(ApiItem::ok(markdown_item))
+    }
+}
+
+mod response_types {
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Serialize, Deserialize)]
+    pub struct MarkdownItem {
+        pub filename: String,
+        pub size: u64,
+    }
 }
 
 #[cfg(test)]
@@ -24,6 +51,7 @@ mod markdown_api_tests {
     use super::*;
     use crate::utils::{auth::UserJwt, constants::cookies::USER_JWT};
 
+    use httpstatus::StatusCode;
     use rocket::{
         self,
         http::{Cookie, Status},
@@ -39,7 +67,6 @@ mod markdown_api_tests {
         Client::tracked(rocket).unwrap_or_else(|e| panic!("Client::tracked() failed: {e:?}"))
     }
 
-    #[ignore]
     #[test]
     fn rocket_startup_normally() {
         let client = get_client();
@@ -49,7 +76,6 @@ mod markdown_api_tests {
         assert_eq!(res.status(), Status::BadRequest);
     }
 
-    #[ignore]
     #[test]
     fn handle_unauthorized() {
         let client = get_client();
@@ -62,7 +88,6 @@ mod markdown_api_tests {
         assert_eq!(res.status(), Status::Unauthorized);
     }
 
-    #[ignore]
     #[test]
     fn handle_username_mismatch() {
         let client = get_client();
@@ -80,9 +105,8 @@ mod markdown_api_tests {
 
     #[test]
     fn api_user_markdowns_works() {
-        let client = get_client();
-
-        let sub_path = PathBuf::from("");
+        let filename = "README.md";
+        let sub_path = PathBuf::from(filename);
         let user_jwt = UserJwt {
             sub: USERNAME.to_owned(),
             ..Default::default()
@@ -90,11 +114,15 @@ mod markdown_api_tests {
         .sign_jwt()
         .expect("sign_jwt() failed");
 
+        let client = get_client();
         let res = client
             .get(uri!(api_user_markdowns(USERNAME, sub_path)))
             .cookie(Cookie::new(USER_JWT, user_jwt))
-            .dispatch();
+            .dispatch()
+            .into_json::<ApiItem<MarkdownItem>>()
+            .unwrap_or_else(|| panic!("res.into_json() failed"));
 
-        assert_eq!(res.status(), Status::Ok);
+        assert_eq!(res.status_code, StatusCode::Ok);
+        assert_eq!(res.item.filename, filename);
     }
 }

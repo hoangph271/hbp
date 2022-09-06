@@ -1,6 +1,6 @@
 use crate::shared::interfaces::ApiError;
 use crate::utils::responders::HbpResult;
-use crate::utils::string::url_encode_path;
+use crate::utils::url_encode_path;
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use httpstatus::StatusCode;

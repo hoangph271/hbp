@@ -16,7 +16,6 @@ pub mod markdown;
 pub mod marper;
 pub mod responders;
 pub mod setup_logger;
-pub mod string;
 pub mod template;
 
 pub fn timestamp_now() -> i64 {
@@ -43,4 +42,11 @@ pub fn create_thumbnail(path: &Path) -> HbpResult<NamedTempFile> {
         .write_to(&mut thumbnail, ImageFormat::Png)?;
 
     Ok(thumbnail)
+}
+
+pub fn url_encode_path(path: &str) -> String {
+    path.split('/')
+        .map(|part| urlencoding::encode(part).to_string())
+        .collect::<Vec<String>>()
+        .join("/")
 }

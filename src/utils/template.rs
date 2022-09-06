@@ -8,7 +8,7 @@ use std::vec;
 use super::auth::AuthPayload;
 use super::markdown::markdown_to_html;
 use super::responders::HbpResult;
-use super::string::url_encode_path;
+use super::url_encode_path;
 
 fn compile_template(path: &PathBuf) -> HbpResult<Template> {
     mustache::compile_path(Path::new("template").join(path)).map_err(|e| e.into())

@@ -1,7 +1,5 @@
 use crate::shared::entities::markdown::*;
 use crate::shared::interfaces::ApiError;
-use crate::utils::marper;
-use crate::utils::string::url_encode_path;
 use crate::utils::template::Templater;
 use httpstatus::StatusCode::BadRequest;
 use log::error;
@@ -14,6 +12,7 @@ use super::auth::{AuthPayload, ResourseJwt};
 use super::env::is_root;
 use super::responders::HbpResult;
 use super::template::{IndexLayout, MarkdownTemplate, MoveUpUrl};
+use super::{marper, url_encode_path};
 
 pub fn markdown_to_html(markdown: &str) -> String {
     let mut options = Options::empty();

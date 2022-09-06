@@ -1,7 +1,10 @@
 use crate::shared::interfaces::ApiError;
 use crate::utils::auth::{AuthPayload, UserJwt};
 use crate::utils::types::HbpResult;
-use crate::utils::{constants, status_from};
+use crate::utils::{
+    constants::{cookies::*, headers::*},
+    status_from,
+};
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
 
@@ -10,7 +13,7 @@ fn jwt_str_from_query_params(req: &Request) -> Option<String> {
         Some(jwt) => jwt.map(|val| val.to_owned()).ok(),
         None => req
             .headers()
-            .get_one(constants::headers::AUTHORIZATION)
+            .get_one(AUTHORIZATION)
             .map(|jwt_str| jwt_str.trim()["Bearer ".len()..].to_owned()),
     }
 }
@@ -18,25 +21,32 @@ fn jwt_str_from_query_params(req: &Request) -> Option<String> {
 fn get_user_jwt(req: &Request) -> Option<UserJwt> {
     match jwt_str_from_query_params(req).or_else(|| {
         req.cookies()
-            .get_private(constants::cookies::USER_JWT)
+            .get_private(USER_JWT)
             .map(|val| val.value().to_owned())
     }) {
         Some(token) => UserJwt::decode(&token).ok(),
         None => None,
     }
 }
+
+// ! FIXME: Dude, this is NOT correct...!
+#[cfg(not(test))]
+fn get_cookie(req: &Request, cookie_name: &str) -> Option<String> {
+    req.cookies()
+        .get_private(cookie_name)
+        .map(|val| val.value().to_owned())
+}
+#[cfg(test)]
+fn get_cookie(req: &Request, cookie_name: &str) -> Option<String> {
+    req.cookies()
+        .get(cookie_name)
+        .map(|val| val.value().to_owned())
+}
+
 fn get_jwt(req: &Request) -> HbpResult<AuthPayload> {
     let jwt_str = jwt_str_from_query_params(req)
-        .or_else(|| {
-            req.cookies()
-                .get_private(constants::cookies::USER_JWT)
-                .map(|val| val.value().to_owned())
-        })
-        .or_else(|| {
-            req.cookies()
-                .get_private(constants::cookies::RESOURCE_JWT)
-                .map(|val| val.value().to_owned())
-        });
+        .or_else(|| get_cookie(req, USER_JWT))
+        .or_else(|| get_cookie(req, RESOURCE_JWT));
 
     match jwt_str {
         Some(token) => AuthPayload::decode(&token),

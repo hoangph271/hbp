@@ -10,14 +10,17 @@ use crate::utils::{
 };
 use httpstatus::StatusCode;
 use log::*;
-use rocket::{get, routes, uri, Route};
+use rocket::{get, uri};
 use serde::Serialize;
 use std::path::PathBuf;
 
 use super::{assert_payload_access, markdown_path_from};
 
 #[get("/<sub_path..>", rank = 2)]
-async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpResult<HbpResponse> {
+pub(super) async fn markdown_file(
+    sub_path: PathBuf,
+    jwt: Option<AuthPayload>,
+) -> HbpResult<HbpResponse> {
     let file_path = PathBuf::from("markdown").join(sub_path.clone());
 
     if !file_path.exists() {
@@ -65,7 +68,7 @@ async fn markdown_file(sub_path: PathBuf, jwt: Option<AuthPayload>) -> HbpResult
 }
 
 #[get("/_edit/<sub_path..>")]
-async fn user_markdown_editor(sub_path: PathBuf, _jwt: AuthPayload) -> HbpResponse {
+pub(super) async fn user_markdown_editor(sub_path: PathBuf, _jwt: AuthPayload) -> HbpResponse {
     let _file_path_str = PathBuf::from("markdown").join(sub_path);
 
     match Templater::new("markdown/write-markdown.html".into()).to_html(()) {
@@ -75,14 +78,12 @@ async fn user_markdown_editor(sub_path: PathBuf, _jwt: AuthPayload) -> HbpRespon
 }
 
 #[get("/users/<username>/<sub_path..>", rank = 1)]
-async fn user_markdown_file(
+pub(super) async fn user_markdown_file(
     username: &str,
     sub_path: PathBuf,
     jwt: AuthPayload,
 ) -> HbpResult<HbpResponse> {
-    if !username.eq(jwt.username()) {
-        return Ok(HbpResponse::forbidden());
-    }
+    jwt.assert_username(username)?;
 
     let (file_path_str, file_path) = markdown_path_from(username, &sub_path);
 
@@ -150,7 +151,7 @@ async fn user_markdown_file(
 }
 
 #[get("/users", rank = 1)]
-async fn user_default(jwt: AuthPayload) -> HbpResponse {
+pub(super) async fn user_default(jwt: AuthPayload) -> HbpResponse {
     let uri = uri!(
         "/markdown",
         user_markdown_file(jwt.username(), PathBuf::new())
@@ -164,15 +165,6 @@ pub struct MarkdownExtraData {
     title: String,
     og_title: String,
     og_image: String,
-}
-
-pub fn markdown_routes() -> Vec<Route> {
-    routes![
-        markdown_file,
-        user_markdown_file,
-        user_markdown_editor,
-        user_default
-    ]
 }
 
 fn render_dir(dir_path: &PathBuf, layout_data: IndexLayout) -> HbpResult<HbpResponse> {

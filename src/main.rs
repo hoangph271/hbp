@@ -61,6 +61,7 @@ fn launch() -> rocket::Rocket<rocket::Build> {
         rocket,
         "/api/v1",
         openapi_settings,
+        "/markdowns" => routes::markdown::get_routes_and_docs(&openapi_settings),
         "/users" => routes::users::get_routes_and_docs(&openapi_settings),
         "/movies_and_tv" => routes::movies_and_tv::get_routes_and_docs(&openapi_settings),
         "/profiles" => routes::profiles::get_routes_and_docs(&openapi_settings),

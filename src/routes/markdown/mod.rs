@@ -1,7 +1,10 @@
+use okapi::openapi3::OpenApi;
+use rocket::{routes, Route};
+use rocket_okapi::{openapi_get_routes_spec, settings::OpenApiSettings};
+use std::path::{Path, PathBuf};
+
 mod api;
 mod ui;
-
-use std::path::{Path, PathBuf};
 
 pub use api::*;
 pub use ui::*;
@@ -25,4 +28,17 @@ fn markdown_path_from(username: &str, sub_path: &Path) -> (String, PathBuf) {
         .join(sub_path);
 
     (file_path.to_string_lossy().to_string(), file_path)
+}
+
+pub fn markdown_routes() -> Vec<Route> {
+    routes![
+        markdown_file,
+        user_markdown_file,
+        user_markdown_editor,
+        user_default
+    ]
+}
+
+pub fn get_routes_and_docs(settings: &OpenApiSettings) -> (Vec<Route>, OpenApi) {
+    openapi_get_routes_spec![settings: api_user_markdowns]
 }

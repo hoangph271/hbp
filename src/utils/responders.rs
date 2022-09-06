@@ -1,22 +1,14 @@
 use futures::Future;
 use httpstatus::StatusCode;
-use okapi::openapi3::Responses;
-use rocket::fs::NamedFile;
-use rocket::http::{ContentType, Header, Status};
-use rocket::response::{Responder, Response};
-use rocket_okapi::gen::OpenApiGenerator;
-use rocket_okapi::response::OpenApiResponderInner;
+use rocket::http::ContentType;
 use rocket_okapi::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::io::Cursor;
 use std::path::PathBuf;
 use tempfile::NamedTempFile;
 
 use crate::shared::interfaces::{ApiError, ApiResult};
 
-use super::status_from;
 use super::template::{action_html_for_401, status_text, ErrorPage, IndexLayout, Templater};
-use super::types::HbpResult;
 
 #[derive(Serialize, Deserialize, JsonSchema, Debug)]
 pub enum HbpContent {
@@ -34,14 +26,6 @@ pub enum HbpContent {
 pub struct HbpResponse {
     pub status_code: StatusCode,
     pub content: HbpContent,
-}
-
-impl OpenApiResponderInner for HbpResponse {
-    fn responses(_gen: &mut OpenApiGenerator) -> rocket_okapi::Result<Responses> {
-        Ok(Responses {
-            ..Default::default()
-        })
-    }
 }
 
 impl HbpResponse {
@@ -134,64 +118,118 @@ impl HbpResponse {
     }
 }
 
-impl<'r> Responder<'r, 'r> for HbpResponse {
-    // ! FIXME: Change `respond_to` into async when async Traits roll out...!
-    fn respond_to(self, request: &rocket::Request<'_>) -> rocket::response::Result<'r> {
-        let mut builder = Response::build();
+#[derive(Debug)]
+pub struct HbpError {
+    api_error: ApiError,
+}
+pub type HbpResult<T> = Result<T, HbpError>;
 
-        let status = status_from(self.status_code);
-        builder.status(status);
+mod hbp_response_impls {
+    use super::{json_stringify, HbpContent, HbpError, HbpResponse};
+    use crate::utils::status_from;
+    use hbp_types::ApiError;
+    use okapi::openapi3::Responses;
+    use rocket::{
+        fs::NamedFile,
+        http::{ContentType, Header, Status},
+        response::Responder,
+        Response,
+    };
+    use rocket_okapi::gen::OpenApiGenerator;
+    use rocket_okapi::response::OpenApiResponderInner;
+    use std::io::Cursor;
 
-        match self.content {
-            HbpContent::Plain(text) => {
-                builder
-                    .header(ContentType::Plain)
-                    .sized_body(text.len(), Cursor::new(text));
+    impl<'r> Responder<'r, 'r> for HbpResponse {
+        // ! FIXME: Change `respond_to` into async when async Traits roll out...!
+        fn respond_to(self, request: &rocket::Request<'_>) -> rocket::response::Result<'r> {
+            let mut builder = Response::build();
+
+            let status = status_from(self.status_code);
+            builder.status(status);
+
+            match self.content {
+                HbpContent::Plain(text) => {
+                    builder
+                        .header(ContentType::Plain)
+                        .sized_body(text.len(), Cursor::new(text));
+                }
+                HbpContent::Html(html) => {
+                    builder
+                        .header(ContentType::HTML)
+                        .sized_body(html.len(), Cursor::new(html));
+                }
+                HbpContent::Json(json) => {
+                    builder
+                        .header(ContentType::JSON)
+                        .sized_body(json.len(), Cursor::new(json));
+                }
+                HbpContent::Found(path) => {
+                    builder
+                        .header(ContentType::HTML)
+                        .status(Status::Found)
+                        .header(Header::new("Location", path));
+                }
+                HbpContent::File(file_path) => {
+                    return futures::executor::block_on(NamedFile::open(&*file_path))
+                        .respond_to(request)
+                }
+                HbpContent::NamedTempFile(tempfile) => {
+                    return futures::executor::block_on(NamedFile::open(tempfile.into_temp_path()))
+                        .respond_to(request)
+                }
+                HbpContent::Bytes(body, content_type) => {
+                    builder
+                        .header(content_type.unwrap_or(ContentType::Binary))
+                        .sized_body(body.len(), Cursor::new(body));
+                }
             }
-            HbpContent::Html(html) => {
-                builder
-                    .header(ContentType::HTML)
-                    .sized_body(html.len(), Cursor::new(html));
-            }
-            HbpContent::Json(json) => {
-                builder
-                    .header(ContentType::JSON)
-                    .sized_body(json.len(), Cursor::new(json));
-            }
-            HbpContent::Found(path) => {
-                builder
-                    .header(ContentType::HTML)
-                    .status(Status::Found)
-                    .header(Header::new("Location", path));
-            }
-            HbpContent::File(file_path) => {
-                return futures::executor::block_on(NamedFile::open(&*file_path))
-                    .respond_to(request)
-            }
-            HbpContent::NamedTempFile(tempfile) => {
-                return futures::executor::block_on(NamedFile::open(tempfile.into_temp_path()))
-                    .respond_to(request)
-            }
-            HbpContent::Bytes(body, content_type) => {
-                builder
-                    .header(content_type.unwrap_or(ContentType::Binary))
-                    .sized_body(body.len(), Cursor::new(body));
+
+            Ok(builder.finalize())
+        }
+    }
+
+    impl<'r> Responder<'r, 'r> for HbpError {
+        fn respond_to(self, request: &'r rocket::Request<'_>) -> rocket::response::Result<'r> {
+            let res = HbpResponse {
+                status_code: self.api_error.status_code,
+                content: HbpContent::Json(json_stringify(&self.api_error)),
+            };
+
+            res.respond_to(request)
+        }
+    }
+
+    impl From<HbpResponse> for Response<'_> {
+        fn from(hbp_response: HbpResponse) -> Response<'static> {
+            let mut response_builder = Response::build();
+
+            let status = status_from(hbp_response.status_code);
+            response_builder.status(status);
+
+            response_builder.finalize()
+        }
+    }
+
+    impl OpenApiResponderInner for HbpResponse {
+        fn responses(_gen: &mut OpenApiGenerator) -> rocket_okapi::Result<Responses> {
+            Ok(Responses {
+                ..Default::default()
+            })
+        }
+    }
+
+    impl From<ApiError> for HbpResponse {
+        fn from(e: ApiError) -> Self {
+            HbpResponse {
+                status_code: e.status_code,
+                content: HbpContent::Json(json_stringify(&e)),
             }
         }
-
-        Ok(builder.finalize())
     }
 }
 
-impl From<HbpResponse> for Response<'_> {
-    fn from(hbp_response: HbpResponse) -> Response<'static> {
-        let mut response_builder = Response::build();
-
-        let status = status_from(hbp_response.status_code);
-        response_builder.status(status);
-
-        response_builder.finalize()
-    }
+fn json_stringify(json: &impl Serialize) -> String {
+    serde_json::to_string(&json).unwrap_or_else(|e| panic!("json_stringify failed: {e}"))
 }
 
 pub async fn wrap_api_handler<R, T>(handler: impl FnOnce() -> R) -> HbpResult<T>

@@ -6,9 +6,8 @@ use rocket::{get, routes, Route};
 
 use crate::shared::entities::markdown::Markdown;
 use crate::utils::markdown;
-use crate::utils::responders::HbpResponse;
+use crate::utils::responders::{HbpResponse, HbpResult};
 use crate::utils::template::IndexLayout;
-use crate::utils::types::HbpResult;
 
 #[get("/README.md")]
 async fn readme_md() -> HbpResult<HbpResponse> {

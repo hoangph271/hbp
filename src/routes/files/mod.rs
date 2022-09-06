@@ -11,15 +11,16 @@ use rocket_okapi::{openapi, openapi_get_routes_spec, settings::OpenApiSettings};
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-use crate::shared::interfaces::{ApiError, ApiResult};
+use crate::shared::interfaces::ApiError;
 use crate::utils::create_thumbnail;
+use crate::utils::responders::HbpResult;
 use crate::utils::{
     auth::AuthPayload,
     env::{files_root, is_root, public_files_root},
     responders::HbpResponse,
 };
 
-fn attempt_access(path: &Path, jwt: &Option<AuthPayload>) -> ApiResult<()> {
+fn attempt_access(path: &Path, jwt: &Option<AuthPayload>) -> HbpResult<()> {
     fn is_private(path: &Path) -> bool {
         let is_in_public_folder = path.starts_with(public_files_root());
 
@@ -35,7 +36,8 @@ fn attempt_access(path: &Path, jwt: &Option<AuthPayload>) -> ApiResult<()> {
             ApiError::forbidden().append_error(format!("{path:?} should be within files_root()"))
         } else {
             ApiError::unauthorized()
-        });
+        }
+        .into());
     }
 
     if !is_private(path) {
@@ -49,16 +51,17 @@ fn attempt_access(path: &Path, jwt: &Option<AuthPayload>) -> ApiResult<()> {
                 |_, _| is_root(jwt.username()), // TODO: User jwt
             )
         }
-        None => Err(ApiError::forbidden()),
+        None => Err(ApiError::forbidden().into()),
     }
 }
 
-fn assert_raw_file(path: &Path) -> ApiResult<&Path> {
+fn assert_raw_file(path: &Path) -> HbpResult<&Path> {
     if path.is_dir() {
         Err(ApiError::unprocessable_entity()
-            .append_error(format!("requested file at {path:?} is NOT a file")))
+            .append_error(format!("requested file at {path:?} is NOT a file"))
+            .into())
     } else if !path.exists() {
-        Err(ApiError::not_found())
+        Err(ApiError::not_found().into())
     } else {
         Ok(path)
     }
@@ -70,7 +73,7 @@ pub async fn api_get_random_file(
     mime: Option<String>,
     jwt: Option<AuthPayload>,
     preview: Option<bool>,
-) -> ApiResult<HbpResponse> {
+) -> HbpResult<HbpResponse> {
     let mime = if let Some(mime) = mime {
         let mime = Mime::from_str(&mime).map_err(|e| {
             error!("{e:?}");
@@ -87,7 +90,7 @@ pub async fn api_get_random_file(
         path: &Path,
         jwt: &Option<AuthPayload>,
         mime: &Option<Mime>,
-    ) -> ApiResult<Vec<AsyncPathBuf>> {
+    ) -> HbpResult<Vec<AsyncPathBuf>> {
         let mut matched_files = vec![];
 
         match read_dir(path).await {
@@ -170,7 +173,7 @@ pub async fn api_get_random_file(
 
             Ok(HbpResponse::redirect(uri))
         }
-        None => Err(ApiError::not_found()),
+        None => Err(ApiError::not_found().into()),
     }
 }
 
@@ -179,7 +182,7 @@ pub async fn api_get_random_file(
 pub async fn api_get_preview_file(
     jwt: Option<AuthPayload>,
     path: PathBuf,
-) -> ApiResult<HbpResponse> {
+) -> HbpResult<HbpResponse> {
     let path = files_root().join(path);
 
     attempt_access(&path, &jwt)?;
@@ -192,7 +195,7 @@ pub async fn api_get_preview_file(
 
 #[openapi]
 #[get("/raw/<path..>", rank = 2)]
-pub async fn api_get_raw_file(jwt: Option<AuthPayload>, path: PathBuf) -> ApiResult<HbpResponse> {
+pub async fn api_get_raw_file(jwt: Option<AuthPayload>, path: PathBuf) -> HbpResult<HbpResponse> {
     let path = files_root().join(path);
 
     attempt_access(&path, &jwt)?;

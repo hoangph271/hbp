@@ -22,7 +22,7 @@ pulldown-cmark = { version = "0.9.1", default-features = false, features = [
 serde_derive = "1.0.139"
 mustache = "0.9.0"
 jsonwebtoken = "8.1.1"
-serde = { version = "1.0.139", features = ["derive"] }
+serde = { version = "1.0.144", features = ["derive"] }
 walkdir = "2.3.2"
 zip = "0.6.2"
 tempfile = "3.3.0"
@@ -47,6 +47,7 @@ async-recursion = "1.0.0"
 rand = "0.8.5"
 image = "0.24.3"
 mime_guess = "2.0.4"
+hbp_types = { git = "https://github.com/hoangph271/hbp_types", features = ["okapi"] }
 
 [profile.dev]
 overflow-checks = true

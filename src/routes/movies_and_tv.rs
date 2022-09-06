@@ -11,8 +11,8 @@ use crate::{
         execute_stargate_query, execute_stargate_query_for_one, get_keyspace,
         stargate_client_from_env,
     },
-    shared::interfaces::{ApiError, ApiItem, ApiList, ApiResult},
-    utils::{responders::HbpResponse, types::HbpResult},
+    shared::interfaces::{ApiError, ApiItem, ApiList},
+    utils::responders::HbpApiResult,
 };
 
 #[derive(TryFromRow, Serialize)]
@@ -23,7 +23,7 @@ struct MovieOrTv {
 
 #[openapi]
 #[get("/")]
-async fn api_get_shows() -> ApiResult<ApiList<MovieOrTv>> {
+async fn api_get_shows() -> HbpApiResult<MovieOrTv> {
     let query = Query::builder()
         .keyspace(get_keyspace())
         .query("SELECT title, show_id FROM movies_and_tv")
@@ -58,12 +58,12 @@ async fn api_get_shows() -> ApiResult<ApiList<MovieOrTv>> {
         None => vec![],
     };
 
-    Ok(ApiList::ok(movies_and_tv))
+    Ok(ApiList::ok(movies_and_tv).into())
 }
 
 #[openapi]
 #[get("/<show_id>")]
-async fn api_get_one(show_id: i64) -> HbpResult<HbpResponse> {
+async fn api_get_one(show_id: i64) -> HbpApiResult<MovieOrTv> {
     let query = Query::builder()
         .keyspace(get_keyspace())
         .query("SELECT title, show_id FROM movies_and_tv WHERE show_id = :show_id")
@@ -75,7 +75,7 @@ async fn api_get_one(show_id: i64) -> HbpResult<HbpResponse> {
     execute_stargate_query_for_one::<MovieOrTv>(client, query)
         .await?
         .map(|show| ApiItem::ok(show).into())
-        .ok_or_else(ApiError::not_found)
+        .ok_or_else(|| ApiError::not_found().into())
 }
 
 pub fn get_routes_and_docs(settings: &OpenApiSettings) -> (Vec<Route>, OpenApi) {

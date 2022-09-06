@@ -1,13 +1,11 @@
 use std::path::Path;
 
 use httpstatus::StatusCode;
-use image::{ImageError, ImageFormat};
-use log::error;
+use image::ImageFormat;
 use rocket::http::Status;
-use serde::Serializer;
 use tempfile::NamedTempFile;
 
-use crate::shared::interfaces::{ApiError, ApiResult};
+use self::responders::HbpResult;
 
 pub mod auth;
 pub mod constants;
@@ -20,7 +18,6 @@ pub mod responders;
 pub mod setup_logger;
 pub mod string;
 pub mod template;
-pub mod types;
 
 pub fn timestamp_now() -> i64 {
     chrono::Utc::now()
@@ -34,33 +31,7 @@ pub fn status_from(status_code: StatusCode) -> Status {
         .unwrap_or_else(|| panic!("status_code {} is NOT valid", status_code.as_u16()))
 }
 
-impl From<ImageError> for ApiError {
-    fn from(e: ImageError) -> Self {
-        error!("ImageError: {e}");
-
-        match e {
-            ImageError::Decoding(e) => {
-                ApiError::from_message(&e.to_string(), StatusCode::BadRequest)
-            }
-            ImageError::Encoding(e) => {
-                ApiError::from_message(&e.to_string(), StatusCode::BadRequest)
-            }
-            ImageError::Parameter(e) => {
-                ApiError::from_message(&e.to_string(), StatusCode::BadRequest)
-            }
-            ImageError::Limits(e) => {
-                ApiError::from_message(&e.to_string(), StatusCode::UnprocessableEntity)
-            }
-            ImageError::Unsupported(e) => {
-                ApiError::from_message(&e.to_string(), StatusCode::UnprocessableEntity)
-            }
-            ImageError::IoError(e) => {
-                ApiError::from_message(&format!("{e}"), StatusCode::InternalServerError)
-            }
-        }
-    }
-}
-pub fn create_thumbnail(path: &Path) -> ApiResult<NamedTempFile> {
+pub fn create_thumbnail(path: &Path) -> HbpResult<NamedTempFile> {
     let suffix = ImageFormat::Png.extensions_str().first().unwrap_or(&"png");
 
     let mut thumbnail = tempfile::Builder::new()
@@ -72,11 +43,4 @@ pub fn create_thumbnail(path: &Path) -> ApiResult<NamedTempFile> {
         .write_to(&mut thumbnail, ImageFormat::Png)?;
 
     Ok(thumbnail)
-}
-
-pub fn status_code_serialize<S>(val: &StatusCode, s: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    s.serialize_u16(val.as_u16())
 }

@@ -14,15 +14,15 @@ use crate::{
     shared::interfaces::{ApiError, ApiResult},
     utils::{
         env::{self, is_root, jwt_secret},
+        responders::{HbpError, HbpResult},
         timestamp_now,
-        types::HbpResult,
     },
 };
 
 pub mod jwt {
     use crate::{
         shared::interfaces::ApiError,
-        utils::{env::jwt_secret, types::HbpResult},
+        utils::{env::jwt_secret, responders::HbpResult},
     };
     use httpstatus::StatusCode;
     use jsonwebtoken::{encode, EncodingKey, Header};
@@ -39,6 +39,7 @@ pub mod jwt {
                 &format!("sign_jwt failed: {e}"),
                 StatusCode::InternalServerError,
             )
+            .into()
         })
     }
 }
@@ -59,7 +60,7 @@ pub struct UserJwt {
     pub roles: Vec<String>,
 }
 impl UserJwt {
-    pub fn sign_jwt(&self) -> Result<String, ApiError> {
+    pub fn sign_jwt(&self) -> Result<String, HbpError> {
         jwt::sign_jwt(&self)
     }
 
@@ -166,7 +167,7 @@ impl AuthPayload {
                 if user_assert(payload, path) {
                     Ok(())
                 } else {
-                    Err(ApiError::forbidden())
+                    Err(ApiError::forbidden().into())
                 }
             }
             AuthPayload::UserResource(payload) => {
@@ -180,7 +181,7 @@ impl AuthPayload {
                 if can_access {
                     Ok(())
                 } else {
-                    Err(ApiError::forbidden())
+                    Err(ApiError::forbidden().into())
                 }
             }
         }
@@ -196,6 +197,7 @@ impl AuthPayload {
             AuthPayload::User(user_payload) => jwt::sign_jwt(user_payload),
             AuthPayload::UserResource(resource_payload) => jwt::sign_jwt(resource_payload),
         }
+        .map_err(|e| e.api_error)
     }
 }
 

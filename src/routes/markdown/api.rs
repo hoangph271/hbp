@@ -1,6 +1,6 @@
 use crate::{
-    shared::interfaces::{ApiError, ApiItem, ApiResult},
-    utils::auth::AuthPayload,
+    shared::interfaces::{ApiError, ApiItem},
+    utils::{auth::AuthPayload, responders::HbpApiResult},
 };
 use async_std::fs::metadata;
 use response_types::*;
@@ -14,13 +14,14 @@ pub(super) async fn api_user_markdowns(
     username: &str,
     sub_path: PathBuf,
     jwt: AuthPayload,
-) -> ApiResult<ApiItem<MarkdownItem>> {
+) -> HbpApiResult<MarkdownItem> {
     jwt.assert_username(username)?;
 
     if sub_path.is_dir() {
         Err(ApiError::bad_request(vec![
-            "markdown directory requests are NOT yet handled".to_owned(),
-        ]))
+            "markdown directory requests are NOT yet handled".to_owned()
+        ])
+        .into())
     } else {
         let metadata = metadata(&sub_path).await?;
         let markdown_item = MarkdownItem {
@@ -32,7 +33,7 @@ pub(super) async fn api_user_markdowns(
             size: metadata.len(),
         };
 
-        Ok(ApiItem::ok(markdown_item))
+        Ok(ApiItem::ok(markdown_item).into())
     }
 }
 

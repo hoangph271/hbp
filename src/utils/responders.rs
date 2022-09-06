@@ -131,7 +131,7 @@ pub enum HbpJson<T: Serialize> {
     Empty,
 }
 
-pub type HbpApiResult<T: Serialize> = Result<HbpJson<T>, HbpError>;
+pub type HbpApiResult<T> = Result<HbpJson<T>, HbpError>;
 
 pub type HbpResult<T> = Result<T, HbpError>;
 

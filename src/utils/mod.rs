@@ -3,7 +3,6 @@ use std::path::Path;
 use httpstatus::StatusCode;
 use image::ImageFormat;
 use rocket::http::Status;
-use serde::Serializer;
 use tempfile::NamedTempFile;
 
 use self::responders::HbpResult;
@@ -44,11 +43,4 @@ pub fn create_thumbnail(path: &Path) -> HbpResult<NamedTempFile> {
         .write_to(&mut thumbnail, ImageFormat::Png)?;
 
     Ok(thumbnail)
-}
-
-pub fn status_code_serialize<S>(val: &StatusCode, s: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    s.serialize_u16(val.as_u16())
 }

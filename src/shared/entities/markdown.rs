@@ -62,7 +62,7 @@ pub fn extract_markdown_header_content(content: &str) -> Option<String> {
                 header_comment.start() + "<!--".len(),
                 header_comment.end() - "-->".len(),
             );
-            let header_content = (&content[start..end]).to_string();
+            let header_content = (content[start..end]).to_string();
             Some(header_content)
         }
     } else {
@@ -99,8 +99,8 @@ impl Markdown {
                     });
 
                     (
-                        (&line[..colon_index]).trim().to_string(),
-                        (&line[colon_index + 1..]).trim().to_string(),
+                        (line[..colon_index]).trim().to_string(),
+                        (line[colon_index + 1..]).trim().to_string(),
                     )
                 })
                 .collect();

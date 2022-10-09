@@ -1,7 +1,4 @@
-use crate::{
-    data::{lib::post_orm::PostOrm, profile_orm::ProfileOrm, user_orm::UserOrm},
-    utils::env::{from_env, is_prod, EnvKey},
-};
+use crate::utils::env::{from_env, is_prod, EnvKey};
 use async_std::task;
 use rocket::async_trait;
 use stargate_grpc::StargateClient;
@@ -14,14 +11,16 @@ use self::lib::{stargate_client_from, DbError};
 pub mod lib;
 pub mod models;
 
+pub mod challenge_orm;
 pub mod profile_orm;
 pub mod user_orm;
+
 fn block_init_table<F, Output>(executor: F)
 where
     F: Fn() -> Output,
     Output: Future<Output = Result<(), DbError>>,
 {
-    const RETRY_LIMIT: usize = 0;
+    const RETRY_LIMIT: usize = 5;
     let mut count = 0;
 
     loop {
@@ -41,7 +40,7 @@ where
 }
 
 pub fn init_db() {
-    if !is_prod() {
+    if is_prod() {
         return;
     }
 
@@ -50,9 +49,10 @@ pub fn init_db() {
     spawn(|| {
         log::info!("---@ init_db()");
 
-        block_init_table(|| async { UserOrm::default().init_table().await });
-        block_init_table(|| async { PostOrm::default().init_table().await });
-        block_init_table(|| async { ProfileOrm::default().init_table().await });
+        // block_init_table(|| async { user_orm::UserOrm::default().init_table().await });
+        // block_init_table(|| async { post_orm::PostOrm::default().init_table().await });
+        // block_init_table(|| async { profile_orm::ProfileOrm::default().init_table().await });
+        block_init_table(|| async { challenge_orm::ChallengeOrm::default().init_table().await });
 
         log::info!("---# init_db()");
     });
@@ -92,6 +92,8 @@ impl OrmConfig {
 #[async_trait]
 pub trait OrmInit {
     fn orm_config(&self) -> &OrmConfig;
+    fn table_name(&self) -> String;
+
     async fn stargate_client(&self) -> Result<StargateClient, DbError> {
         let orm_config = self.orm_config();
         stargate_client_from(orm_config).await
@@ -100,7 +102,26 @@ pub trait OrmInit {
     async fn init_table(&self) -> Result<(), DbError>;
 
     #[cfg(test)]
-    async fn drop_table(&self) -> Result<(), DbError>;
+    async fn drop_table(&self) -> Result<(), DbError> {
+        let table_name = self.table_name();
+        let create_table_query = stargate_grpc::Query::builder()
+            .keyspace(&self.orm_config().keyspace)
+            .query(&format!("DROP TABLE IF EXISTS {}", table_name))
+            .build();
+
+        self.stargate_client()
+            .await?
+            .execute_query(create_table_query)
+            .await
+            .map_err(|e| {
+                let msg = format!("drop_table() {table_name} failed at .execute_query(): {e:?}");
+
+                DbError::internal_server_error(msg)
+            })?;
+
+        log::info!("dropped {table_name} table");
+        Ok(())
+    }
 
     #[cfg(test)]
     async fn reset_table(&self) -> Result<(), DbError> {

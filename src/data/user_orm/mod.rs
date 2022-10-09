@@ -20,6 +20,10 @@ impl OrmInit for UserOrm {
         &self.orm_config
     }
 
+    fn table_name(&self) -> String {
+        "users".to_string()
+    }
+
     async fn init_table(&self) -> Result<(), DbError> {
         let create_users_table = stargate_grpc::Query::builder()
             .keyspace(&self.orm_config.keyspace)

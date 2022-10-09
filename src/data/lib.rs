@@ -58,6 +58,10 @@ pub mod post_orm {
             &self.orm_config
         }
 
+        fn table_name(&self) -> String {
+            "posts".to_owned()
+        }
+
         async fn init_table(&self) -> Result<(), DbError> {
             let mut client = stargate_client_from_env().await?;
 
@@ -76,11 +80,6 @@ pub mod post_orm {
             info!("created posts table");
 
             Ok(())
-        }
-
-        #[cfg(test)]
-        async fn drop_table(&self) -> Result<(), DbError> {
-            todo!()
         }
     }
 }

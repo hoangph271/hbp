@@ -23,6 +23,10 @@ impl OrmInit for ProfileOrm {
         &self.orm_config
     }
 
+    fn table_name(&self) -> String {
+        "profiles".to_owned()
+    }
+
     async fn init_table(&self) -> Result<(), DbError> {
         let create_profiles_table = stargate_grpc::Query::builder()
             .keyspace(&self.orm_config.keyspace)
@@ -46,29 +50,6 @@ impl OrmInit for ProfileOrm {
             })?;
 
         info!("created profiles table");
-        Ok(())
-    }
-
-    #[cfg(test)]
-    async fn drop_table(&self) -> Result<(), DbError> {
-        use log::info;
-
-        let create_users_table = stargate_grpc::Query::builder()
-            .keyspace(&self.orm_config.keyspace)
-            .query("DROP TABLE IF EXISTS profiles")
-            .build();
-
-        self.stargate_client()
-            .await?
-            .execute_query(create_users_table)
-            .await
-            .map_err(|e| {
-                let msg = format!("drop_table() profiles failed at .execute_query(): {e:?}");
-
-                DbError::internal_server_error(msg)
-            })?;
-
-        info!("dropped profiles table");
         Ok(())
     }
 }

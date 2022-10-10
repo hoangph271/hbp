@@ -6,7 +6,7 @@ pub struct Challenge {
     pub title: String,
     pub why: String,
     pub note: String,
-    pub started_at: u64,
-    pub end_at: u64,
+    pub started_at: i64,
+    pub end_at: i64,
     pub finished: bool,
 }

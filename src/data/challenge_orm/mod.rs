@@ -1,9 +1,9 @@
 // #[cfg(test)]
 // mod challenge_orm_test;
 
-use crate::data::{lib::*, models::users_model::*};
-use httpstatus::StatusCode;
-use log::{error, info};
+use crate::data::{lib::*, models::challenges_model::*};
+use chrono::{DateTime, NaiveDateTime, Utc};
+use log::info;
 use rocket::async_trait;
 use stargate_grpc::Query;
 
@@ -56,7 +56,23 @@ impl OrmInit for ChallengeOrm {
 }
 
 impl ChallengeOrm {
-    pub async fn find_one(&self, id: &str) -> Result<Option<DbUser>, DbError> {
+    pub async fn find(&self) -> Result<Vec<hbp_types::Challenge>, DbError> {
+        let challenges_query = Query::builder()
+            .keyspace(&self.orm_config.keyspace)
+            .query("SELECT * FROM challenges")
+            .build();
+
+        let maybe_challenges: Option<Vec<Challenge>> =
+            execute_stargate_query_for_vec(challenges_query).await?;
+
+        Ok(maybe_challenges
+            .unwrap_or_default()
+            .into_iter()
+            .map(map_challenge)
+            .collect())
+    }
+
+    pub async fn find_one(&self, id: &str) -> Result<Option<hbp_types::Challenge>, DbError> {
         let challenge_query = Query::builder()
             .keyspace(&self.orm_config.keyspace)
             .query("SELECT * FROM challenges WHERE id = :id")
@@ -64,71 +80,26 @@ impl ChallengeOrm {
             .build();
 
         let client = self.stargate_client().await?;
-        let maybe_user: Option<DbUser> =
-            execute_stargate_query_for_one(client, challenge_query).await?;
+        let maybe_challenge: Option<hbp_types::Challenge> =
+            execute_stargate_query_for_one(client, challenge_query)
+                .await?
+                .map(map_challenge);
 
-        Ok(maybe_user)
+        Ok(maybe_challenge)
     }
+}
 
-    // pub async fn create_one(&self, new_user: DbUser) -> Result<DbUser, DbError> {
-    //     let insert_query = Query::builder()
-    //         .keyspace(&self.orm_config.keyspace)
-    //         .query(
-    //             "
-    //             INSERT INTO users(username, hashed_password, title)
-    //             VALUES (:username, :hashed_password, :title)
-    //             IF NOT EXISTS",
-    //         )
-    //         .bind(new_user.clone())
-    //         .build();
-
-    //     let client = self.stargate_client().await?;
-    //     let mut result_set = execute_stargate_query(client, insert_query)
-    //         .await?
-    //         .unwrap_or_else(|| panic!("result_set must NOT be None"));
-
-    //     let mut row = result_set
-    //         .rows
-    //         .pop()
-    //         .unwrap_or_else(|| panic!("result_set MUST has one row"));
-    //     let inserted: bool = row.try_take(0).map_err(|e| {
-    //         let message = format!("Can't read inserted: {e}");
-
-    //         error!("{message}");
-
-    //         DbError::internal_server_error(message)
-    //     })?;
-
-    //     if inserted {
-    //         match self.find_one(&new_user.username).await? {
-    //             Some(user) => Ok(user),
-    //             None => Err(DbError::internal_server_error(
-    //                 "create_user failed".to_owned(),
-    //             )),
-    //         }
-    //     } else {
-    //         Err(DbError {
-    //             status_code: StatusCode::Conflict,
-    //             message: format!("username `{}` existed", new_user.username),
-    //         })
-    //     }
-    // }
-
-    // pub async fn update_user(&self, user: PutUser) -> Result<(), DbError> {
-    //     let user_query = Query::builder()
-    //         .keyspace(&self.orm_config.keyspace)
-    //         .query(
-    //             "
-    //             UPDATE users
-    //             SET title = :title
-    //             WHERE username = :username",
-    //         )
-    //         .bind(user.clone())
-    //         .build();
-
-    //     let client = self.stargate_client().await?;
-    //     let _ = execute_stargate_query(client, user_query).await?;
-
-    //     Ok(())
-    // }
+fn map_challenge(challenge: Challenge) -> hbp_types::Challenge {
+    hbp_types::Challenge {
+        id: challenge.id,
+        title: challenge.title,
+        why: challenge.why,
+        note: challenge.note,
+        started_at: DateTime::<Utc>::from_utc(
+            NaiveDateTime::from_timestamp(challenge.started_at, 0),
+            Utc,
+        ),
+        end_at: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(challenge.end_at, 0), Utc),
+        finished: challenge.finished,
+    }
 }

@@ -4,16 +4,16 @@ use crate::{
 };
 use hbp_types::{ApiError, ApiItem, ApiList, Challenge};
 use okapi::openapi3::OpenApi;
-use rocket::{get, Route};
+use rocket::{get, post, serde::json::Json, Route};
 use rocket_okapi::{openapi, openapi_get_routes_spec, settings::OpenApiSettings};
 
 #[openapi]
 #[get("/")]
 pub async fn api_get_challenges() -> HbpApiResult<Challenge> {
     let challenges = wrap_api_handler(|| async {
-        let profile_orm = ChallengeOrm::default();
+        let orm = ChallengeOrm::default();
 
-        let challenges = profile_orm.find().await?;
+        let challenges = orm.find().await?;
 
         Ok(challenges)
     })
@@ -23,12 +23,26 @@ pub async fn api_get_challenges() -> HbpApiResult<Challenge> {
 }
 
 #[openapi]
+#[post("/", data = "<new_challenge>")]
+pub async fn api_post_challenge(new_challenge: Json<Challenge>) -> HbpApiResult<Challenge> {
+    let new_challenge = new_challenge.into_inner();
+    let challenge = wrap_api_handler(|| async {
+        let orm = ChallengeOrm::default();
+
+        orm.create(new_challenge).await.map_err(|e| e.into())
+    })
+    .await?;
+
+    Ok(HbpJson::Item(ApiItem::ok(challenge)))
+}
+
+#[openapi]
 #[get("/<challenge_id>")]
 pub async fn api_get_challenge_by_id(challenge_id: &str) -> HbpApiResult<Challenge> {
     let challenge = wrap_api_handler(|| async {
-        let profile_orm = ChallengeOrm::default();
+        let orm = ChallengeOrm::default();
 
-        let challenge = profile_orm.find_one(&challenge_id).await?;
+        let challenge = orm.find_one(challenge_id).await?;
 
         Ok(challenge)
     })
@@ -41,5 +55,9 @@ pub async fn api_get_challenge_by_id(challenge_id: &str) -> HbpApiResult<Challen
 }
 
 pub fn get_routes_and_docs(settings: &OpenApiSettings) -> (Vec<Route>, OpenApi) {
-    openapi_get_routes_spec![settings: api_get_challenges, api_get_challenge_by_id]
+    openapi_get_routes_spec![
+        settings: api_get_challenges,
+        api_get_challenge_by_id,
+        api_post_challenge
+    ]
 }

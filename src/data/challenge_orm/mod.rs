@@ -1,13 +1,15 @@
 // #[cfg(test)]
 // mod challenge_orm_test;
 
-use crate::data::{lib::*, models::challenges_model::*};
+use super::{OrmConfig, OrmInit};
+use crate::data::lib::*;
+use crate::data::models::challenges_model::Challenge as DbChallenge;
 use chrono::{DateTime, NaiveDateTime, Utc};
-use log::info;
+use hbp_types::Challenge;
+use httpstatus::StatusCode;
+use log::{error, info};
 use rocket::async_trait;
 use stargate_grpc::Query;
-
-use super::{OrmConfig, OrmInit};
 
 #[derive(Default)]
 pub struct ChallengeOrm {
@@ -56,13 +58,13 @@ impl OrmInit for ChallengeOrm {
 }
 
 impl ChallengeOrm {
-    pub async fn find(&self) -> Result<Vec<hbp_types::Challenge>, DbError> {
+    pub async fn find(&self) -> Result<Vec<Challenge>, DbError> {
         let challenges_query = Query::builder()
             .keyspace(&self.orm_config.keyspace)
             .query("SELECT * FROM challenges")
             .build();
 
-        let maybe_challenges: Option<Vec<Challenge>> =
+        let maybe_challenges: Option<Vec<DbChallenge>> =
             execute_stargate_query_for_vec(challenges_query).await?;
 
         Ok(maybe_challenges
@@ -72,7 +74,7 @@ impl ChallengeOrm {
             .collect())
     }
 
-    pub async fn find_one(&self, id: &str) -> Result<Option<hbp_types::Challenge>, DbError> {
+    pub async fn find_one(&self, id: &str) -> Result<Option<Challenge>, DbError> {
         let challenge_query = Query::builder()
             .keyspace(&self.orm_config.keyspace)
             .query("SELECT * FROM challenges WHERE id = :id")
@@ -80,26 +82,79 @@ impl ChallengeOrm {
             .build();
 
         let client = self.stargate_client().await?;
-        let maybe_challenge: Option<hbp_types::Challenge> =
+        let maybe_challenge: Option<Challenge> =
             execute_stargate_query_for_one(client, challenge_query)
                 .await?
                 .map(map_challenge);
 
         Ok(maybe_challenge)
     }
+
+    pub async fn create(&self, new_challenge: Challenge) -> Result<Challenge, DbError> {
+        let insert_query = Query::builder()
+            .keyspace(&self.orm_config.keyspace)
+            .query(
+                "
+                INSERT INTO challenges(id, title, why, note, started_at, end_at, finished)
+                VALUES (:id, :title, :why, :note, :started_at, :end_at, :finished)
+                IF NOT EXISTS",
+            )
+            .bind_name("id", new_challenge.id.clone())
+            .bind_name("title", new_challenge.title)
+            .bind_name("why", new_challenge.why)
+            .bind_name("note", new_challenge.note)
+            .bind_name("started_at", new_challenge.started_at.timestamp_millis())
+            .bind_name("end_at", new_challenge.end_at.timestamp_millis())
+            .bind_name("finished", new_challenge.finished)
+            .build();
+
+        let client = self.stargate_client().await?;
+        let mut result_set = execute_stargate_query(client, insert_query)
+            .await?
+            .unwrap_or_else(|| panic!("result_set must NOT be None"));
+
+        let mut row = result_set
+            .rows
+            .pop()
+            .unwrap_or_else(|| panic!("result_set MUST has one row"));
+        let inserted: bool = row.try_take(0).map_err(|e| {
+            let message = format!("Can't read inserted: {e}");
+
+            error!("{message}");
+
+            DbError::internal_server_error(message)
+        })?;
+
+        if inserted {
+            match self.find_one(&new_challenge.id).await? {
+                Some(challenge) => Ok(challenge),
+                None => Err(DbError::internal_server_error(
+                    "create_challenge failed".to_owned(),
+                )),
+            }
+        } else {
+            Err(DbError {
+                status_code: StatusCode::Conflict,
+                message: format!("challenge :id `{}` existed", new_challenge.id),
+            })
+        }
+    }
 }
 
-fn map_challenge(challenge: Challenge) -> hbp_types::Challenge {
-    hbp_types::Challenge {
-        id: challenge.id,
-        title: challenge.title,
-        why: challenge.why,
-        note: challenge.note,
+fn map_challenge(db_challenge: DbChallenge) -> Challenge {
+    Challenge {
+        id: db_challenge.id,
+        title: db_challenge.title,
+        why: db_challenge.why,
+        note: db_challenge.note,
         started_at: DateTime::<Utc>::from_utc(
-            NaiveDateTime::from_timestamp(challenge.started_at, 0),
+            NaiveDateTime::from_timestamp(db_challenge.started_at, 0),
             Utc,
         ),
-        end_at: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(challenge.end_at, 0), Utc),
-        finished: challenge.finished,
+        end_at: DateTime::<Utc>::from_utc(
+            NaiveDateTime::from_timestamp(db_challenge.end_at, 0),
+            Utc,
+        ),
+        finished: db_challenge.finished,
     }
 }

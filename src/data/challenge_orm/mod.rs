@@ -139,6 +139,35 @@ impl ChallengeOrm {
             })
         }
     }
+
+    pub async fn update(&self, challenge: Challenge) -> Result<Challenge, DbError> {
+        let insert_query = Query::builder()
+            .keyspace(&self.orm_config.keyspace)
+            .query(
+                "
+                UPDATE challenges
+                SET title = :title, why = :why, note = :note, started_at = :started_at, end_at = :end_at, finished = :finished
+                WHERE id = :id",
+            )
+            .bind_name("id", challenge.id.clone())
+            .bind_name("title", challenge.title)
+            .bind_name("why", challenge.why)
+            .bind_name("note", challenge.note)
+            .bind_name("started_at", challenge.started_at.timestamp_millis())
+            .bind_name("end_at", challenge.end_at.timestamp_millis())
+            .bind_name("finished", challenge.finished)
+            .build();
+
+        let client = self.stargate_client().await?;
+        execute_stargate_query(client, insert_query).await?;
+
+        match self.find_one(&challenge.id).await? {
+            Some(challenge) => Ok(challenge),
+            None => Err(DbError::internal_server_error(
+                "create_challenge failed".to_owned(),
+            )),
+        }
+    }
 }
 
 fn map_challenge(db_challenge: DbChallenge) -> Challenge {

@@ -75,8 +75,8 @@ impl ProfileOrm {
             .keyspace(&self.orm_config.keyspace)
             .query(
                 "
-                INSERT INTO profiles(username, title, avatar_url)
-                VALUES (:username, :title, :avatar_url)
+                INSERT INTO profiles(username, title, avatar_url, description)
+                VALUES (:username, :title, :avatar_url, :description)
                 IF NOT EXISTS",
             )
             .bind(new_profile.clone())

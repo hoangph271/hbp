@@ -2,20 +2,23 @@ use crate::shared::interfaces::ApiError;
 use crate::utils::auth::{AuthPayload, UserJwt};
 use crate::utils::responders::HbpResult;
 use crate::utils::{
-    constants::{cookies::*, headers::*},
+    constants::{cookies::*, headers::AUTHORIZATION},
     status_from,
 };
-use rocket::http::Status;
+use rocket::http::{HeaderMap, Status};
 use rocket::request::{FromRequest, Outcome, Request};
 
 fn jwt_str_from_query_params(req: &Request) -> Option<String> {
-    match req.query_value::<&str>("jwt") {
-        Some(jwt) => jwt.map(|val| val.to_owned()).ok(),
-        None => req
-            .headers()
-            .get_one(AUTHORIZATION)
-            .map(|jwt_str| jwt_str.trim()["Bearer ".len()..].to_owned()),
-    }
+    req.query_value::<&str>("jwt")
+        .and_then(|val| val.ok())
+        .map(|str| str.to_owned())
+}
+fn jwt_str_from_headers(headers: &HeaderMap) -> Option<String> {
+    headers.get(AUTHORIZATION).next().and_then(|header| {
+        let jwt_str = header.split("Bearer ").next();
+
+        jwt_str.map(|str| str.to_string())
+    })
 }
 
 fn get_user_jwt(req: &Request) -> Option<UserJwt> {
@@ -29,7 +32,6 @@ fn get_user_jwt(req: &Request) -> Option<UserJwt> {
     }
 }
 
-// ! FIXME: Dude, this is NOT correct...!
 #[cfg(not(test))]
 fn get_cookie(req: &Request, cookie_name: &str) -> Option<String> {
     req.cookies()
@@ -45,6 +47,7 @@ fn get_cookie(req: &Request, cookie_name: &str) -> Option<String> {
 
 fn get_jwt(req: &Request) -> HbpResult<AuthPayload> {
     let jwt_str = jwt_str_from_query_params(req)
+        .or_else(|| jwt_str_from_headers(req.headers()))
         .or_else(|| get_cookie(req, USER_JWT))
         .or_else(|| get_cookie(req, RESOURCE_JWT));
 

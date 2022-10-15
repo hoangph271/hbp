@@ -154,7 +154,7 @@ impl ChallengeOrm {
             .bind_name("why", challenge.why)
             .bind_name("note", challenge.note)
             .bind_name("started_at", challenge.start_at_ms.timestamp_millis())
-            .bind_name("end_at", challenge.start_at_ms.timestamp_millis())
+            .bind_name("end_at", challenge.end_at_ms.timestamp_millis())
             .bind_name("finished", challenge.finished)
             .build();
 

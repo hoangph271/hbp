@@ -4,7 +4,7 @@
 use super::{OrmConfig, OrmInit};
 use crate::data::lib::*;
 use crate::data::models::challenges_model::Challenge as DbChallenge;
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::{TimeZone, Utc};
 use hbp_types::Challenge;
 use httpstatus::StatusCode;
 use log::{error, info};
@@ -176,14 +176,8 @@ fn map_challenge(db_challenge: DbChallenge) -> Challenge {
         title: db_challenge.title,
         why: db_challenge.why,
         note: db_challenge.note,
-        start_at_ms: DateTime::<Utc>::from_utc(
-            NaiveDateTime::from_timestamp(db_challenge.started_at, 0),
-            Utc,
-        ),
-        end_at_ms: DateTime::<Utc>::from_utc(
-            NaiveDateTime::from_timestamp(db_challenge.end_at, 0),
-            Utc,
-        ),
+        start_at_ms: Utc.timestamp_millis(db_challenge.started_at),
+        end_at_ms: Utc.timestamp_millis(db_challenge.end_at),
         finished: db_challenge.finished,
     }
 }

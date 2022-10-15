@@ -4,7 +4,7 @@ use crate::{
 };
 use hbp_types::{ApiError, ApiItem, ApiList, Challenge};
 use okapi::openapi3::OpenApi;
-use rocket::{get, post, put, serde::json::Json, Route};
+use rocket::{delete, get, post, put, serde::json::Json, Route};
 use rocket_okapi::{openapi, openapi_get_routes_spec, settings::OpenApiSettings};
 
 #[openapi]
@@ -68,11 +68,25 @@ pub async fn api_get_challenge_by_id(challenge_id: &str) -> HbpApiResult<Challen
     Ok(HbpJson::Item(ApiItem::ok(challenge)))
 }
 
+#[openapi]
+#[delete("/<challenge_id>")]
+pub async fn api_delete_challenge_by_id(challenge_id: &str) -> HbpApiResult<()> {
+    wrap_api_handler(|| async {
+        ChallengeOrm::default().delete(challenge_id).await?;
+
+        Ok(())
+    })
+    .await?;
+
+    Ok(HbpJson::Item(ApiItem::ok(())))
+}
+
 pub fn get_routes_and_docs(settings: &OpenApiSettings) -> (Vec<Route>, OpenApi) {
     openapi_get_routes_spec![
         settings: api_get_challenges,
         api_get_challenge_by_id,
         api_post_challenge,
-        api_put_challenge
+        api_put_challenge,
+        api_delete_challenge_by_id
     ]
 }

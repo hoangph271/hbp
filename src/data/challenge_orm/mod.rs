@@ -141,7 +141,7 @@ impl ChallengeOrm {
     }
 
     pub async fn update(&self, challenge: Challenge) -> Result<Challenge, DbError> {
-        let insert_query = Query::builder()
+        let update_query = Query::builder()
             .keyspace(&self.orm_config.keyspace)
             .query(
                 "
@@ -159,7 +159,7 @@ impl ChallengeOrm {
             .build();
 
         let client = self.stargate_client().await?;
-        execute_stargate_query(client, insert_query).await?;
+        execute_stargate_query(client, update_query).await?;
 
         match self.find_one(&challenge.id).await? {
             Some(challenge) => Ok(challenge),
@@ -167,6 +167,23 @@ impl ChallengeOrm {
                 "create_challenge failed".to_owned(),
             )),
         }
+    }
+
+    pub async fn delete(&self, id: &str) -> Result<(), DbError> {
+        let delete_query = Query::builder()
+            .keyspace(&self.orm_config.keyspace)
+            .query(
+                "
+                DELETE FROM challenges
+                WHERE id = :id",
+            )
+            .bind_name("id", id)
+            .build();
+
+        let client = self.stargate_client().await?;
+        execute_stargate_query(client, delete_query).await?;
+
+        Ok(())
     }
 }
 

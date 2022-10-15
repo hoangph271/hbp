@@ -171,7 +171,6 @@ impl ChallengeOrm {
 }
 
 fn map_challenge(db_challenge: DbChallenge) -> Challenge {
-    println!("{}...?", db_challenge.started_at);
     Challenge {
         id: db_challenge.id,
         title: db_challenge.title,

@@ -103,8 +103,8 @@ impl ChallengeOrm {
             .bind_name("title", new_challenge.title)
             .bind_name("why", new_challenge.why)
             .bind_name("note", new_challenge.note)
-            .bind_name("started_at", new_challenge.started_at.timestamp_millis())
-            .bind_name("end_at", new_challenge.end_at.timestamp_millis())
+            .bind_name("started_at", new_challenge.start_at_ms.timestamp_millis())
+            .bind_name("end_at", new_challenge.end_at_ms.timestamp_millis())
             .bind_name("finished", new_challenge.finished)
             .build();
 
@@ -153,8 +153,8 @@ impl ChallengeOrm {
             .bind_name("title", challenge.title)
             .bind_name("why", challenge.why)
             .bind_name("note", challenge.note)
-            .bind_name("started_at", challenge.started_at.timestamp_millis())
-            .bind_name("end_at", challenge.end_at.timestamp_millis())
+            .bind_name("started_at", challenge.start_at_ms.timestamp_millis())
+            .bind_name("end_at", challenge.start_at_ms.timestamp_millis())
             .bind_name("finished", challenge.finished)
             .build();
 
@@ -171,16 +171,17 @@ impl ChallengeOrm {
 }
 
 fn map_challenge(db_challenge: DbChallenge) -> Challenge {
+    println!("{}...?", db_challenge.started_at);
     Challenge {
         id: db_challenge.id,
         title: db_challenge.title,
         why: db_challenge.why,
         note: db_challenge.note,
-        started_at: DateTime::<Utc>::from_utc(
+        start_at_ms: DateTime::<Utc>::from_utc(
             NaiveDateTime::from_timestamp(db_challenge.started_at, 0),
             Utc,
         ),
-        end_at: DateTime::<Utc>::from_utc(
+        end_at_ms: DateTime::<Utc>::from_utc(
             NaiveDateTime::from_timestamp(db_challenge.end_at, 0),
             Utc,
         ),

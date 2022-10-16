@@ -1,7 +1,9 @@
 use async_recursion::async_recursion;
 use async_std::fs::read_dir;
 use async_std::path::PathBuf as AsyncPathBuf;
-use async_std::prelude::*;
+
+use futures::StreamExt;
+use hbp_types::{ApiItem, Directory};
 use log::error;
 use mime_guess::Mime;
 use okapi::openapi3::OpenApi;
@@ -13,7 +15,7 @@ use std::str::FromStr;
 
 use crate::shared::interfaces::ApiError;
 use crate::utils::create_thumbnail;
-use crate::utils::responders::HbpResult;
+use crate::utils::responders::{HbpApiResult, HbpJson, HbpResult};
 use crate::utils::{
     auth::AuthPayload,
     env::{files_root, is_root, public_files_root},
@@ -31,31 +33,22 @@ fn attempt_access(path: &Path, jwt: &Option<AuthPayload>) -> HbpResult<()> {
         true
     }
 
-    if !path.starts_with(files_root()) {
-        return Err(if jwt.is_some() {
-            ApiError::forbidden().append_error(format!("{path:?} should be within files_root()"))
-        } else {
-            ApiError::unauthorized()
+    if is_private(&path) {
+        match jwt {
+            Some(jwt) => {
+                jwt.match_path(
+                    &path,
+                    |_, _| is_root(jwt.username()), // TODO: User jwt
+                )
+            }
+            None => Err(ApiError::forbidden().into()),
         }
-        .into());
-    }
-
-    if !is_private(path) {
-        return Ok(());
-    }
-
-    match jwt {
-        Some(jwt) => {
-            jwt.match_path(
-                path,
-                |_, _| is_root(jwt.username()), // TODO: User jwt
-            )
-        }
-        None => Err(ApiError::forbidden().into()),
+    } else {
+        Ok(())
     }
 }
 
-fn assert_raw_file(path: &Path) -> HbpResult<&Path> {
+fn assert_file_access(path: &Path) -> HbpResult<&Path> {
     if path.is_dir() {
         Err(ApiError::unprocessable_entity()
             .append_error(format!("requested file at {path:?} is NOT a file"))
@@ -65,6 +58,42 @@ fn assert_raw_file(path: &Path) -> HbpResult<&Path> {
     } else {
         Ok(path)
     }
+}
+
+fn assert_directory_access(path: &Path) -> HbpResult<&Path> {
+    if path.is_file() {
+        Err(ApiError::unprocessable_entity()
+            .append_error(format!(
+                "requested directory at {path:?} is NOT a directory"
+            ))
+            .into())
+    } else if !path.exists() {
+        Err(ApiError::not_found().into())
+    } else {
+        Ok(path)
+    }
+}
+
+#[openapi]
+#[get("/dir/<path..>")]
+pub async fn api_get_directory(path: PathBuf, jwt: Option<AuthPayload>) -> HbpApiResult<Directory> {
+    let path = files_root().join(path);
+
+    attempt_access(&path, &jwt)?;
+    assert_directory_access(&path)?;
+
+    let item = Directory {
+        children: read_dir(path)
+            .await?
+            .map(|entry| {
+                entry.unwrap().path().to_string_lossy()[files_root().to_string_lossy().len() + 1..]
+                    .to_owned()
+            })
+            .collect()
+            .await,
+    };
+
+    Ok(HbpJson::Item(ApiItem::ok(item)))
 }
 
 #[openapi]
@@ -186,7 +215,7 @@ pub async fn api_get_preview_file(
     let path = files_root().join(path);
 
     attempt_access(&path, &jwt)?;
-    assert_raw_file(&path)?;
+    assert_file_access(&path)?;
 
     let thumbnail = create_thumbnail(&path)?;
 
@@ -199,7 +228,7 @@ pub async fn api_get_raw_file(jwt: Option<AuthPayload>, path: PathBuf) -> HbpRes
     let path = files_root().join(path);
 
     attempt_access(&path, &jwt)?;
-    assert_raw_file(&path)?;
+    assert_file_access(&path)?;
 
     Ok(HbpResponse::file(path))
 }
@@ -208,6 +237,7 @@ pub fn get_routes_and_docs(openapi_settings: &OpenApiSettings) -> (Vec<Route>, O
     openapi_get_routes_spec![
         openapi_settings: api_get_raw_file,
         api_get_preview_file,
-        api_get_random_file
+        api_get_random_file,
+        api_get_directory
     ]
 }

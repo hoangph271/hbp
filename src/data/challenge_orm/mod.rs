@@ -147,7 +147,8 @@ impl ChallengeOrm {
                 "
                 UPDATE challenges
                 SET title = :title, why = :why, note = :note, started_at = :started_at, end_at = :end_at, finished = :finished
-                WHERE id = :id",
+                WHERE id = :id
+                IF EXISTS",
             )
             .bind_name("id", challenge.id.clone())
             .bind_name("title", challenge.title)
@@ -159,7 +160,21 @@ impl ChallengeOrm {
             .build();
 
         let client = self.stargate_client().await?;
-        execute_stargate_query(client, update_query).await?;
+        let mut rs = execute_stargate_query(client, update_query)
+            .await?
+            .ok_or_else(|| DbError {
+                status_code: StatusCode::NotFound,
+                message: format!("Challenge NotFound: {}", challenge.id),
+            })?;
+
+        let is_found: bool = rs.rows.pop().unwrap().try_take(0).unwrap();
+
+        if !is_found {
+            Err(DbError {
+                status_code: StatusCode::NotFound,
+                message: format!("Challenge NotFound: {}", challenge.id),
+            })?
+        }
 
         match self.find_one(&challenge.id).await? {
             Some(challenge) => Ok(challenge),

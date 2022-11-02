@@ -1,6 +1,6 @@
 use crate::{
     data::challenge_orm::ChallengeOrm,
-    utils::responders::{wrap_api_handler, HbpApiResult, HbpError, HbpJson},
+    utils::{responders::{wrap_api_handler, HbpApiResult, HbpError, HbpJson}, auth::AuthPayload},
 };
 use hbp_types::{ApiError, ApiItem, ApiList, Challenge};
 use okapi::openapi3::OpenApi;
@@ -24,7 +24,7 @@ pub async fn api_get_challenges() -> HbpApiResult<Challenge> {
 
 #[openapi]
 #[post("/", data = "<new_challenge>")]
-pub async fn api_post_challenge(new_challenge: Json<Challenge>) -> HbpApiResult<Challenge> {
+pub async fn api_post_challenge(new_challenge: Json<Challenge>, _jwt: AuthPayload) -> HbpApiResult<Challenge> {
     let new_challenge = new_challenge.into_inner();
     let challenge = wrap_api_handler(|| async {
         let orm = ChallengeOrm::default();
@@ -38,7 +38,7 @@ pub async fn api_post_challenge(new_challenge: Json<Challenge>) -> HbpApiResult<
 
 #[openapi]
 #[put("/", data = "<challenge>")]
-pub async fn api_put_challenge(challenge: Json<Challenge>) -> HbpApiResult<Challenge> {
+pub async fn api_put_challenge(challenge: Json<Challenge>, _jwt: AuthPayload) -> HbpApiResult<Challenge> {
     let challenge = challenge.into_inner();
     let challenge = wrap_api_handler(|| async {
         let orm = ChallengeOrm::default();
@@ -70,7 +70,7 @@ pub async fn api_get_challenge_by_id(challenge_id: &str) -> HbpApiResult<Challen
 
 #[openapi]
 #[delete("/<challenge_id>")]
-pub async fn api_delete_challenge_by_id(challenge_id: &str) -> HbpApiResult<()> {
+pub async fn api_delete_challenge_by_id(challenge_id: &str, _jwt: AuthPayload) -> HbpApiResult<()> {
     wrap_api_handler(|| async {
         ChallengeOrm::default().delete(challenge_id).await?;
 

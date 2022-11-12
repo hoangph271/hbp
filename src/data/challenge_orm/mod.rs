@@ -208,8 +208,8 @@ fn map_challenge(db_challenge: DbChallenge) -> Challenge {
         title: db_challenge.title,
         why: db_challenge.why,
         note: db_challenge.note,
-        start_at_ms: Utc.timestamp_millis(db_challenge.started_at),
-        end_at_ms: Utc.timestamp_millis(db_challenge.end_at),
+        start_at_ms: Utc.timestamp_millis_opt(db_challenge.started_at).unwrap(),
+        end_at_ms: Utc.timestamp_millis_opt(db_challenge.end_at).unwrap(),
         finished: db_challenge.finished,
     }
 }

@@ -139,7 +139,7 @@ impl Markdown {
             markdown.dob = format!(
                 "{}",
                 DateTime::<Utc>::from(path.metadata()?.created()?)
-                    .date()
+                    .date_naive()
                     .format("%m/%d/%Y")
             );
         }

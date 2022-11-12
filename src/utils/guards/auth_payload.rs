@@ -15,7 +15,8 @@ fn jwt_str_from_query_params(req: &Request) -> Option<String> {
 }
 fn jwt_str_from_headers(headers: &HeaderMap) -> Option<String> {
     headers.get(AUTHORIZATION).next().and_then(|header| {
-        let jwt_str = header.split("Bearer ").next();
+        let parts = header.split(' ').collect::<Vec<_>>();
+        let jwt_str = parts.get(1);
 
         jwt_str.map(|str| str.to_string())
     })

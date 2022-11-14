@@ -2,10 +2,6 @@
   gap: var(--radius-gentle);
 }
 
-.Header-link-wrapper {
-  min-width: 10rem;
-}
-
 .breadcrumb-item:last-of-type::after {
   display: none;
 }

@@ -81,6 +81,9 @@ footer.Box {
   list-style: none;
 }
 
+.hbp-markdown ul li input[type="checkbox"]+p {
+  display: inline-block;
+}
 .hbp-markdown code {
   background-color: lightgray;
   padding: 0.2rem;

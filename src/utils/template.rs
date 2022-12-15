@@ -73,7 +73,7 @@ impl MoveUpUrl {
                 for sub_path in parent_path.iter() {
                     let title = sub_path.to_string_lossy().to_string();
                     let prev_url: String = match moveup_urls.last() {
-                        Some(moveup_url) => (*moveup_url).url.clone(),
+                        Some(moveup_url) => moveup_url.url.clone(),
                         None => "/".to_string(),
                     };
 

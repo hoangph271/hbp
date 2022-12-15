@@ -33,11 +33,11 @@ fn attempt_access(path: &Path, jwt: &Option<AuthPayload>) -> HbpResult<()> {
         true
     }
 
-    if is_private(&path) {
+    if is_private(path) {
         match jwt {
             Some(jwt) => {
                 jwt.match_path(
-                    &path,
+                    path,
                     |_, _| is_root(jwt.username()), // TODO: User jwt
                 )
             }

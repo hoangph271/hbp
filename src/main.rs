@@ -1,7 +1,6 @@
 #![forbid(unsafe_code)]
 
 // #region imports
-#[macro_use]
 extern crate dotenv_codegen;
 extern crate mustache;
 extern crate rocket_okapi;

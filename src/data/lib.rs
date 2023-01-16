@@ -145,8 +145,8 @@ pub async fn build_stargate_client(
 }
 pub async fn stargate_client_from_env() -> Result<StargateClient, DbError> {
     build_stargate_client(
-        from_env(EnvKey::AstraUri),
-        from_env(EnvKey::AstraBearerToken),
+        &from_env(EnvKey::AstraUri),
+        &from_env(EnvKey::AstraBearerToken),
     )
     .await
 }
@@ -235,6 +235,6 @@ where
     }
 }
 
-pub fn get_keyspace() -> &'static str {
+pub fn get_keyspace() -> String {
     from_env(EnvKey::AstraKeySpace)
 }

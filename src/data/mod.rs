@@ -74,9 +74,9 @@ impl OrmConfig {
     #[cfg(test)]
     pub fn from_test_env() -> Self {
         Self {
-            keyspace: dotenv!("TEST_ASTRA_KEY_SPACE").to_owned(),
-            astra_uri: dotenv!("TEST_ASTRA_URI").to_owned(),
-            bearer_token: dotenv!("TEST_ASTRA_BEARER_TOKEN").to_owned(),
+            keyspace: dotenv::var("TEST_ASTRA_KEY_SPACE").unwrap(),
+            astra_uri: dotenv::var("TEST_ASTRA_URI").unwrap(),
+            bearer_token: dotenv::var("TEST_ASTRA_BEARER_TOKEN").unwrap(),
         }
     }
 

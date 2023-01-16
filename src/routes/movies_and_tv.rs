@@ -25,7 +25,7 @@ struct MovieOrTv {
 #[get("/")]
 async fn api_get_shows() -> HbpApiResult<MovieOrTv> {
     let query = Query::builder()
-        .keyspace(get_keyspace())
+        .keyspace(&get_keyspace())
         .query("SELECT title, show_id FROM movies_and_tv")
         .build();
 
@@ -65,7 +65,7 @@ async fn api_get_shows() -> HbpApiResult<MovieOrTv> {
 #[get("/<show_id>")]
 async fn api_get_one(show_id: i64) -> HbpApiResult<MovieOrTv> {
     let query = Query::builder()
-        .keyspace(get_keyspace())
+        .keyspace(&get_keyspace())
         .query("SELECT title, show_id FROM movies_and_tv WHERE show_id = :show_id")
         .bind_name("show_id", show_id)
         .build();

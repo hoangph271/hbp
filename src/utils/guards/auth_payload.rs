@@ -61,9 +61,7 @@ fn get_jwt(req: &Request) -> HbpResult<AuthPayload> {
                 AuthPayload::UserResource(_) => RESOURCE_JWT,
             };
 
-            if get_cookie(req, cookies_name).is_none() {
-                req.cookies().add_private(Cookie::new(cookies_name, token));
-            }
+            req.cookies().add_private(Cookie::new(cookies_name, token));
 
             jwt
         })

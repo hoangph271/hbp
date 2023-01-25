@@ -1,11 +1,11 @@
 use crate::shared::interfaces::ApiError;
 use crate::utils::auth::{AuthPayload, UserJwt};
-use crate::utils::responders::HbpResult;
+use crate::utils::responders::{HbpError, HbpResult};
 use crate::utils::{
     constants::{cookies::*, headers::AUTHORIZATION},
     status_from,
 };
-use rocket::http::{HeaderMap, Status};
+use rocket::http::{Cookie, HeaderMap, Status};
 use rocket::request::{FromRequest, Outcome, Request};
 
 fn jwt_str_from_query_params(req: &Request) -> Option<String> {
@@ -47,15 +47,26 @@ fn get_cookie(req: &Request, cookie_name: &str) -> Option<String> {
 }
 
 fn get_jwt(req: &Request) -> HbpResult<AuthPayload> {
-    let jwt_str = jwt_str_from_query_params(req)
+    let token = jwt_str_from_query_params(req)
         .or_else(|| jwt_str_from_headers(req.headers()))
         .or_else(|| get_cookie(req, USER_JWT))
-        .or_else(|| get_cookie(req, RESOURCE_JWT));
+        .or_else(|| get_cookie(req, RESOURCE_JWT))
+        .ok_or_else(|| HbpError::from(ApiError::unauthorized()))?;
 
-    match jwt_str {
-        Some(token) => AuthPayload::decode(&token).map_err(|e| e.into()),
-        None => Err(ApiError::unauthorized().into()),
-    }
+    AuthPayload::decode(&token)
+        .map_err(|e| e.into())
+        .map(|jwt| {
+            let cookies_name = match jwt {
+                AuthPayload::User(_) => USER_JWT,
+                AuthPayload::UserResource(_) => RESOURCE_JWT,
+            };
+
+            if get_cookie(req, cookies_name).is_none() {
+                req.cookies().add_private(Cookie::new(cookies_name, token));
+            }
+
+            jwt
+        })
 }
 
 #[rocket::async_trait]

@@ -173,7 +173,7 @@ impl AuthPayload {
             AuthPayload::UserResource(payload) => {
                 let can_access = glob::Pattern::new(&payload.path)
                     .map_err(|e| {
-                        error!("{e}");
+                        error!("AuthPayload::match_path failed: {e}");
                         ApiError::forbidden()
                     })?
                     .matches(&path.to_string_lossy());

@@ -3,7 +3,7 @@ use crate::shared::interfaces::ApiError;
 use crate::utils::markdown::render_markdown_list;
 use crate::utils::responders::HbpResult;
 use crate::utils::template::{IndexLayout, MoveUpUrl, Templater};
-// use crate::utils::types::HbpResult;
+
 use crate::utils::{
     auth::AuthPayload,
     markdown,

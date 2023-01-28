@@ -125,7 +125,8 @@ pub async fn build_stargate_client(
 
     StargateClient::builder()
         .uri(astra_uri)
-        .map_err(|_| {
+        .map_err(|e| {
+            log::error!("InvalidUri: {e}");
             DbError::internal_server_error("build_stargate_client() failed at .uri()".to_owned())
         })?
         .auth_token(AuthToken::from_str(bearer_token).map_err(|e| {

@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, MAIN_SEPARATOR};
 
 use httpstatus::StatusCode;
 use image::ImageFormat;
@@ -45,7 +45,7 @@ pub fn create_thumbnail(path: &Path) -> HbpResult<NamedTempFile> {
 }
 
 pub fn url_encode_path(path: &str) -> String {
-    path.split('/')
+    path.split(MAIN_SEPARATOR)
         .map(|part| urlencoding::encode(part).to_string())
         .collect::<Vec<String>>()
         .join("/")

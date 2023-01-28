@@ -80,6 +80,8 @@ impl MoveUpUrl {
                     let mut url = PathBuf::from(prev_url);
                     url.push(title.clone());
 
+                    println!("{url:?}");
+
                     moveup_urls.push(MoveUpUrl {
                         title,
                         url: url_encode_path(&url.to_string_lossy()),

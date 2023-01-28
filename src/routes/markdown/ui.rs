@@ -41,7 +41,7 @@ pub(super) async fn markdown_file(
                         .to_string(),
                 );
 
-            render_dir(&file_path, layout_data)
+            render_markdown_dir(&file_path, layout_data)
         } else {
             Ok(HbpResponse::file(file_path))
         };
@@ -98,7 +98,7 @@ pub(super) async fn user_markdown_file(
     let moveup_urls = MoveUpUrl::from_path(&file_path);
 
     if file_path.is_dir() {
-        return render_dir(
+        return render_markdown_dir(
             &file_path,
             IndexLayout::default()
                 .title(file_path_str)
@@ -168,7 +168,7 @@ pub struct MarkdownExtraData {
     og_image: String,
 }
 
-fn render_dir(dir_path: &PathBuf, layout_data: IndexLayout) -> HbpResult<HbpResponse> {
+fn render_markdown_dir(dir_path: &PathBuf, layout_data: IndexLayout) -> HbpResult<HbpResponse> {
     let markdowns: Vec<MarkdownOrMarkdownDir> = markdown::markdown_from_dir(dir_path)?;
 
     render_markdown_list(layout_data, markdowns).map(|html| HbpResponse::html(html, StatusCode::Ok))

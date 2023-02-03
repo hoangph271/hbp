@@ -56,20 +56,16 @@ pub async fn render_markdown(markdown: &Markdown, layout_data: IndexLayout) -> H
         .to_html_page(MarkdownTemplate::of(markdown, None), layout_data)
 }
 
-fn allowed_glob (file_path:&Path) -> String {
+fn allowed_glob(file_path: &Path) -> String {
     if file_path.is_file() {
         let file_stem = file_path.file_stem().map(|val| val.to_string_lossy());
         let parent_path = file_path.parent();
 
-        match (file_stem, parent_path) {
-            (Some(file_stem), Some(parent_path)) => {
-
-                if parent_path.ends_with(&file_stem.to_string()) {
-                    let parent_glob = parent_path.join("*");
-                    return parent_glob.to_string_lossy().to_string()
-                }
-            },
-            _ => {}
+        if let (Some(file_stem), Some(parent_path)) = (file_stem, parent_path) {
+            if parent_path.ends_with(file_stem.to_string()) {
+                let parent_glob = parent_path.join("*");
+                return parent_glob.to_string_lossy().to_string();
+            }
         }
     }
 

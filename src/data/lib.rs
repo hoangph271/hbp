@@ -75,7 +75,7 @@ pub mod post_orm {
             client
                 .execute_query(create_posts_table)
                 .await
-                .unwrap_or_else(|e| panic!("execute_query() failed: {:?}", e));
+                .unwrap_or_else(|e| panic!("execute_query() failed: {e:?}"));
 
             info!("created posts table");
 

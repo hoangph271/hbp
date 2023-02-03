@@ -339,7 +339,7 @@ mod hbp_response_impls {
             error!("[reqwest::Error]: {e}");
 
             let msg = match e.source() {
-                Some(source) => format!("{:?}", source),
+                Some(source) => format!("{source:?}"),
                 None => "Unknown error".to_owned(),
             };
 

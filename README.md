@@ -6,6 +6,10 @@ It's actually live [here](https://sneu.date/)
 
 ---
 
+## Issues:
+- Pretty much only work on Linux & macOS
+- Not working on a blockchain (that was the original plan)
+
 ## Setup:
 
 - Initialize the `.env` file and the `Rocket.toml` file

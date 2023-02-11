@@ -10,6 +10,18 @@ It's actually live [here](https://sneu.date/)
 - Pretty much only work on Linux & macOS
 - Not working on a blockchain (that was the original plan)
 
+## Build:
+
+- Debian/Ubuntu based distros:
+
+```bash
+# Install required packages:
+sudo apt install build-essential pkg-config libssl-dev -y
+
+# Release build:
+cargo build --release
+```
+
 ## Setup:
 
 - Initialize the `.env` file and the `Rocket.toml` file

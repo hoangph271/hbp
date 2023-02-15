@@ -4,16 +4,17 @@ use crate::{
 };
 use hbp_types::{ApiError, ApiItem, ApiList, Challenge};
 use okapi::openapi3::OpenApi;
-use rocket::{delete, get, post, put, serde::json::Json, Route};
+use rocket::{delete, get, post, put, serde::json::Json, Route, State};
 use rocket_okapi::{openapi, openapi_get_routes_spec, settings::OpenApiSettings};
+use sled::Db;
 
 #[openapi]
 #[get("/")]
-pub async fn api_get_challenges() -> HbpApiResult<Challenge> {
+pub async fn api_get_challenges(db: &State<Db>) -> HbpApiResult<Challenge> {
     let challenges = wrap_api_handler(|| async {
         let orm = ChallengeOrm::default();
 
-        let challenges = orm.find().await?;
+        let challenges = orm.find(&db).await?;
 
         Ok(challenges)
     })
@@ -24,12 +25,12 @@ pub async fn api_get_challenges() -> HbpApiResult<Challenge> {
 
 #[openapi]
 #[post("/", data = "<new_challenge>")]
-pub async fn api_post_challenge(new_challenge: Json<Challenge>, _jwt: AuthPayload) -> HbpApiResult<Challenge> {
+pub async fn api_post_challenge(new_challenge: Json<Challenge>, _jwt: AuthPayload, db: &State<Db>) -> HbpApiResult<Challenge> {
     let new_challenge = new_challenge.into_inner();
     let challenge = wrap_api_handler(|| async {
         let orm = ChallengeOrm::default();
 
-        orm.create(new_challenge).await.map_err(|e| e.into())
+        orm.create(new_challenge, db).await.map_err(|e| e.into())
     })
     .await?;
 
@@ -38,12 +39,12 @@ pub async fn api_post_challenge(new_challenge: Json<Challenge>, _jwt: AuthPayloa
 
 #[openapi]
 #[put("/", data = "<challenge>")]
-pub async fn api_put_challenge(challenge: Json<Challenge>, _jwt: AuthPayload) -> HbpApiResult<Challenge> {
+pub async fn api_put_challenge(challenge: Json<Challenge>, _jwt: AuthPayload, db: &State<Db>) -> HbpApiResult<Challenge> {
     let challenge = challenge.into_inner();
     let challenge = wrap_api_handler(|| async {
         let orm = ChallengeOrm::default();
 
-        orm.update(challenge).await.map_err(|e| e.into())
+        orm.update(challenge, db).await.map_err(|e| e.into())
     })
     .await?;
 
@@ -52,11 +53,11 @@ pub async fn api_put_challenge(challenge: Json<Challenge>, _jwt: AuthPayload) ->
 
 #[openapi]
 #[get("/<challenge_id>")]
-pub async fn api_get_challenge_by_id(challenge_id: &str) -> HbpApiResult<Challenge> {
+pub async fn api_get_challenge_by_id(challenge_id: &str, db: &State<Db>) -> HbpApiResult<Challenge> {
     let challenge = wrap_api_handler(|| async {
         let orm = ChallengeOrm::default();
 
-        let challenge = orm.find_one(challenge_id).await?;
+        let challenge = orm.find_one(challenge_id, db).await?;
 
         Ok(challenge)
     })
@@ -70,9 +71,9 @@ pub async fn api_get_challenge_by_id(challenge_id: &str) -> HbpApiResult<Challen
 
 #[openapi]
 #[delete("/<challenge_id>")]
-pub async fn api_delete_challenge_by_id(challenge_id: &str, _jwt: AuthPayload) -> HbpApiResult<()> {
+pub async fn api_delete_challenge_by_id(challenge_id: &str, _jwt: AuthPayload, db: &State<Db>) -> HbpApiResult<()> {
     wrap_api_handler(|| async {
-        ChallengeOrm::default().delete(challenge_id).await?;
+        ChallengeOrm::default().delete(challenge_id, db).await?;
 
         Ok(())
     })

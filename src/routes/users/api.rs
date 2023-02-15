@@ -5,10 +5,11 @@ use crate::utils::auth::UserJwt;
 use crate::utils::responders::{wrap_api_handler, HbpApiResult, HbpResult};
 use httpstatus::StatusCode::BadRequest;
 use rocket::serde::json::{Error as JsonError, Json};
-use rocket::{post, put};
+use rocket::{post, put, State};
 use rocket_okapi::openapi;
 use schemars::JsonSchema;
 use serde::Deserialize;
+use sled::Db;
 
 use super::shared::{attemp_signin, LoginBody};
 
@@ -33,6 +34,7 @@ impl SignupApiPayload {
 #[post("/signup", data = "<signup_payload>")]
 pub async fn api_post_signup(
     signup_payload: Result<Json<SignupApiPayload>, JsonError<'_>>,
+    db: &State<Db>,
 ) -> HbpApiResult<DbUser> {
     use crate::data::models::users_model::DbUser;
 
@@ -54,7 +56,7 @@ pub async fn api_post_signup(
                 username: signup_body.username.clone(),
                 hashed_password: bcrypt::hash(&signup_body.password, bcrypt::DEFAULT_COST)
                     .map_err(|e| ApiError::internal_server_error().append_error(e.to_string()))?,
-            })
+            }, db)
             .await?;
 
         Ok(new_user)
@@ -83,9 +85,9 @@ pub async fn api_put_user(
 
 #[openapi]
 #[post("/signin", data = "<signin_body>")]
-pub async fn api_post_signin(signin_body: Json<LoginBody>) -> HbpApiResult<String> {
+pub async fn api_post_signin(signin_body: Json<LoginBody>, db: &State<Db>) -> HbpApiResult<String> {
     let jwt: String = wrap_api_handler(|| async {
-        let user = attemp_signin(&signin_body.username, &signin_body.password)
+        let user = attemp_signin(&signin_body.username, &signin_body.password, db)
             .await?
             .ok_or_else(ApiError::unauthorized)?;
 

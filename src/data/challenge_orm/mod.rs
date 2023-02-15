@@ -18,10 +18,8 @@ impl OrmInit for ChallengeOrm {
 }
 
 impl ChallengeOrm {
-    pub async fn find(&self) -> Result<Vec<Challenge>, DbError> {
-        let sled = sled::open(self.db_file_name()).unwrap();
-
-        let challenges: Vec<Challenge> = sled
+    pub async fn find(&self, db: &sled::Db) -> Result<Vec<Challenge>, DbError> {
+        let challenges: Vec<Challenge> = db
             .iter()
             .map(|raw| {
                 let (_, value) = raw.unwrap();
@@ -34,10 +32,8 @@ impl ChallengeOrm {
         Ok(challenges)
     }
 
-    pub async fn find_one(&self, id: &str) -> Result<Option<Challenge>, DbError> {
-        let sled = sled::open(self.db_file_name()).unwrap();
-
-        if let Some(raw) = sled.get(id).unwrap() {
+    pub async fn find_one(&self, id: &str, db: &sled::Db) -> Result<Option<Challenge>, DbError> {
+        if let Some(raw) = db.get(id).unwrap() {
             let json = from_utf8_lossy(&raw[..]);
             Ok(serde_json::from_str(&json).ok())
         } else {
@@ -45,16 +41,15 @@ impl ChallengeOrm {
         }
     }
 
-    pub async fn create(&self, new_challenge: Challenge) -> Result<Challenge, DbError> {
-        let sled = sled::open(self.db_file_name()).unwrap();
+    pub async fn create(&self, new_challenge: Challenge, db: &sled::Db) -> Result<Challenge, DbError> {
         let id = new_challenge.id.clone();
 
-        sled.insert(
+        db.insert(
             new_challenge.id.clone(),
             serde_json::to_string(&new_challenge).unwrap().as_bytes(),
         ).unwrap();
 
-        self.find_one(&id)
+        self.find_one(&id, &db)
             .await
             .unwrap()
             .ok_or(DbError::internal_server_error(
@@ -62,7 +57,7 @@ impl ChallengeOrm {
             ))
     }
 
-    pub async fn update(&self, _challenge: Challenge) -> Result<Challenge, DbError> {
+    pub async fn update(&self, _challenge: Challenge, db: &sled::Db) -> Result<Challenge, DbError> {
         todo!()
         // let update_query = Query::builder()
         //     .keyspace(&self.orm_config.keyspace)
@@ -107,10 +102,8 @@ impl ChallengeOrm {
         // }
     }
 
-    pub async fn delete(&self, id: &str) -> Result<(), DbError> {
-        let sled = sled::open(self.db_file_name()).unwrap();
-
-        sled.remove(id).unwrap();
+    pub async fn delete(&self, id: &str, db: &sled::Db) -> Result<(), DbError> {
+        db.remove(id).unwrap();
 
         Ok(())
     }

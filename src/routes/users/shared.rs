@@ -1,7 +1,8 @@
 use httpstatus::StatusCode::BadRequest;
-use rocket::form::FromForm;
+use rocket::{form::FromForm, State};
 use schemars::JsonSchema;
 use serde::Deserialize;
+use sled::Db;
 
 use crate::{
     data::{lib::DbResult, models::users_model::DbUser, user_orm::UserOrm},
@@ -9,8 +10,8 @@ use crate::{
     utils::responders::HbpResult,
 };
 
-pub async fn attemp_signin(username: &str, password: &str) -> DbResult<Option<DbUser>> {
-    if let Some(user) = UserOrm::default().find_one(username).await? {
+pub async fn attemp_signin(username: &str, password: &str, db: &State<Db>) -> DbResult<Option<DbUser>> {
+    if let Some(user) = UserOrm::default().find_one(username, db).await? {
         let is_password_matches = bcrypt::verify(password, &user.hashed_password).unwrap_or(false);
 
         if is_password_matches {

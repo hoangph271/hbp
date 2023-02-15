@@ -18,10 +18,8 @@ impl OrmInit for ProfileOrm {
 
 impl ProfileOrm {
     #[allow(dead_code)]
-    pub async fn find_one(&self, username: &str) -> Result<Option<DbProfile>, DbError> {
-        let sled = sled::open(self.db_file_name()).unwrap();
-
-        if let Some(raw) = sled.get(username).unwrap() {
+    pub async fn find_one(&self, username: &str, db: &sled::Db) -> Result<Option<DbProfile>, DbError> {
+        if let Some(raw) = db.get(username).unwrap() {
             let json = from_utf8_lossy(&raw[..]);
             Ok(serde_json::from_str(&json).ok())
         } else {
@@ -29,16 +27,15 @@ impl ProfileOrm {
         }
     }
 
-    pub async fn create_profile(&self, new_profile: DbProfile) -> Result<DbProfile, DbError> {
-        let sled = sled::open(self.db_file_name()).unwrap();
+    pub async fn create_profile(&self, new_profile: DbProfile, db: &sled::Db) -> Result<DbProfile, DbError> {
         let username = new_profile.username.clone();
 
-        sled.insert(
+        db.insert(
             new_profile.username.clone(),
             serde_json::to_string(&new_profile).unwrap().as_bytes(),
         ).unwrap();
 
-        self.find_one(&username)
+        self.find_one(&username, db)
             .await
             .unwrap()
             .ok_or(DbError::internal_server_error(

@@ -67,32 +67,27 @@ impl OrmInit for UserOrm {
 }
 
 impl UserOrm {
-    pub async fn find_one(&self, username: &str) -> Result<Option<DbUser>, DbError> {
-        let sled = sled::open(self.db_file_name()).unwrap();
-
-        if let Some(raw) = sled.get(username).unwrap() {
+    pub async fn find_one(&self, username: &str, db: &sled::Db) -> Result<Option<DbUser>, DbError> {
+        if let Some(raw) = db.get(username).unwrap() {
             let json = from_utf8_lossy(&raw[..]);
-            Ok(serde_json::from_str(&json).ok())
+            let user: DbUser = serde_json::from_str(&json).unwrap();
+
+            Ok(Some(user))
         } else {
             Ok(None)
         }
     }
 
-    pub async fn create_user(&self, new_user: DbUser) -> Result<DbUser, DbError> {
-        let sled = sled::open(self.db_file_name()).unwrap();
+    pub async fn create_user(&self, new_user: DbUser, db: &sled::Db) -> Result<DbUser, DbError> {
         let username = new_user.username.clone();
 
-        sled.insert(
+        db.insert(
             new_user.username.clone(),
             serde_json::to_string(&new_user).unwrap().as_bytes(),
-        ).unwrap();
+        )
+        .unwrap();
 
-        self.find_one(&username)
-            .await
-            .unwrap()
-            .ok_or(DbError::internal_server_error(
-                "create Challenge failed".to_string(),
-            ))
+        Ok(self.find_one(&username, db).await.unwrap().unwrap())
     }
 
     pub async fn update_user(&self, _user: PutUser) -> Result<(), DbError> {

@@ -69,7 +69,7 @@ pub async fn post_login(
     login_body: Form<LoginBody>,
     jar: &CookieJar<'_>,
     redirect_url: Option<String>,
-    db: &State<Db>
+    db: &State<Db>,
 ) -> HbpResponse {
     match attemp_signin(&login_body.username, &login_body.password, db).await {
         Err(e) => {
@@ -132,7 +132,7 @@ pub async fn post_signup(signup_body: Form<SignupBody>, db: &State<Db>) -> HbpRe
             .unwrap_or_else(|e| panic!("bcrypt::hash failed: {e:?}")),
     };
 
-    if UserOrm::default().create_user(new_user, db).await.is_ok() {
+    if UserOrm::default().create_user(db, new_user).await.is_ok() {
         HbpResponse::redirect(uri!("/users", login(_)))
     } else {
         HbpResponse::redirect(uri!("/users", signup))

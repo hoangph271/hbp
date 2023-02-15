@@ -51,12 +51,17 @@ pub async fn api_post_signup(
         signup_body.validate()?;
 
         let new_user = UserOrm::default()
-            .create_user(DbUser {
-                title: signup_body.username.clone(),
-                username: signup_body.username.clone(),
-                hashed_password: bcrypt::hash(&signup_body.password, bcrypt::DEFAULT_COST)
-                    .map_err(|e| ApiError::internal_server_error().append_error(e.to_string()))?,
-            }, db)
+            .create_user(
+                db,
+                DbUser {
+                    title: signup_body.username.clone(),
+                    username: signup_body.username.clone(),
+                    hashed_password: bcrypt::hash(&signup_body.password, bcrypt::DEFAULT_COST)
+                        .map_err(|e| {
+                            ApiError::internal_server_error().append_error(e.to_string())
+                        })?,
+                },
+            )
             .await?;
 
         Ok(new_user)

@@ -10,8 +10,12 @@ use crate::{
     utils::responders::HbpResult,
 };
 
-pub async fn attemp_signin(username: &str, password: &str, db: &State<Db>) -> DbResult<Option<DbUser>> {
-    if let Some(user) = UserOrm::default().find_one(username, db).await? {
+pub async fn attemp_signin(
+    username: &str,
+    password: &str,
+    db: &State<Db>,
+) -> DbResult<Option<DbUser>> {
+    if let Some(user) = UserOrm::default().find_one(db, username).await? {
         let is_password_matches = bcrypt::verify(password, &user.hashed_password).unwrap_or(false);
 
         if is_password_matches {

@@ -67,7 +67,7 @@ impl OrmInit for UserOrm {
 }
 
 impl UserOrm {
-    pub async fn find_one(&self, username: &str, db: &sled::Db) -> Result<Option<DbUser>, DbError> {
+    pub async fn find_one(&self, db: &sled::Db, username: &str) -> Result<Option<DbUser>, DbError> {
         if let Some(raw) = db.get(username).unwrap() {
             let json = from_utf8_lossy(&raw[..]);
             let user: DbUser = serde_json::from_str(&json).unwrap();
@@ -78,7 +78,7 @@ impl UserOrm {
         }
     }
 
-    pub async fn create_user(&self, new_user: DbUser, db: &sled::Db) -> Result<DbUser, DbError> {
+    pub async fn create_user(&self, db: &sled::Db, new_user: DbUser) -> Result<DbUser, DbError> {
         let username = new_user.username.clone();
 
         db.insert(
@@ -87,7 +87,7 @@ impl UserOrm {
         )
         .unwrap();
 
-        Ok(self.find_one(&username, db).await.unwrap().unwrap())
+        Ok(self.find_one(db, &username).await.unwrap().unwrap())
     }
 
     pub async fn update_user(&self, _user: PutUser) -> Result<(), DbError> {

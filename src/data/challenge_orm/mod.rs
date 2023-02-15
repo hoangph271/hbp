@@ -32,7 +32,7 @@ impl ChallengeOrm {
         Ok(challenges)
     }
 
-    pub async fn find_one(&self, id: &str, db: &sled::Db) -> Result<Option<Challenge>, DbError> {
+    pub async fn find_one(&self, db: &sled::Db, id: &str) -> Result<Option<Challenge>, DbError> {
         if let Some(raw) = db.get(id).unwrap() {
             let json = from_utf8_lossy(&raw[..]);
             Ok(serde_json::from_str(&json).ok())
@@ -41,15 +41,20 @@ impl ChallengeOrm {
         }
     }
 
-    pub async fn create(&self, new_challenge: Challenge, db: &sled::Db) -> Result<Challenge, DbError> {
+    pub async fn create(
+        &self,
+        db: &sled::Db,
+        new_challenge: Challenge,
+    ) -> Result<Challenge, DbError> {
         let id = new_challenge.id.clone();
 
         db.insert(
             new_challenge.id.clone(),
             serde_json::to_string(&new_challenge).unwrap().as_bytes(),
-        ).unwrap();
+        )
+        .unwrap();
 
-        self.find_one(&id, &db)
+        self.find_one(db, &id)
             .await
             .unwrap()
             .ok_or(DbError::internal_server_error(
@@ -57,7 +62,7 @@ impl ChallengeOrm {
             ))
     }
 
-    pub async fn update(&self, _challenge: Challenge, db: &sled::Db) -> Result<Challenge, DbError> {
+    pub async fn update(&self, db: &sled::Db, _challenge: Challenge) -> Result<Challenge, DbError> {
         todo!()
         // let update_query = Query::builder()
         //     .keyspace(&self.orm_config.keyspace)
@@ -102,7 +107,7 @@ impl ChallengeOrm {
         // }
     }
 
-    pub async fn delete(&self, id: &str, db: &sled::Db) -> Result<(), DbError> {
+    pub async fn delete(&self, db: &sled::Db, id: &str) -> Result<(), DbError> {
         db.remove(id).unwrap();
 
         Ok(())

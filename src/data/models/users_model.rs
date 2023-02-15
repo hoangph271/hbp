@@ -1,8 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use stargate_grpc_derive::{IntoValues, TryFromRow};
 
-#[derive(Debug, Serialize, TryFromRow, Deserialize, JsonSchema, Clone, IntoValues)]
+#[derive(Debug, Serialize, Deserialize, JsonSchema, Clone)]
 pub struct DbUser {
     pub username: String,
     #[serde(skip_serializing)]
@@ -10,7 +9,7 @@ pub struct DbUser {
     pub title: String,
 }
 
-#[derive(Debug, Serialize, TryFromRow, Deserialize, JsonSchema, Clone, IntoValues)]
+#[derive(Debug, Serialize, Deserialize, JsonSchema, Clone)]
 pub struct PutUser {
     pub username: String,
     pub title: String,

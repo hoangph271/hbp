@@ -1,9 +1,8 @@
-use serde::Serialize;
-use stargate_grpc_derive::{IntoValues, TryFromRow};
+use serde::{Serialize, Deserialize};
 
 use super::users_model::DbUser;
 
-#[derive(Serialize, TryFromRow, Clone, IntoValues)]
+#[derive(Serialize, Clone, Deserialize)]
 pub struct DbProfile {
     pub username: String,
     pub title: String,
@@ -13,14 +12,14 @@ pub struct DbProfile {
 }
 
 impl DbProfile {
-    pub fn from_username(username: String) -> DbProfile {
-        DbProfile {
-            username: username.clone(),
-            title: username,
-            avatar_url: None,
-            description: None,
-        }
-    }
+    // pub fn from_username(username: String) -> DbProfile {
+    //     DbProfile {
+    //         username: username.clone(),
+    //         title: username,
+    //         avatar_url: None,
+    //         description: None,
+    //     }
+    // }
 }
 
 impl From<DbUser> for DbProfile {

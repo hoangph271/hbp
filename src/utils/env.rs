@@ -7,9 +7,6 @@ pub enum EnvKey {
     JwtSecret,
     JwtExpiresInHours,
     MarpApiRoot,
-    AstraUri,
-    AstraBearerToken,
-    AstraKeySpace,
     PublicFilesRoot,
     FilesRoot,
     RootUser,
@@ -30,9 +27,6 @@ pub fn from_env(env_key: EnvKey) -> &'static str {
             }
         }
         EnvKey::MarpApiRoot => dotenv!("MARP_API_ROOT"),
-        EnvKey::AstraUri => dotenv!("ASTRA_URI"),
-        EnvKey::AstraBearerToken => dotenv!("ASTRA_BEARER_TOKEN"),
-        EnvKey::AstraKeySpace => dotenv!("ASTRA_KEY_SPACE"),
         EnvKey::PublicFilesRoot => dotenv!("PUBLIC_FILES_ROOT"),
         EnvKey::FilesRoot => dotenv!("FILES_ROOT"),
         EnvKey::RootUser => dotenv!("ROOT_USER"),

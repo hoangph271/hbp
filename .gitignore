@@ -8,3 +8,4 @@ markdown/users/*
 static/images/users/*
 Rocket.toml
 static/images/avatars/*
+**.sled.db

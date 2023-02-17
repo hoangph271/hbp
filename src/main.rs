@@ -26,7 +26,6 @@ async fn rocket() -> _ {
     utils::setup_logger::setup_logger();
 
     dotenv::dotenv().ok();
-    data::init_db();
 
     let app_name = utils::env::from_env(utils::env::EnvKey::AppName);
     info!("{app_name} is starting, my dude...! 🍿🍿🍿");
@@ -36,6 +35,7 @@ async fn rocket() -> _ {
 
 fn launch() -> rocket::Rocket<rocket::Build> {
     let mut rocket = rocket::build()
+        .manage(sled::open("hbp.sled.db").unwrap())
         .mount("/", utils::cors::options_routes())
         .mount("/", routes::index::index_routes())
         .mount("/dev/null", routes::index::dev_null_routes())

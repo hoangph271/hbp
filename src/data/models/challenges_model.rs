@@ -1,6 +1,4 @@
-use stargate_grpc_derive::TryFromRow;
-
-#[derive(Debug, serde::Serialize, TryFromRow)]
+#[derive(Debug, serde::Serialize)]
 pub struct Challenge {
     pub id: String,
     pub title: String,

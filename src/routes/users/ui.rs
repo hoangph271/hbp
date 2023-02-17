@@ -14,8 +14,9 @@ use rocket::form::Form;
 use rocket::http::uri::{Origin, Uri};
 use rocket::http::{Cookie, CookieJar};
 use rocket::time::{Duration, OffsetDateTime};
-use rocket::{get, post, uri};
+use rocket::{get, post, uri, State};
 use serde::Serialize;
+use sled::Db;
 
 use super::shared::attemp_signin;
 
@@ -68,8 +69,9 @@ pub async fn post_login(
     login_body: Form<LoginBody>,
     jar: &CookieJar<'_>,
     redirect_url: Option<String>,
+    db: &State<Db>,
 ) -> HbpResponse {
-    match attemp_signin(&login_body.username, &login_body.password).await {
+    match attemp_signin(&login_body.username, &login_body.password, db).await {
         Err(e) => {
             error!("attemp_signin() failed: {e}");
             ApiError::internal_server_error().into()
@@ -116,7 +118,7 @@ pub async fn post_login(
 }
 
 #[post("/signup", data = "<signup_body>")]
-pub async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
+pub async fn post_signup(signup_body: Form<SignupBody>, db: &State<Db>) -> HbpResponse {
     if let Err(e) = signup_body.validate() {
         error!("{e:?}");
         return HbpResponse::redirect(uri!("/users", signup));
@@ -130,7 +132,7 @@ pub async fn post_signup(signup_body: Form<SignupBody>) -> HbpResponse {
             .unwrap_or_else(|e| panic!("bcrypt::hash failed: {e:?}")),
     };
 
-    if UserOrm::default().create_user(new_user).await.is_ok() {
+    if UserOrm::default().create_user(db, new_user).await.is_ok() {
         HbpResponse::redirect(uri!("/users", login(_)))
     } else {
         HbpResponse::redirect(uri!("/users", signup))

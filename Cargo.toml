@@ -30,14 +30,12 @@ dotenv = "0.15.0"
 dotenv_codegen = "0.15.0"
 serde_json = "1.0.87"
 nanoid = "0.4.0"
-bcrypt = "0.13.0"
+bcrypt = "0.14.0"
 reqwest = { version = "0.11.12", features = ["multipart", "json"] }
 futures = "0.3.24"
 glob = "0.3.0"
 regex = "1.6.0"
 urlencoding = "2.1.2"
-stargate-grpc = "0.4.0"
-stargate-grpc-derive = "0.2.0"
 async-std = { version = "1.12.0", features = ["tokio1"] }
 schemars = "0.8.11"
 okapi = { version = "0.7.0-rc.1" }
@@ -48,6 +46,7 @@ rand = "0.8.5"
 image = "0.24.5"
 mime_guess = "2.0.4"
 hbp_types = { git = "https://github.com/hoangph271/hbp_types", features = ["okapi"] }
+sled = "0.34.7"
 
 [profile.dev]
 overflow-checks = true

@@ -7,7 +7,7 @@ extern crate mustache;
 extern crate rocket_okapi;
 extern crate serde_derive;
 
-use log::info;
+use log::{error, info};
 use rocket::{launch, routes};
 use rocket_okapi::{
     mount_endpoints_and_merged_docs,
@@ -25,7 +25,10 @@ mod utils;
 async fn rocket() -> _ {
     utils::setup_logger::setup_logger();
 
-    dotenv::dotenv().ok();
+    dotenv::dotenv().unwrap_or_else(|e| {
+        error!("dotenv() failed: {}", e);
+        panic!()
+    });
 
     let app_name = utils::env::from_env(utils::env::EnvKey::AppName);
     info!("{app_name} is starting, my dude...! 🍿🍿🍿");

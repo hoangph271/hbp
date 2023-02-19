@@ -17,7 +17,6 @@ impl OrmInit for ProfileOrm {
 }
 
 impl ProfileOrm {
-    #[allow(dead_code)]
     pub async fn find_one(
         &self,
         db: &sled::Db,

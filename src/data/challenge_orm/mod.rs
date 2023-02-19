@@ -62,7 +62,11 @@ impl ChallengeOrm {
             ))
     }
 
-    pub async fn update(&self, db: &sled::Db, _challenge: Challenge) -> Result<Challenge, DbError> {
+    pub async fn update(
+        &self,
+        _db: &sled::Db,
+        _challenge: Challenge,
+    ) -> Result<Challenge, DbError> {
         todo!()
         // let update_query = Query::builder()
         //     .keyspace(&self.orm_config.keyspace)

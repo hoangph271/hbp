@@ -1,0 +1,10 @@
+---
+version: "2.1"
+services:
+  hbp:
+    image: hbp:latest
+    ports:
+      - 8000:8000
+    volumes:
+      - ./markdown:/markdown
+    restart: unless-stopped

@@ -1,4 +1,4 @@
-FROM rust:1
+FROM rust:latest
 COPY . .
 
 EXPOSE 8000

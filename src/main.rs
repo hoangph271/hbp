@@ -7,7 +7,7 @@ extern crate mustache;
 extern crate rocket_okapi;
 extern crate serde_derive;
 
-use log::{error, info};
+use log::{error, info, warn};
 use rocket::{launch, routes};
 use rocket_okapi::{
     mount_endpoints_and_merged_docs,
@@ -32,6 +32,10 @@ async fn rocket() -> _ {
 
     let app_name = utils::env::from_env(utils::env::EnvKey::AppName);
     info!("{app_name} is starting, my dude...! 🍿🍿🍿");
+
+    if utils::env::is_prod() {
+        warn!("{app_name} is running IN PRODUCTION");
+    }
 
     launch()
 }

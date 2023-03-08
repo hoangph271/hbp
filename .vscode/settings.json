@@ -1,4 +1,4 @@
 {
   "editor.formatOnSave": true,
-  "task.allowAutomaticTasks": "auto"
+  "task.allowAutomaticTasks": "off"
 }

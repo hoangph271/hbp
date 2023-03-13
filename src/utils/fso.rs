@@ -10,9 +10,9 @@ use std::path::Path;
 
 use super::auth::{AuthPayload, ResourseJwt};
 use super::env::is_root;
+use super::marper;
 use super::responders::HbpResult;
 use super::template::{IndexLayout, MarkdownTemplate, MoveUpUrl};
-use super::{marper, url_encode_path};
 
 pub fn markdown_to_html(markdown: &str) -> String {
     let mut options = Options::empty();
@@ -112,27 +112,12 @@ pub fn from_dir<P: AsRef<Path>>(path: &P) -> HbpResult<Vec<FsoEntry>> {
         })?
         .filter_map(|entry| {
             let entry = entry.ok()?;
-            let title = match entry.path().file_name() {
-                Some(file_name) => file_name.to_string_lossy().to_string(),
-                None => "Untitled".to_owned(),
-            };
 
-            if title.starts_with('.') {
+            if entry.file_name().to_string_lossy().starts_with(".") {
                 return None;
             }
 
-            let url = url_encode_path(path.as_ref().to_str().unwrap());
-            if entry.path().is_dir() {
-                let path: String = entry.path().to_string_lossy().to_string();
-                Some(FsoEntry::FsoDirectory(FsoDirectory { title, url }))
-            } else if entry.path().to_string_lossy().ends_with(".md") {
-                Some(
-                    FsoFile::markdown(title, url, FsoMarkdown::from_markdown(&entry.path()).ok()?)
-                        .into(),
-                )
-            } else {
-                None
-            }
+            Some(FsoEntry::from_path(&entry.path()))
         })
         .collect();
 

@@ -9,7 +9,7 @@ use regex::Regex;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Serialize, Default)]
 pub struct FsoMarkdown {
@@ -175,6 +175,14 @@ impl FsoFile {
             fso_type: FsoFileType::Markdown(fso_markdown),
         }
     }
+
+    pub fn unknown(title: String, url: String) -> FsoFile {
+        Self {
+            title,
+            url,
+            fso_type: FsoFileType::Unknown,
+        }
+    }
 }
 impl From<FsoFile> for FsoEntry {
     fn from(fso_file: FsoFile) -> Self {
@@ -186,4 +194,31 @@ impl From<FsoFile> for FsoEntry {
 pub enum FsoEntry {
     FsoFile(FsoFile),
     FsoDirectory(FsoDirectory),
+}
+
+impl FsoEntry {
+    pub fn from_path(path: &PathBuf) -> Self {
+        let title = path
+            .file_name()
+            .map(|filename| filename.to_string_lossy())
+            .unwrap_or(path.to_string_lossy())
+            .to_string();
+        let url = url_encode_path(&path.to_string_lossy());
+
+        if path.is_dir() {
+            return Self::FsoDirectory(FsoDirectory { title, url });
+        }
+
+        if let Some(file_ext) = path.extension().map(|f| f.to_string_lossy()) {
+            return match file_ext.to_lowercase().as_str() {
+                "md" => {
+                    let fso_markdown = FsoMarkdown::from_markdown(path).unwrap();
+                    FsoFile::markdown(title, url, fso_markdown)
+                }
+                _ => FsoFile::unknown(title, url),
+            }.into();
+        }
+
+        FsoFile::unknown(title, url).into()
+    }
 }

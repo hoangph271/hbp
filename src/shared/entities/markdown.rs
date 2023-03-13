@@ -12,7 +12,7 @@ use std::fs;
 use std::path::Path;
 
 #[derive(Debug, Serialize, Default)]
-pub struct Markdown {
+pub struct FsoMarkdown {
     pub title: String,
     pub file_name: String,
     pub author: String,
@@ -23,8 +23,8 @@ pub struct Markdown {
     pub url: String,
 }
 
-impl From<Markdown> for Data {
-    fn from(markdown: Markdown) -> Data {
+impl From<FsoMarkdown> for Data {
+    fn from(markdown: FsoMarkdown) -> Data {
         let insert_fields = move || -> Result<Data, EncoderError> {
             let mut map_builder = MapBuilder::new()
                 .insert("title", &markdown.title)?
@@ -70,14 +70,14 @@ pub fn extract_markdown_header_content(content: &str) -> Option<String> {
     }
 }
 
-impl Markdown {
-    pub fn from_markdown(path: &Path) -> HbpResult<Markdown> {
+impl FsoMarkdown {
+    pub fn from_markdown(path: &Path) -> HbpResult<FsoMarkdown> {
         if !path.exists() {
             let msg = format!("{} NOT exists", path.to_string_lossy());
             return Err(ApiError::from_message(&msg, StatusCode::BadRequest).into());
         }
 
-        let mut markdown = Markdown {
+        let mut markdown = FsoMarkdown {
             // TODO: Abstract this map_err
             content: fs::read_to_string(path)?,
             file_name: path
@@ -86,7 +86,7 @@ impl Markdown {
                 .to_string_lossy()
                 .into_owned(),
             url: url_encode_path(&path.to_string_lossy()),
-            ..Markdown::default()
+            ..FsoMarkdown::default()
         };
 
         if let Some(header_comment) = extract_markdown_header_content(&markdown.content) {
@@ -149,13 +149,41 @@ impl Markdown {
 }
 
 #[derive(Debug, Serialize)]
-pub struct MarkdownDir {
+pub struct FsoDirectory {
     pub title: String,
     pub url: String,
 }
 
 #[derive(Serialize, Debug)]
-pub enum MarkdownOrMarkdownDir {
-    Markdown(Markdown),
-    MarkdownDir(MarkdownDir),
+pub enum FsoFileType {
+    Markdown(FsoMarkdown),
+    Unknown,
+}
+
+#[derive(Serialize, Debug)]
+pub struct FsoFile {
+    pub title: String,
+    pub url: String,
+    pub fso_type: FsoFileType,
+}
+
+impl FsoFile {
+    pub fn markdown(title: String, url: String, fso_markdown: FsoMarkdown) -> FsoFile {
+        Self {
+            title,
+            url,
+            fso_type: FsoFileType::Markdown(fso_markdown),
+        }
+    }
+}
+impl From<FsoFile> for FsoEntry {
+    fn from(fso_file: FsoFile) -> Self {
+        Self::FsoFile(fso_file)
+    }
+}
+
+#[derive(Serialize, Debug)]
+pub enum FsoEntry {
+    FsoFile(FsoFile),
+    FsoDirectory(FsoDirectory),
 }

@@ -4,23 +4,23 @@ use httpstatus::StatusCode;
 use rocket::response::Redirect;
 use rocket::{get, routes, Route};
 
-use crate::shared::entities::markdown::Markdown;
-use crate::utils::markdown;
+use crate::shared::entities::markdown::FsoMarkdown;
+use crate::utils::fso;
 use crate::utils::responders::{HbpResponse, HbpResult};
 use crate::utils::template::IndexLayout;
 
 #[get("/README.md")]
 async fn readme_md() -> HbpResult<HbpResponse> {
     let file_path = PathBuf::from("README.md");
-    let markdown_data = Markdown::from_markdown(&file_path)?;
+    let markdown_data = FsoMarkdown::from_markdown(&file_path)?;
 
     let html_result = async {
-        if markdown::is_marp(&markdown_data.content) {
-            markdown::render_marp(&markdown_data).await
+        if fso::is_marp(&markdown_data.content) {
+            fso::render_marp(&markdown_data).await
         } else {
-            markdown::render_markdown(
+            fso::render_markdown(
                 &markdown_data,
-                IndexLayout::from_title(markdown_data.title.to_owned()),
+                IndexLayout::from_title(&markdown_data.title),
             )
             .await
         }

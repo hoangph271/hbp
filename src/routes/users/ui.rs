@@ -32,7 +32,7 @@ pub fn index(jwt: AuthPayload) -> HbpResult<HbpResponse> {
             username: jwt.username().to_owned(),
         },
         IndexLayout::default()
-            .title(jwt.username().to_owned())
+            .title(jwt.username())
             .username(jwt.username()),
     )?;
 
@@ -50,7 +50,7 @@ pub fn login(redirect_url: Option<String>) -> HbpResult<HbpResponse> {
         RenderData {
             redirect_url: redirect_url.unwrap_or_default(),
         },
-        template::IndexLayout::from_title("Login".to_owned()),
+        template::IndexLayout::from_title("Login"),
     )?;
 
     Ok(HbpResponse::html(html, StatusCode::Ok))
@@ -59,7 +59,7 @@ pub fn login(redirect_url: Option<String>) -> HbpResult<HbpResponse> {
 #[get("/signup")]
 pub fn signup() -> HbpResult<HbpResponse> {
     let html = Templater::new("users/signup.html".into())
-        .to_html_page((), template::IndexLayout::from_title("Signup".to_owned()))?;
+        .to_html_page((), template::IndexLayout::from_title("Signup"))?;
 
     Ok(HbpResponse::html(html, StatusCode::Ok))
 }

@@ -1,12 +1,12 @@
 use crate::shared::entities::markdown::*;
 use crate::shared::interfaces::ApiError;
-use crate::utils::markdown::render_markdown_list;
+use crate::utils::fso::render_markdown_list;
 use crate::utils::responders::HbpResult;
 use crate::utils::template::{IndexLayout, MoveUpUrl, Templater};
 
 use crate::utils::{
     auth::AuthPayload,
-    markdown,
+    fso,
     responders::{HbpContent, HbpResponse},
 };
 use httpstatus::StatusCode;
@@ -28,17 +28,16 @@ pub(super) async fn markdown_file(
         return Err(ApiError::not_found().with_ui().into());
     }
 
-    if !markdown::is_markdown(&sub_path) {
+    if !fso::is_markdown(&sub_path) {
         return if file_path.is_dir() {
             let layout_data = IndexLayout::default()
                 .moveup_urls(MoveUpUrl::from_path(&file_path))
-                .maybe_auth(jwt)
+                .set_auth(jwt)
                 .title(
-                    file_path
+                    &file_path
                         .file_name()
                         .map(|file_name| file_name.to_string_lossy())
                         .unwrap_or_else(|| file_path.to_string_lossy())
-                        .to_string(),
                 );
 
             render_dir(&file_path, layout_data)
@@ -47,17 +46,17 @@ pub(super) async fn markdown_file(
         };
     }
 
-    let markdown_data = Markdown::from_markdown(&file_path)?;
+    let markdown_data = FsoMarkdown::from_markdown(&file_path)?;
 
     let html = async {
-        if markdown::is_marp(&markdown_data.content) {
-            markdown::render_marp(&markdown_data).await
+        if fso::is_marp(&markdown_data.content) {
+            fso::render_marp(&markdown_data).await
         } else {
-            markdown::render_markdown(
+            fso::render_markdown(
                 &markdown_data,
                 IndexLayout::default()
-                    .title(markdown_data.title.to_owned())
-                    .maybe_auth(jwt)
+                    .title(&markdown_data.title)
+                    .set_auth(jwt)
                     .moveup_urls(MoveUpUrl::from_path(&file_path)),
             )
             .await
@@ -101,32 +100,35 @@ pub(super) async fn user_markdown_file(
         return render_dir(
             &file_path,
             IndexLayout::default()
-                .title(file_path_str)
+                .title(&file_path_str)
                 .username(username)
                 .moveup_urls(moveup_urls),
         );
     }
 
-    if !markdown::is_markdown(&file_path) {
+    if !fso::is_markdown(&file_path) {
         return if file_path.is_dir() {
-            let mut markdowns = markdown::markdown_from_dir(&file_path)?;
+            let mut fso_entries = fso::from_dir(&file_path)?;
 
-            markdowns.iter_mut().for_each(|markdown| {
-                if let MarkdownOrMarkdownDir::Markdown(markdown) = markdown {
-                    if markdown.author.is_empty() {
-                        markdown.author = username.to_owned();
-                    }
-                }
+            fso_entries.iter_mut().for_each(|_fso_entry| {
+                // TODO: Fix me
+                // if let FsoEntry::FsoFile(fso_file) = fso_entry {
+                //     if let FsoFileType::Markdown(mut markdown) = fso_file.fso_type {
+                //         if markdown.author.is_empty() {
+                //             markdown.author = username.to_owned();
+                //         }
+                //     }
+                // }
             });
 
             // TODO: Sort...! :"<
 
             let html = render_markdown_list(
                 IndexLayout::default()
-                    .title(file_path_str)
-                    .maybe_auth(Some(jwt))
+                    .title(&file_path_str)
+                    .set_auth(Some(jwt))
                     .moveup_urls(moveup_urls),
-                markdowns,
+                fso_entries,
             )?;
 
             Ok(HbpResponse::html(html, StatusCode::Ok))
@@ -135,12 +137,12 @@ pub(super) async fn user_markdown_file(
         };
     }
 
-    if let Ok(markdown_data) = Markdown::from_markdown(&file_path) {
+    if let Ok(markdown_data) = FsoMarkdown::from_markdown(&file_path) {
         let html = async {
-            if markdown::is_marp(&markdown_data.content) {
-                markdown::render_marp(&markdown_data).await
+            if fso::is_marp(&markdown_data.content) {
+                fso::render_marp(&markdown_data).await
             } else {
-                markdown::render_user_markdown(&markdown_data, &jwt, &file_path).await
+                fso::render_user_markdown(&markdown_data, &jwt, &file_path).await
             }
         }
         .await?;
@@ -169,7 +171,7 @@ pub struct MarkdownExtraData {
 }
 
 fn render_dir(dir_path: &PathBuf, layout_data: IndexLayout) -> HbpResult<HbpResponse> {
-    let markdowns: Vec<MarkdownOrMarkdownDir> = markdown::markdown_from_dir(dir_path)?;
+    let markdowns: Vec<FsoEntry> = fso::from_dir(dir_path)?;
 
     render_markdown_list(layout_data, markdowns).map(|html| HbpResponse::html(html, StatusCode::Ok))
 }

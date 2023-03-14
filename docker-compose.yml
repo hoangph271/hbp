@@ -8,5 +8,6 @@ services:
     env_file:
       - .env
     volumes:
-      - ./markdown:/markdown
+      - ./markdown:/markdown:ro
+      - ../sneu_svelte\dist:/ui:ro
     restart: unless-stopped

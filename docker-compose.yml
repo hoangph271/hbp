@@ -6,5 +6,6 @@ services:
     ports:
       - 8000:8000
     volumes:
-      - ./markdown:/markdown
+      - ./markdown:/markdown:ro
+      - ../sneu_svelte\dist:/ui:ro
     restart: unless-stopped

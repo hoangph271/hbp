@@ -5,6 +5,8 @@ services:
     image: hbp:latest
     ports:
       - 8000:8000
+    env_file:
+      - .env
     volumes:
       - ./markdown:/markdown:ro
       - ../sneu_svelte\dist:/ui:ro

@@ -11,6 +11,7 @@ pub enum EnvKey {
     FilesRoot,
     RootUser,
     DeployEnv,
+    SneuUiRoot,
 }
 
 pub fn from_env(env_key: EnvKey) -> &'static str {
@@ -31,6 +32,7 @@ pub fn from_env(env_key: EnvKey) -> &'static str {
         EnvKey::FilesRoot => dotenv!("FILES_ROOT"),
         EnvKey::RootUser => dotenv!("ROOT_USER"),
         EnvKey::DeployEnv => dotenv!("DEPLOY_ENV"),
+        EnvKey::SneuUiRoot => dotenv!("SNEU_UI_ROOT"),
     }
 }
 

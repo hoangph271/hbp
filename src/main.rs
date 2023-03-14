@@ -8,12 +8,14 @@ extern crate rocket_okapi;
 extern crate serde_derive;
 
 use log::{error, info, warn};
-use rocket::{launch, routes};
+use rocket::{launch, routes, fs::FileServer};
 use rocket_okapi::{
     mount_endpoints_and_merged_docs,
     settings::OpenApiSettings,
     swagger_ui::{make_swagger_ui, SwaggerUIConfig},
 };
+
+use crate::utils::env::{from_env, EnvKey};
 
 mod data;
 mod routes;
@@ -45,6 +47,7 @@ fn launch() -> rocket::Rocket<rocket::Build> {
         .manage(sled::open("hbp.sled.db").unwrap())
         .mount("/", utils::cors::options_routes())
         .mount("/", routes::index::index_routes())
+        .mount("/ui", FileServer::from(from_env(EnvKey::SneuUiRoot)))
         .mount("/dev/null", routes::index::dev_null_routes())
         .mount("/markdown", routes::markdown::markdown_routes())
         .mount("/static", routes![routes::static_files::serve])

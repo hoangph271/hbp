@@ -78,7 +78,6 @@ impl FsoMarkdown {
         }
 
         let mut markdown = FsoMarkdown {
-            // TODO: Abstract this map_err
             content: fs::read_to_string(path)?,
             file_name: path
                 .file_name()

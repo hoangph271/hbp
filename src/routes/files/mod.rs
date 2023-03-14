@@ -38,7 +38,8 @@ fn attempt_access(path: &Path, jwt: &Option<AuthPayload>) -> HbpResult<()> {
             Some(jwt) => {
                 jwt.match_path(
                     path,
-                    |_, _| is_root(jwt.username()), // TODO: User jwt
+                    // FIXME: Only root can access for now
+                    |_, _| is_root(jwt.username()),
                 )
             }
             None => Err(ApiError::forbidden().into()),

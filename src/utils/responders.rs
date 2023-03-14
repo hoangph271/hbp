@@ -56,7 +56,7 @@ impl HbpResponse {
 
     pub fn from_error_status(status_code: StatusCode) -> HbpResponse {
         let render_data = ErrorPage::from_status(&status_code);
-        let layout_data = IndexLayout::default().title(status_text(&status_code));
+        let layout_data = IndexLayout::default().title(&status_text(&status_code));
 
         Templater::error_page()
             .to_html_page(render_data, layout_data)
@@ -69,7 +69,7 @@ impl HbpResponse {
 
         let render_data =
             ErrorPage::from_status(&status_code).action_html(action_html_for_401(redirect_url));
-        let layout_data = IndexLayout::from_title(status_text(&status_code));
+        let layout_data = IndexLayout::from_title(&status_text(&status_code));
 
         Templater::error_page()
             .to_html_page(render_data, layout_data)

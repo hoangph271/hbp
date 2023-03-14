@@ -10,9 +10,9 @@ use std::path::Path;
 
 use super::auth::{AuthPayload, ResourseJwt};
 use super::env::is_root;
+use super::marper;
 use super::responders::HbpResult;
 use super::template::{IndexLayout, MarkdownTemplate, MoveUpUrl};
-use super::{marper, url_encode_path};
 
 pub fn markdown_to_html(markdown: &str) -> String {
     let mut options = Options::empty();
@@ -37,7 +37,7 @@ pub fn is_markdown(file_path: &Path) -> bool {
     }
 }
 
-pub async fn render_marp(markdown: &Markdown) -> HbpResult<String> {
+pub async fn render_marp(markdown: &FsoMarkdown) -> HbpResult<String> {
     if !marper::is_marp(&markdown.content) {
         return Err(ApiError::from_message(
             &format!("NOT a marp: {}", markdown.file_name),
@@ -51,7 +51,10 @@ pub async fn render_marp(markdown: &Markdown) -> HbpResult<String> {
 pub fn is_marp(content: &str) -> bool {
     marper::is_marp(content)
 }
-pub async fn render_markdown(markdown: &Markdown, layout_data: IndexLayout) -> HbpResult<String> {
+pub async fn render_markdown(
+    markdown: &FsoMarkdown,
+    layout_data: IndexLayout,
+) -> HbpResult<String> {
     Templater::new("markdown/markdown.html".into())
         .to_html_page(MarkdownTemplate::of(markdown, None), layout_data)
 }
@@ -72,12 +75,12 @@ fn allowed_glob(file_path: &Path) -> String {
     file_path.to_string_lossy().to_string()
 }
 pub async fn render_user_markdown(
-    markdown: &Markdown,
+    markdown: &FsoMarkdown,
     jwt: &AuthPayload,
     file_path: &Path,
 ) -> HbpResult<String> {
     let layout_data = IndexLayout::default()
-        .title(markdown.title.to_owned())
+        .title(&markdown.title)
         .username(jwt.username())
         .moveup_urls(MoveUpUrl::from_path(file_path));
 
@@ -101,7 +104,7 @@ pub async fn render_user_markdown(
     )
 }
 
-pub fn markdown_from_dir<P: AsRef<Path>>(path: &P) -> HbpResult<Vec<MarkdownOrMarkdownDir>> {
+pub fn from_dir<P: AsRef<Path>>(path: &P) -> HbpResult<Vec<FsoEntry>> {
     let markdowns = read_dir(path)
         .map_err(|e| {
             error!("read_dir failed: {e:?}");
@@ -109,30 +112,12 @@ pub fn markdown_from_dir<P: AsRef<Path>>(path: &P) -> HbpResult<Vec<MarkdownOrMa
         })?
         .filter_map(|entry| {
             let entry = entry.ok()?;
-            let title = match entry.path().file_name() {
-                Some(file_name) => file_name.to_string_lossy().to_string(),
-                None => "Untitled".to_owned(),
-            };
 
-            if title.starts_with('.') {
+            if entry.file_name().to_string_lossy().starts_with(".") {
                 return None;
             }
 
-            if entry.path().is_dir() {
-                let path: String = entry.path().to_string_lossy().to_string();
-                let url = url_encode_path(&path);
-
-                Some(MarkdownOrMarkdownDir::MarkdownDir(MarkdownDir {
-                    title,
-                    url,
-                }))
-            } else if entry.path().to_string_lossy().ends_with(".md") {
-                Some(MarkdownOrMarkdownDir::Markdown(
-                    Markdown::from_markdown(&entry.path()).ok()?,
-                ))
-            } else {
-                None
-            }
+            Some(FsoEntry::from_path(&entry.path()))
         })
         .collect();
 
@@ -141,7 +126,7 @@ pub fn markdown_from_dir<P: AsRef<Path>>(path: &P) -> HbpResult<Vec<MarkdownOrMa
 
 pub fn render_markdown_list(
     layout_data: IndexLayout,
-    markdowns: Vec<MarkdownOrMarkdownDir>,
+    markdowns: Vec<FsoEntry>,
 ) -> HbpResult<String> {
     let mut render_data = HashMap::new();
     render_data.insert("markdowns", markdowns);

@@ -1,4 +1,4 @@
-use crate::shared::entities::markdown::Markdown;
+use crate::shared::entities::markdown::FsoMarkdown;
 use httpstatus::StatusCode;
 use mustache::Template;
 use serde::Serialize;
@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use std::vec;
 
 use super::auth::AuthPayload;
-use super::markdown::markdown_to_html;
+use super::fso::markdown_to_html;
 use super::responders::HbpResult;
 use super::url_encode_path;
 
@@ -102,17 +102,17 @@ pub struct IndexLayout {
 }
 
 impl IndexLayout {
-    pub fn from_title(title: String) -> Self {
+    pub fn from_title(title: &str) -> Self {
         Self::default().title(title)
     }
 
-    pub fn title(mut self, title: String) -> Self {
-        self.title = title;
+    pub fn title(mut self, title: &str) -> Self {
+        self.title = title.to_string();
 
         self
     }
 
-    pub fn maybe_auth(mut self, jwt: Option<AuthPayload>) -> Self {
+    pub fn set_auth(mut self, jwt: Option<AuthPayload>) -> Self {
         let username = if let Some(jwt) = jwt {
             match jwt {
                 AuthPayload::User(user) => user.sub,
@@ -149,7 +149,7 @@ pub struct MarkdownTemplate {
 }
 
 impl MarkdownTemplate {
-    pub fn of(markdown: &Markdown, signed_url: Option<String>) -> MarkdownTemplate {
+    pub fn of(markdown: &FsoMarkdown, signed_url: Option<String>) -> MarkdownTemplate {
         MarkdownTemplate {
             markdown_html: markdown_to_html(&markdown.content),
             markdown_url: markdown.url.clone(),

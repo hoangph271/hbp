@@ -105,7 +105,7 @@ impl HbpResponse {
 
     pub fn redirect(uri: rocket::http::uri::Origin) -> HbpResponse {
         HbpResponse {
-            status_code: StatusCode::MovedPermanently,
+            status_code: StatusCode::Found,
             content: HbpContent::Found(uri.into_normalized().to_string()),
         }
     }

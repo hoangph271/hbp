@@ -9,7 +9,7 @@ use regex::Regex;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::{Path};
 
 #[derive(Debug, Serialize, Default)]
 pub struct FsoMarkdown {
@@ -196,7 +196,7 @@ pub enum FsoEntry {
 }
 
 impl FsoEntry {
-    pub fn from_path(path: &PathBuf) -> Self {
+    pub fn from_path(path: &Path) -> Self {
         let title = path
             .file_name()
             .map(|filename| filename.to_string_lossy())

@@ -113,7 +113,7 @@ pub fn from_dir<P: AsRef<Path>>(path: &P) -> HbpResult<Vec<FsoEntry>> {
         .filter_map(|entry| {
             let entry = entry.ok()?;
 
-            if entry.file_name().to_string_lossy().starts_with(".") {
+            if entry.file_name().to_string_lossy().starts_with('.') {
                 return None;
             }
 

@@ -67,6 +67,7 @@ fn launch() -> rocket::Rocket<rocket::Build> {
         .attach(utils::cors::Cors);
 
     let openapi_settings = OpenApiSettings::default();
+
     mount_endpoints_and_merged_docs! {
         rocket,
         "/api/v1",

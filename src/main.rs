@@ -54,6 +54,7 @@ fn launch() -> rocket::Rocket<rocket::Build> {
         .mount("/posts", routes::posts::posts_routes())
         .mount("/users", routes::users::users_routes())
         .mount("/blogs", routes![routes::blogs::index])
+        .mount("/git", routes::git::git_routes())
         // * Swagger UI routes
         .mount(
             "/swagger",

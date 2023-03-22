@@ -32,7 +32,7 @@ async fn readme_md() -> HbpResult<HbpResponse> {
 
 #[get("/")]
 fn index() -> Redirect {
-    Redirect::moved("/README.md")
+    Redirect::found("/markdown/AboutMe.md")
 }
 
 pub fn index_routes() -> Vec<Route> {

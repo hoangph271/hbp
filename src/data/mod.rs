@@ -6,7 +6,6 @@ use self::lib::DbError;
 pub mod lib;
 pub mod models;
 
-pub mod challenge_orm;
 pub mod profile_orm;
 pub mod user_orm;
 

@@ -129,9 +129,7 @@ mod more_impls {
 
 #[cfg(test)]
 mod test {
-    use crate::shared::Challenge;
-
-    use super::{ApiItem, ApiList};
+    use super::{ApiItem};
 
     #[test]
     fn can_stringify() {
@@ -142,13 +140,6 @@ mod test {
     fn can_parse_json() {
         let _: ApiItem<Vec<String>> =
             serde_json::from_str(r#"{"statusCode":200,"item":["0","1","2"]}"#).unwrap();
-    }
-
-    #[test]
-    fn can_parse_json_items() {
-        let json = r##"{"statusCode":200,"items":[{"id":"id","title":"#brown for 30 days","why":"- Stay brown for 30 days, and THEN back to green...! :\"}\r\n- Really, it makes me feel so tired sometimes...!\r\n- Cuz you promised yourself...!","note":"#DONE","startedAt":1662285000000000,"endAt":1664877000000000,"finished":false}]}"##;
-
-        let _: ApiList<Challenge> = serde_json::from_str(json).unwrap();
     }
 }
 

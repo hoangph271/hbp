@@ -1,0 +1,16 @@
+{
+    "name": "#Hbp",
+    "short_name": "#Hbp",
+    "icons": [
+        {
+            "src": "/static/svg/sneu.svg",
+            "sizes": "any",
+            "type": "image/svg"
+        }
+    ],
+    "theme_color": "#47668b",
+    "background_color": "#47668b",
+    "start_url": "/markdown/users",
+    "display": "fullscreen",
+    "orientation": "portrait"
+}

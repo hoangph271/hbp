@@ -21,5 +21,5 @@ pub fn setup_logger() {
         // ? Use this if you need an output.log file, skip for now
         // .chain(fern::log_file("output.log"))
         .apply()
-        .expect("setup_logger() failed...!");
+        .unwrap_or_else(|e| panic!("setup_logger() failed: {e}"));
 }

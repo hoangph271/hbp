@@ -1,0 +1,16 @@
+---
+version: "2.1"
+services:
+  hbp:
+    image: hbp
+    build: 
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - 8000:8000
+    env_file:
+      - .env
+    volumes:
+      - ./markdown:/markdown:ro
+      - ../sneu_svelte\dist:/ui:ro
+    restart: unless-stopped

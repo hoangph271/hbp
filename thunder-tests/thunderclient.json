@@ -1,0 +1,221 @@
+[
+  {
+    "_id": "a8ca88e7-dbc0-40e7-b128-e794b0c80575",
+    "colId": "fe1912e9-6fc2-48a2-a3e7-2719de8b2292",
+    "containerId": "0dc687bc-d9b0-4b9a-9ec4-5166e68944fd",
+    "name": "api/users/signin",
+    "url": "{{API_ROOT}}/api/v1/users/signin",
+    "method": "POST",
+    "sortNum": 10000,
+    "created": "2022-08-21T04:37:52.797Z",
+    "modified": "2022-08-21T04:37:52.797Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n    \"username\": \"hungpv\",\n    \"password\": \"1234\"\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "41f1be34-417a-4c36-9e63-1d0a21ef7e71",
+    "colId": "fe1912e9-6fc2-48a2-a3e7-2719de8b2292",
+    "containerId": "a9025d10-b6b1-4352-b8af-9fbc7fad8542",
+    "name": "GET /api/movies_and_tv",
+    "url": "{{API_ROOT}}/api/v1/movies_and_tv",
+    "method": "GET",
+    "sortNum": 10000,
+    "created": "2022-08-21T04:37:52.798Z",
+    "modified": "2022-08-21T04:37:52.798Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n    \"username\": \"\",\n    \"password\": \"\",\n    \"password_confirm\": \"\"\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "576d66d4-63df-4185-8c55-e12a61dd7d63",
+    "colId": "fe1912e9-6fc2-48a2-a3e7-2719de8b2292",
+    "containerId": "3010edbc-f028-4ae5-b287-eb65473fe538",
+    "name": "api/profiles",
+    "url": "{{API_ROOT}}/api/v1/profiles",
+    "method": "GET",
+    "sortNum": 10000,
+    "created": "2022-08-21T04:37:52.799Z",
+    "modified": "2022-08-21T04:37:52.799Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n    \"username\": \"hungpv\",\n    \"password\": \"1234\"\n}",
+      "form": []
+    },
+    "auth": {
+      "type": "bearer",
+      "bearer": "{{JWT}}"
+    },
+    "tests": []
+  },
+  {
+    "_id": "3e122101-3dba-4ef9-90da-023a6bd434fe",
+    "colId": "fe1912e9-6fc2-48a2-a3e7-2719de8b2292",
+    "containerId": "4c988fd5-cd17-462f-ae35-85b28154e81b",
+    "name": "api/files/raw",
+    "url": "{{API_ROOT}}/api/v1/files/raw?path=src/main.rs",
+    "method": "GET",
+    "sortNum": 10000,
+    "created": "2022-08-21T04:37:52.800Z",
+    "modified": "2022-08-21T04:37:52.800Z",
+    "headers": [],
+    "params": [
+      {
+        "name": "path",
+        "value": "src/main.rs",
+        "isPath": false
+      }
+    ],
+    "body": {
+      "type": "json",
+      "raw": "{\n    \"username\": \"hungpv\",\n    \"password\": \"1234\"\n}",
+      "form": []
+    },
+    "auth": {
+      "type": "bearer",
+      "bearer": "{{JWT}}"
+    },
+    "tests": []
+  },
+  {
+    "_id": "6e4f4fa1-8b6a-40a3-b989-b09f004062dd",
+    "colId": "fe1912e9-6fc2-48a2-a3e7-2719de8b2292",
+    "containerId": "4c988fd5-cd17-462f-ae35-85b28154e81b",
+    "name": "api/files/preview",
+    "url": "{{API_ROOT}}/api/v1/files/preview/Users/garand/useSynced/__mêta_mêm__/giphy%20(1).webp?from_root=true",
+    "method": "GET",
+    "sortNum": 15000,
+    "created": "2022-08-21T04:37:52.801Z",
+    "modified": "2022-08-21T04:47:05.636Z",
+    "headers": [],
+    "params": [
+      {
+        "name": "from_root",
+        "value": "true",
+        "isPath": false
+      }
+    ],
+    "body": {
+      "type": "json",
+      "raw": "{\n    \"username\": \"hungpv\",\n    \"password\": \"1234\"\n}",
+      "form": []
+    },
+    "auth": {
+      "type": "bearer",
+      "bearer": "{{JWT}}"
+    },
+    "tests": []
+  },
+  {
+    "_id": "c0255bdd-c724-428c-8052-25851cb64752",
+    "colId": "fe1912e9-6fc2-48a2-a3e7-2719de8b2292",
+    "containerId": "0dc687bc-d9b0-4b9a-9ec4-5166e68944fd",
+    "name": "api/users/<username>",
+    "url": "{{API_ROOT}}/api/v1/users/hungpv?jwt={{JWT}}",
+    "method": "PUT",
+    "sortNum": 20000,
+    "created": "2022-08-21T04:37:52.802Z",
+    "modified": "2022-08-21T04:37:52.802Z",
+    "headers": [],
+    "params": [
+      {
+        "name": "jwt",
+        "value": "{{JWT}}",
+        "isPath": false
+      }
+    ],
+    "body": {
+      "type": "json",
+      "raw": "{\n    \"username\": \"hungpv\",\n    \"title\": \"hungpv\",\n    \"avatarUrl\": \"123\"\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "912367ba-b0d4-4572-9309-f2ae4df1a170",
+    "colId": "fe1912e9-6fc2-48a2-a3e7-2719de8b2292",
+    "containerId": "4c988fd5-cd17-462f-ae35-85b28154e81b",
+    "name": "api/files/random/raw",
+    "url": "{{API_ROOT}}/api/v1/files/random/raw?mime=image/&preview=true",
+    "method": "GET",
+    "sortNum": 20000,
+    "created": "2022-08-21T04:37:52.803Z",
+    "modified": "2022-08-21T04:37:52.803Z",
+    "headers": [],
+    "params": [
+      {
+        "name": "mime",
+        "value": "image/",
+        "isPath": false
+      },
+      {
+        "name": "preview",
+        "value": "true",
+        "isPath": false
+      }
+    ],
+    "tests": []
+  },
+  {
+    "_id": "e51cc437-7969-4f15-8d68-9d203f90082e",
+    "colId": "fe1912e9-6fc2-48a2-a3e7-2719de8b2292",
+    "containerId": "0dc687bc-d9b0-4b9a-9ec4-5166e68944fd",
+    "name": "api/users/<username>/avatar",
+    "url": "{{API_ROOT}}/api/v1/users/hungp1v/avatar?jwt={{JWT}}",
+    "method": "PUT",
+    "sortNum": 30000,
+    "created": "2022-08-21T04:37:52.804Z",
+    "modified": "2022-08-21T04:37:52.804Z",
+    "headers": [],
+    "params": [
+      {
+        "name": "jwt",
+        "value": "{{JWT}}",
+        "isPath": false
+      }
+    ],
+    "body": {
+      "type": "formdata",
+      "raw": "",
+      "form": [],
+      "files": [
+        {
+          "name": "file",
+          "value": "/Users/garand/useSynced/__mêta_mêm__/received_655989479221827.jpg"
+        }
+      ]
+    },
+    "tests": []
+  },
+  {
+    "_id": "6ac7b2bd-6fc6-47cd-a153-9aeacd1f2676",
+    "colId": "fe1912e9-6fc2-48a2-a3e7-2719de8b2292",
+    "containerId": "0dc687bc-d9b0-4b9a-9ec4-5166e68944fd",
+    "name": "api/users/signup",
+    "url": "{{API_ROOT}}/api/v1/users/signup",
+    "method": "POST",
+    "sortNum": 40000,
+    "created": "2022-08-21T04:37:52.805Z",
+    "modified": "2022-08-21T04:37:52.805Z",
+    "headers": [],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n    \"username\": \"hungpv\",\n    \"password\": \"1234\"\n}",
+      "form": []
+    },
+    "tests": []
+  }
+]

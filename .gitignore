@@ -3,6 +3,9 @@ target
 tmp/*.sqlite3
 tmp/*.sqlite3-*
 .env
+markdown/blogs/*
 markdown/users/*
 static/images/users/*
 Rocket.toml
+static/images/avatars/*
+**.sled.db

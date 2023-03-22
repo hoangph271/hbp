@@ -1,28 +1,31 @@
+use httpstatus::StatusCode;
+use log::error;
 use rocket::get;
 
 use crate::shared::entities::markdown::*;
 use crate::utils::auth::AuthPayload;
-use crate::utils::markdown::{markdown_from_dir, render_markdown_list};
+use crate::utils::fso::{from_dir, render_markdown_list};
 use crate::utils::responders::HbpResponse;
-use crate::utils::template::IndexLayoutData;
+use crate::utils::template::IndexLayout;
 
 #[get("/")]
 pub fn index(jwt: Option<AuthPayload>) -> HbpResponse {
-    let markdowns: Vec<MarkdownOrMarkdownDir> = markdown_from_dir(&"markdown/blogs").unwrap();
+    let markdowns: Vec<FsoEntry> = match from_dir(&"markdown/blogs") {
+        Ok(markdowns) => markdowns,
+        Err(e) => {
+            error!("markdown_from_dir failed: {:?}", e);
+
+            return HbpResponse::from_status(e.api_error.status_code);
+        }
+    };
 
     // FIXME: Now with dir, how to sort...?
-    // markdowns.sort_by(|m1, m2| {
-    //     const DATE_FORMAT: &str = "%m/%d/%Y";
-    //     NaiveDate::parse_from_str(&m2.dob, DATE_FORMAT)
-    //         .unwrap()
-    //         .cmp(&NaiveDate::parse_from_str(&m1.dob, DATE_FORMAT).unwrap())
-    // });
 
     match render_markdown_list(
-        IndexLayoutData::only_title("Blogs").maybe_auth(jwt),
+        IndexLayout::from_title("Blogs").set_auth(jwt),
         markdowns,
     ) {
-    Ok(html) => HbpResponse::html(&html, None),
-    Err(e) => e.into(),
-}
+        Ok(html) => HbpResponse::html(html, StatusCode::Ok),
+        Err(e) => HbpResponse::from_status(e.api_error.status_code),
+    }
 }

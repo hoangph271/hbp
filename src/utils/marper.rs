@@ -1,11 +1,10 @@
-use crate::routes::markdown::MarkdownExtraData;
 use crate::utils::env::{from_env, EnvKey};
 use crate::utils::marper;
-use crate::utils::types::HbpResult;
 use reqwest::{multipart, Client};
 use serde::{Deserialize, Serialize};
 
-use super::template::TemplateRenderer;
+use super::responders::HbpResult;
+use super::template::Templater;
 
 #[derive(Deserialize, Debug)]
 pub struct MarpContent {
@@ -24,32 +23,27 @@ pub fn is_marp(markdown: &str) -> bool {
     }
 }
 
-pub async fn marp_from_markdown(markdown: String) -> MarpContent {
+pub async fn marp_from_markdown(markdown: String) -> HbpResult<MarpContent> {
     let url = format!("{}?json=1", from_env(EnvKey::MarpApiRoot));
     let form = multipart::Form::new().text("markdown", markdown);
 
-    let res = Client::new()
-        .post(url)
-        .multipart(form)
-        .send()
-        .await
-        .unwrap();
+    let res = Client::new().post(url).multipart(form).send().await?;
 
-    res.json::<MarpContent>().await.unwrap()
+    res.json::<MarpContent>().await.map_err(|e| e.into())
 }
 
-pub async fn render_marp(markdown: &str, extra_data: MarkdownExtraData) -> HbpResult<String> {
-    let marp_content = marper::marp_from_markdown(markdown.to_owned()).await;
+pub async fn render_marp(markdown: &str) -> HbpResult<String> {
+    let marp_content = marper::marp_from_markdown(markdown.to_owned()).await?;
 
-    let raw_content = [
+    let markdown_html = [
         marp_content.html,
         format!(
             "<style>
-            {css}
-            .nav-bar {{
-                display: none;
-            }}
-        </style>",
+                {css}
+                .nav-bar {{
+                    display: none;
+                }}
+            </style>",
             css = marp_content.css
         ),
     ]
@@ -57,12 +51,8 @@ pub async fn render_marp(markdown: &str, extra_data: MarkdownExtraData) -> HbpRe
 
     #[derive(Serialize)]
     struct RenderData {
-        raw_content: String,
-        extra_data: MarkdownExtraData,
+        markdown_html: String,
     }
 
-    TemplateRenderer::new("index.html".into()).to_html(RenderData {
-        raw_content,
-        extra_data,
-    })
+    Templater::new("markdown/markdown.html".into()).to_html(RenderData { markdown_html })
 }

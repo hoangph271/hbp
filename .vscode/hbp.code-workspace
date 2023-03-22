@@ -9,5 +9,7 @@
       "name": "notes"
     }
   ],
-  "settings": {}
+  "settings": {
+    "task.allowAutomaticTasks": "on"
+  }
 }

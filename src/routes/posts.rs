@@ -1,44 +1,37 @@
+use crate::data::lib::post_orm::*;
+use crate::data::models::posts_model::Post;
 use crate::data::{lib, models::posts_model};
-use crate::utils::responders::HbpResponse;
+use crate::utils::responders::{HbpApiResult, HbpJson, HbpResponse};
+use crate::shared::interfaces::{ApiItem, ApiList};
 use httpstatus::StatusCode;
-use log::*;
 use rocket::serde::json::Json;
 use rocket::{delete, get, post, put, routes, Route};
 
 #[get("/")]
-pub async fn index() -> HbpResponse {
-    let posts = lib::post_orm::get_posts().await;
+pub async fn index() -> HbpApiResult<Post> {
+    let posts = lib::post_orm::get_posts().await?;
 
-    HbpResponse::json(posts, None)
+    Ok(HbpJson::List(ApiList::ok(posts)))
 }
 #[get("/<post_id>")]
-pub async fn find_one(post_id: String) -> HbpResponse {
-    use lib::{post_orm, OrmError};
+pub async fn find_one(post_id: String) -> HbpApiResult<Post> {
+    get_one(&post_id)?;
 
-    match post_orm::get_one(&post_id) {
-        Ok(post) => HbpResponse::json(post, None),
-        Err(e) => match e {
-            OrmError::NotFound => HbpResponse::status(StatusCode::NotFound),
-        },
-    }
+    todo!()
 }
 
 #[delete("/<post_id>")]
-pub async fn delete_one(post_id: String) -> HbpResponse {
-    lib::post_orm::delete_one(&post_id);
-    // TODO: Skip on 404, handle errors
-    HbpResponse::status(StatusCode::Ok)
+pub async fn api_delete_one(post_id: String) -> HbpApiResult<()> {
+    delete_one(&post_id);
+
+    Ok(HbpJson::Empty)
 }
 
 #[post("/", data = "<new_post>")]
-pub async fn create(new_post: Json<posts_model::NewPost>) -> HbpResponse {
-    match lib::post_orm::create_post(new_post.into_inner()) {
-        Ok(post) => HbpResponse::json(post, None),
-        Err(_) => {
-            error!("create_post failed");
-            HbpResponse::internal_server_error()
-        }
-    }
+pub async fn create(new_post: Json<posts_model::NewPost>) -> HbpApiResult<Post> {
+    let post = create_post(new_post.into_inner()).expect("create_post() failed");
+
+    Ok(ApiItem::ok(post).into())
 }
 
 #[put("/", data = "<updated_post>")]
@@ -46,13 +39,13 @@ pub async fn update(updated_post: Json<posts_model::UpdatedPost>) -> HbpResponse
     use lib::{post_orm, OrmError};
 
     match post_orm::update_one(updated_post.into_inner()) {
-        Ok(_) => HbpResponse::status(StatusCode::Ok),
+        Ok(_) => HbpResponse::from_error_status(StatusCode::Ok), // FIME: error_status is NOT correct
         Err(e) => match e {
-            OrmError::NotFound => HbpResponse::status(StatusCode::NotFound),
+            OrmError::NotFound => HbpResponse::from_error_status(StatusCode::NotFound),
         },
     }
 }
 
 pub fn posts_routes() -> Vec<Route> {
-    routes![index, find_one, delete_one, create, update]
+    routes![index, find_one, api_delete_one, create, update]
 }

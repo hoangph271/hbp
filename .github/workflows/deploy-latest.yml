@@ -1,15 +1,15 @@
 name: Deploy latest
 
 on:
+  workflow_dispatch:
+    branches:
+    - master
   push:
     branches:
     - master
   pull_request:
     branches:
     - master
-
-env:
-  DAY_OF_WEEK: ${{ secrets.JWT_KEY }}
 
 jobs:
   deploy:
@@ -22,4 +22,4 @@ jobs:
             username: ${{ secrets.USERNAME }}
             KEY: ${{ secrets.KEY }}
             port: ${{ secrets.PORT }}
-            script: cd /home/algo/hbp && git pull
+            script: cd ${{ secrets.HBP_LOCATION }} && git pull

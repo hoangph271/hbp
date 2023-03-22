@@ -1,5 +1,6 @@
-use crate::utils::string::url_encode_path;
-use crate::utils::types::{HbpError, HbpResult};
+use crate::shared::interfaces::ApiError;
+use crate::utils::responders::HbpResult;
+use crate::utils::url_encode_path;
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use httpstatus::StatusCode;
@@ -8,10 +9,10 @@ use regex::Regex;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::fs;
-use std::path::Path;
+use std::path::{Path};
 
 #[derive(Debug, Serialize, Default)]
-pub struct Markdown {
+pub struct FsoMarkdown {
     pub title: String,
     pub file_name: String,
     pub author: String,
@@ -22,8 +23,8 @@ pub struct Markdown {
     pub url: String,
 }
 
-impl From<Markdown> for Data {
-    fn from(markdown: Markdown) -> Data {
+impl From<FsoMarkdown> for Data {
+    fn from(markdown: FsoMarkdown) -> Data {
         let insert_fields = move || -> Result<Data, EncoderError> {
             let mut map_builder = MapBuilder::new()
                 .insert("title", &markdown.title)?
@@ -36,7 +37,9 @@ impl From<Markdown> for Data {
             if let Some(tags) = markdown.tags {
                 map_builder = map_builder.insert_vec("tags", |mut builder| {
                     for tag in &tags[..] {
-                        builder = builder.push(tag).unwrap();
+                        builder = builder
+                            .push(tag)
+                            .unwrap_or_else(|e| panic!("push tag failed: {e:?}"));
                     }
 
                     builder
@@ -46,11 +49,11 @@ impl From<Markdown> for Data {
             Ok(map_builder.build())
         };
 
-        insert_fields().unwrap()
+        insert_fields().unwrap_or_else(|e| panic!("insert_fields fail: {e}"))
     }
 }
 
-fn extract_markdown_header_content(content: &str) -> Option<String> {
+pub fn extract_markdown_header_content(content: &str) -> Option<String> {
     if let Some(header_comment) = Regex::new("<!--((.|\n)*?)-->").ok()?.find(content) {
         if header_comment.start() != 0 {
             None
@@ -59,7 +62,7 @@ fn extract_markdown_header_content(content: &str) -> Option<String> {
                 header_comment.start() + "<!--".len(),
                 header_comment.end() - "-->".len(),
             );
-            let header_content = (&content[start..end]).to_string();
+            let header_content = (content[start..end]).to_string();
             Some(header_content)
         }
     } else {
@@ -67,20 +70,22 @@ fn extract_markdown_header_content(content: &str) -> Option<String> {
     }
 }
 
-impl Markdown {
-    pub fn from_markdown(path: &Path) -> HbpResult<Markdown> {
+impl FsoMarkdown {
+    pub fn from_markdown(path: &Path) -> HbpResult<FsoMarkdown> {
         if !path.exists() {
             let msg = format!("{} NOT exists", path.to_string_lossy());
-            return Err(HbpError::from_message(&msg, StatusCode::BadRequest));
+            return Err(ApiError::from_message(&msg, StatusCode::BadRequest).into());
         }
 
-        let mut markdown = Markdown {
-            // TODO: Abstract this map_err
-            content: fs::read_to_string(path)
-                .map_err(|e| HbpError::from_std_error(e, StatusCode::InternalServerError))?,
-            file_name: path.file_name().unwrap().to_string_lossy().into_owned(),
+        let mut markdown = FsoMarkdown {
+            content: fs::read_to_string(path)?,
+            file_name: path
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .into_owned(),
             url: url_encode_path(&path.to_string_lossy()),
-            ..Markdown::default()
+            ..FsoMarkdown::default()
         };
 
         if let Some(header_comment) = extract_markdown_header_content(&markdown.content) {
@@ -88,11 +93,13 @@ impl Markdown {
                 .trim()
                 .split('\n')
                 .map(|line| {
-                    let colon_index = line.find(':').unwrap();
+                    let colon_index = line.find(':').unwrap_or_else(|| {
+                        panic!("header_comment value lines MUST contain a colon")
+                    });
 
                     (
-                        (&line[..colon_index]).trim().to_string(),
-                        (&line[colon_index + 1..]).trim().to_string(),
+                        (line[..colon_index]).trim().to_string(),
+                        (line[colon_index + 1..]).trim().to_string(),
                     )
                 })
                 .collect();
@@ -128,23 +135,12 @@ impl Markdown {
         }
 
         if markdown.dob.is_empty() {
-            markdown.dob = format!(
-                "{}",
-                DateTime::<Utc>::from(
-                    path.metadata()
-                        // TODO: Abstract this map_err
-                        .map_err(|e| {
-                            HbpError::from_std_error(e, StatusCode::InternalServerError)
-                        })?
-                        .created()
-                        // TODO: Abstract this map_err
-                        .map_err(|e| {
-                            HbpError::from_std_error(e, StatusCode::InternalServerError)
-                        })?
-                )
-                .date()
-                .format("%m/%d/%Y")
-            );
+            if let Ok(dob) = path.metadata()?.created() {
+                markdown.dob = format!(
+                    "{}",
+                    DateTime::<Utc>::from(dob).date_naive().format("%m/%d/%Y")
+                );
+            }
         }
 
         Ok(markdown)
@@ -152,23 +148,77 @@ impl Markdown {
 }
 
 #[derive(Debug, Serialize)]
-pub struct MarkdownDir {
+pub struct FsoDirectory {
     pub title: String,
     pub url: String,
 }
 
-#[derive(Serialize)]
-pub enum MarkdownOrMarkdownDir {
-    Markdown(Markdown),
-    MarkdownDir(MarkdownDir),
+#[derive(Serialize, Debug)]
+pub enum FsoFileType {
+    Markdown(FsoMarkdown),
+    Unknown,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[derive(Serialize, Debug)]
+pub struct FsoFile {
+    pub title: String,
+    pub url: String,
+    pub fso_type: FsoFileType,
+}
 
-    #[test]
-    fn skip_if_no_metadata_comment() {
-        assert_eq!(extract_markdown_header_content(""), None);
+impl FsoFile {
+    pub fn markdown(title: String, url: String, fso_markdown: FsoMarkdown) -> FsoFile {
+        Self {
+            title,
+            url,
+            fso_type: FsoFileType::Markdown(fso_markdown),
+        }
+    }
+
+    pub fn unknown(title: String, url: String) -> FsoFile {
+        Self {
+            title,
+            url,
+            fso_type: FsoFileType::Unknown,
+        }
+    }
+}
+impl From<FsoFile> for FsoEntry {
+    fn from(fso_file: FsoFile) -> Self {
+        Self::FsoFile(fso_file)
+    }
+}
+
+#[derive(Serialize, Debug)]
+pub enum FsoEntry {
+    FsoFile(FsoFile),
+    FsoDirectory(FsoDirectory),
+}
+
+impl FsoEntry {
+    pub fn from_path(path: &Path) -> Self {
+        let title = path
+            .file_name()
+            .map(|filename| filename.to_string_lossy())
+            .unwrap_or(path.to_string_lossy())
+            .to_string();
+        let url = url_encode_path(&path.to_string_lossy());
+
+        if path.is_dir() {
+            return Self::FsoDirectory(FsoDirectory { title, url });
+        }
+
+        if let Some(file_ext) = path.extension().map(|f| f.to_string_lossy()) {
+            return match file_ext.to_lowercase().as_str() {
+                "md" => {
+                    let fso_markdown = FsoMarkdown::from_markdown(path).unwrap();
+                    FsoFile::markdown(title, url, fso_markdown)
+                }
+                _ => FsoFile::unknown(title, url),
+            }
+            .into();
+        }
+
+        FsoFile::unknown(title, url).into()
     }
 }

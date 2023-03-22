@@ -1,41 +1,16 @@
-<div class="error-text">
-  <div class="content">
-    <h3>
-      {{ error_text }}
-    </h3>
-    <p>
-      Click <a href="/">here</a> to get home...!
-    </p>
-  </div>
-</div>
-
 <style>
-  body {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    background-image: url(/static/images/cuddlyferris.png);
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
-  }
-
-  div.error-text {
-    font-family: 'Ubuntu Mono', 'Courier New', Courier, monospace;
+  main {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center;
-    flex-grow: 1;
-  }
-
-  div.error-text .content {
-    max-width: calc(100vw - 4rem);
-    margin: auto;
-    background: rgba(255, 255, 255, 0.85);
-    border-radius: var(--radius-gentle);
-    text-align: center;
-    padding: var(--padding-small);
-    box-shadow: var(--equal-shadow-gentle);
   }
 </style>
+
+<div class="text-center">
+  <div class="Popover-message p-2 mx-auto">
+    <h3 class="mb-2">
+      {{ error_text }}
+    </h3>
+    {{{ action_html }}}
+  </div>
+</div>

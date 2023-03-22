@@ -1,0 +1,20 @@
+[
+  {
+    "_id": "f507172d-842d-4b25-9703-9b9c46bde6ca",
+    "name": ".env",
+    "default": true,
+    "sortNum": 10000,
+    "created": "2022-08-21T04:37:59.908Z",
+    "modified": "2022-08-21T04:41:28.099Z",
+    "data": [
+      {
+        "name": "API_ROOT",
+        "value": "http://localhost:8000"
+      },
+      {
+        "name": "JWT",
+        "value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjIyNjU4NjA0NzAsInN1YiI6Imh1bmdwdiIsInJvbGVzIjpbXX0.Nf7Xn-l1Ye6Jh79bC2RlJgVedHISw1gOp-nv7VpmJy4"
+      }
+    ]
+  }
+]

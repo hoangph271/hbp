@@ -1,35 +1,33 @@
+use async_std::{fs};
+use rocket::async_trait;
+
+use self::lib::DbError;
+
 pub mod lib;
 pub mod models;
 
-use async_std::task;
-use log::*;
-use std::thread::{sleep, spawn};
-use std::time::Duration;
+pub mod profile_orm;
+pub mod user_orm;
 
-pub fn init_db() {
-    spawn(|| {
-        info!("---@ init_db()");
 
-        loop {
-            match task::block_on(lib::user_orm::init_users_table()) {
-                Ok(_) => break,
-                Err(e) => {
-                    error!("{:?}", e);
-                    sleep(Duration::from_secs(10))
-                }
-            }
-        }
+#[async_trait]
+pub trait OrmInit {
+    fn db_file_name(&self) -> String;
 
-        loop {
-            match task::block_on(lib::post_orm::init_posts_table()) {
-                Ok(_) => break,
-                Err(e) => {
-                    error!("{:?}", e);
-                    sleep(Duration::from_secs(10))
-                }
-            }
-        }
+    async fn init_table(&self) -> Result<(), DbError> {
+        fs::File::create(self.db_file_name()).await.unwrap();
 
-        info!("---# init_db()");
-    });
+        Ok(())
+    }
+
+    // #[cfg(test)]
+    // async fn drop_table(&self) -> Result<(), DbError>;
+
+    // #[cfg(test)]
+    // async fn reset_table(&self) -> Result<(), DbError> {
+    //     self.drop_table().await?;
+    //     self.init_table().await?;
+
+    //     Ok(())
+    // }
 }

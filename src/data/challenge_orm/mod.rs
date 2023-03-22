@@ -1,9 +1,5 @@
-// #[cfg(test)]
-// mod challenge_orm_test;
-
-use super::OrmInit;
-use crate::data::lib::*;
-use hbp_types::Challenge;
+use super::{OrmInit};
+use crate::{data::lib::*, shared::Challenge};
 use rocket::async_trait;
 use serde::__private::from_utf8_lossy;
 
@@ -68,47 +64,6 @@ impl ChallengeOrm {
         _challenge: Challenge,
     ) -> Result<Challenge, DbError> {
         todo!()
-        // let update_query = Query::builder()
-        //     .keyspace(&self.orm_config.keyspace)
-        //     .query(
-        //         "
-        //         UPDATE challenges
-        //         SET title = :title, why = :why, note = :note, started_at = :started_at, end_at = :end_at, finished = :finished
-        //         WHERE id = :id
-        //         IF EXISTS",
-        //     )
-        //     .bind_name("id", challenge.id.clone())
-        //     .bind_name("title", challenge.title)
-        //     .bind_name("why", challenge.why)
-        //     .bind_name("note", challenge.note)
-        //     .bind_name("started_at", challenge.start_at_ms.timestamp_millis())
-        //     .bind_name("end_at", challenge.end_at_ms.timestamp_millis())
-        //     .bind_name("finished", challenge.finished)
-        //     .build();
-
-        // let client = self.stargate_client().await?;
-        // let mut rs = execute_stargate_query(client, update_query)
-        //     .await?
-        //     .ok_or_else(|| DbError {
-        //         status_code: StatusCode::NotFound,
-        //         message: format!("Challenge NotFound: {}", challenge.id),
-        //     })?;
-
-        // let is_found: bool = rs.rows.pop().unwrap().try_take(0).unwrap();
-
-        // if !is_found {
-        //     Err(DbError {
-        //         status_code: StatusCode::NotFound,
-        //         message: format!("Challenge NotFound: {}", challenge.id),
-        //     })?
-        // }
-
-        // match self.find_one(&challenge.id).await? {
-        //     Some(challenge) => Ok(challenge),
-        //     None => Err(DbError::internal_server_error(
-        //         "create_challenge failed".to_owned(),
-        //     )),
-        // }
     }
 
     pub async fn delete(&self, db: &sled::Db, id: &str) -> Result<(), DbError> {

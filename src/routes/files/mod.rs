@@ -3,7 +3,7 @@ use async_std::fs::read_dir;
 use async_std::path::PathBuf as AsyncPathBuf;
 
 use futures::StreamExt;
-use hbp_types::{ApiItem, Directory};
+use crate::shared::{ApiItem, Directory};
 use log::error;
 use mime_guess::Mime;
 use okapi::openapi3::OpenApi;

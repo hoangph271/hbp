@@ -2,7 +2,10 @@
 version: "2.1"
 services:
   hbp:
-    image: hbp:latest
+    image: hbp
+    build: 
+      context: .
+      dockerfile: ./Dockerfile
     ports:
       - 8000:8000
     env_file:

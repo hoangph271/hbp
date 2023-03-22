@@ -135,12 +135,12 @@ impl FsoMarkdown {
         }
 
         if markdown.dob.is_empty() {
-            markdown.dob = format!(
-                "{}",
-                DateTime::<Utc>::from(path.metadata()?.created()?)
-                    .date_naive()
-                    .format("%m/%d/%Y")
-            );
+            if let Ok(dob) = path.metadata()?.created() {
+                markdown.dob = format!(
+                    "{}",
+                    DateTime::<Utc>::from(dob).date_naive().format("%m/%d/%Y")
+                );
+            }
         }
 
         Ok(markdown)
@@ -215,7 +215,8 @@ impl FsoEntry {
                     FsoFile::markdown(title, url, fso_markdown)
                 }
                 _ => FsoFile::unknown(title, url),
-            }.into();
+            }
+            .into();
         }
 
         FsoFile::unknown(title, url).into()

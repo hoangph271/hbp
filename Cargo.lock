@@ -1160,7 +1160,6 @@ dependencies = [
  "fern",
  "futures",
  "glob",
- "hbp_types",
  "httpstatus",
  "image",
  "jsonwebtoken",
@@ -1185,19 +1184,6 @@ dependencies = [
  "urlencoding",
  "walkdir",
  "zip",
-]
-
-[[package]]
-name = "hbp_types"
-version = "0.1.0"
-source = "git+https://github.com/hoangph271/hbp_types#434b34ef951bcf8e499618fc3360252b8417f15b"
-dependencies = [
- "chrono",
- "httpstatus",
- "okapi",
- "rocket_okapi",
- "schemars",
- "serde",
 ]
 
 [[package]]

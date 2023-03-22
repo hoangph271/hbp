@@ -2,7 +2,7 @@ use crate::data::lib::post_orm::*;
 use crate::data::models::posts_model::Post;
 use crate::data::{lib, models::posts_model};
 use crate::utils::responders::{HbpApiResult, HbpJson, HbpResponse};
-use hbp_types::{ApiItem, ApiList};
+use crate::shared::interfaces::{ApiItem, ApiList};
 use httpstatus::StatusCode;
 use rocket::serde::json::Json;
 use rocket::{delete, get, post, put, routes, Route};

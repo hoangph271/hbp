@@ -1,8 +1,7 @@
-use std::{path::PathBuf, process::Command};
-
-use hbp_types::ApiError;
+use crate::shared::ApiError;
 use httpstatus::StatusCode;
 use rocket::{get, routes, uri, Route};
+use std::{path::PathBuf, process::Command};
 
 use crate::utils::{
     responders::{HbpError, HbpResponse, HbpResult},

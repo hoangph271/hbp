@@ -1,5 +1,5 @@
+use crate::shared::{ApiItem, ApiList};
 use futures::Future;
-use hbp_types::{ApiItem, ApiList};
 use httpstatus::StatusCode;
 use rocket::http::ContentType;
 use rocket_okapi::JsonSchema;
@@ -137,8 +137,8 @@ pub type HbpResult<T> = Result<T, HbpError>;
 
 mod hbp_response_impls {
     use super::{json_stringify, HbpContent, HbpError, HbpJson, HbpResponse};
+    use crate::shared::{ApiError, ApiItem, ApiList};
     use crate::{data::lib::OrmError, utils::status_from};
-    use hbp_types::{ApiError, ApiItem, ApiList};
     use httpstatus::StatusCode;
     use image::ImageError;
     use log::error;
@@ -368,13 +368,13 @@ mod hbp_response_impls {
 
     impl<T: Serialize> From<ApiItem<T>> for HbpJson<T> {
         fn from(item: ApiItem<T>) -> Self {
-            HbpJson::Item(item)
+            HbpJson::<T>::Item(item)
         }
     }
 
     impl<T: Serialize> From<ApiList<T>> for HbpJson<T> {
         fn from(list: ApiList<T>) -> Self {
-            HbpJson::List(list)
+            HbpJson::<T>::List(list)
         }
     }
 

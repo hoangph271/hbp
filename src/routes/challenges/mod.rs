@@ -1,3 +1,4 @@
+use crate::shared::{ApiError, ApiItem, ApiList, Challenge};
 use crate::{
     data::challenge_orm::ChallengeOrm,
     utils::{
@@ -5,7 +6,6 @@ use crate::{
         responders::{wrap_api_handler, HbpApiResult, HbpError, HbpJson},
     },
 };
-use hbp_types::{ApiError, ApiItem, ApiList, Challenge};
 use okapi::openapi3::OpenApi;
 use rocket::{delete, get, post, put, serde::json::Json, Route, State};
 use rocket_okapi::{openapi, openapi_get_routes_spec, settings::OpenApiSettings};

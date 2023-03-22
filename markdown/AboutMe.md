@@ -10,7 +10,7 @@ Things I like:
   - DSK
   - Mr. Robot
 
-You can reach me through my [email](mailto:crustyrat271) or my [GitHub](http://github.com/hoangph271)...!
+You can reach me through my [email](mailto:crustyrat271) or my [GitHub](https://github.com/hoangph271/hbp/issues/new)...!
 
 ---
 

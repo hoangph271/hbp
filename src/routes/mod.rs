@@ -1,6 +1,5 @@
 pub mod blogs;
 pub mod catchers;
-pub mod challenges;
 pub mod files;
 pub mod index;
 pub mod markdown;

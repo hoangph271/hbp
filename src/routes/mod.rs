@@ -8,4 +8,5 @@ pub mod posts;
 pub mod profiles;
 pub mod static_files;
 pub mod users;
+pub mod nft_gallery;
 pub mod git;

@@ -156,6 +156,7 @@ pub struct FsoDirectory {
 #[derive(Serialize, Debug)]
 pub enum FsoFileType {
     Markdown(FsoMarkdown),
+    Plaintext(String),
     Unknown,
 }
 

@@ -9,6 +9,7 @@ use crate::utils::{
     fso,
     responders::{HbpContent, HbpResponse},
 };
+use async_std::fs;
 use httpstatus::StatusCode;
 use log::*;
 use rocket::{get, uri};
@@ -28,7 +29,7 @@ pub(super) async fn markdown_file(
         return Err(ApiError::not_found().with_ui().into());
     }
 
-    if !fso::is_markdown(&sub_path) {
+    if !(fso::is_markdown(&sub_path) || fso::is_plaintext(&sub_path)) {
         return if file_path.is_dir() {
             let layout_data = IndexLayout::default()
                 .moveup_urls(MoveUpUrl::from_path(&file_path))
@@ -37,7 +38,7 @@ pub(super) async fn markdown_file(
                     &file_path
                         .file_name()
                         .map(|file_name| file_name.to_string_lossy())
-                        .unwrap_or_else(|| file_path.to_string_lossy())
+                        .unwrap_or_else(|| file_path.to_string_lossy()),
                 );
 
             render_dir(&file_path, layout_data)
@@ -77,6 +78,7 @@ pub(super) async fn user_markdown_editor(sub_path: PathBuf, _jwt: AuthPayload) -
     }
 }
 
+// TODO: Rename this route, not a markdown handler anymore
 #[get("/users/<username>/<sub_path..>", rank = 1)]
 pub(super) async fn user_markdown_file(
     username: &str,
@@ -106,38 +108,26 @@ pub(super) async fn user_markdown_file(
         );
     }
 
-    if !fso::is_markdown(&file_path) {
-        return if file_path.is_dir() {
-            let mut fso_entries = fso::from_dir(&file_path)?;
+    if fso::is_plaintext(&file_path) {
+        let raw_content = fs::read_to_string(file_path.clone()).await.unwrap();
 
-            fso_entries.iter_mut().for_each(|_fso_entry| {
-                // TODO: Fix me
-                // if let FsoEntry::FsoFile(fso_file) = fso_entry {
-                //     if let FsoFileType::Markdown(mut markdown) = fso_file.fso_type {
-                //         if markdown.author.is_empty() {
-                //             markdown.author = username.to_owned();
-                //         }
-                //     }
-                // }
-            });
+        return Ok(HbpResponse::ok({
+            let filename = file_path.file_name().unwrap().to_string_lossy();
 
-            // TODO: Sort...! :"<
+            Some(HbpContent::Html(
+                Templater::index()
+                    .to_html(IndexLayout::from_title(&filename).raw_content({
+                        let lines: Vec<_> = raw_content.split(' ').collect();
 
-            let html = render_markdown_list(
-                IndexLayout::default()
-                    .title(&file_path_str)
-                    .set_auth(Some(jwt))
-                    .moveup_urls(moveup_urls),
-                fso_entries,
-            )?;
-
-            Ok(HbpResponse::html(html, StatusCode::Ok))
-        } else {
-            Ok(HbpResponse::file(file_path))
-        };
+                        &lines.join("<br />")
+                    }))
+                    .unwrap(),
+            ))
+        }));
     }
 
-    if let Ok(markdown_data) = FsoMarkdown::from_markdown(&file_path) {
+    if fso::is_markdown(&file_path) {
+        let markdown_data = FsoMarkdown::from_markdown(&file_path)?;
         let html = async {
             if fso::is_marp(&markdown_data.content) {
                 fso::render_marp(&markdown_data).await
@@ -147,10 +137,10 @@ pub(super) async fn user_markdown_file(
         }
         .await?;
 
-        Ok(HbpResponse::ok(Some(HbpContent::Html(html))))
-    } else {
-        Ok(HbpResponse::internal_server_error())
+        return Ok(HbpResponse::ok(Some(HbpContent::Html(html))));
     }
+
+    Ok(HbpResponse::file(file_path))
 }
 
 #[get("/users", rank = 1)]

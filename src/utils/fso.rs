@@ -36,6 +36,12 @@ pub fn is_markdown(file_path: &Path) -> bool {
         Some(file_name) => file_name.to_string_lossy().to_lowercase().ends_with(".md"),
     }
 }
+pub fn is_plaintext(file_path: &Path) -> bool {
+    match file_path.file_name() {
+        None => false,
+        Some(file_name) => file_name.to_string_lossy().to_lowercase().ends_with(".txt"),
+    }
+}
 
 pub async fn render_marp(markdown: &FsoMarkdown) -> HbpResult<String> {
     if !marper::is_marp(&markdown.content) {

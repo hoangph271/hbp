@@ -28,6 +28,10 @@ impl Templater {
         Templater::new("static/error.html".into())
     }
 
+    pub fn index () -> Self {
+        Templater::new("index.html".into())
+    }
+
     pub fn to_html(&self, data: impl Serialize) -> HbpResult<String> {
         let template = compile_template(&self.template_path)?;
 
@@ -108,6 +112,12 @@ impl IndexLayout {
 
     pub fn title(mut self, title: &str) -> Self {
         self.title = title.to_string();
+
+        self
+    }
+
+    pub fn raw_content(mut self, raw_content: &str) -> Self {
+        self.raw_content = raw_content.to_string();
 
         self
     }

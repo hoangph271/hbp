@@ -21,6 +21,7 @@ fn git_pull() -> HbpResult<HbpResponse> {
     let output = Command::new("git")
         .current_dir::<PathBuf>("markdown/users/hbp".into())
         .arg("pull")
+        .arg("--ff-only")
         .output()
         .map_err(|e| {
             log::error!("Repository::init failed: {e:?}");

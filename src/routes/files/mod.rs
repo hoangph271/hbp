@@ -2,14 +2,12 @@ use async_recursion::async_recursion;
 use async_std::fs::read_dir;
 use async_std::path::PathBuf as AsyncPathBuf;
 
-use futures::StreamExt;
 use crate::shared::{ApiItem, Directory};
+use futures::StreamExt;
 use log::error;
 use mime_guess::Mime;
-use okapi::openapi3::OpenApi;
 use rand::{seq::SliceRandom, thread_rng};
-use rocket::{get, uri, Route};
-use rocket_okapi::{openapi, openapi_get_routes_spec, settings::OpenApiSettings};
+use rocket::{get, routes, uri, Route};
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
@@ -75,9 +73,8 @@ fn assert_directory_access(path: &Path) -> HbpResult<&Path> {
     }
 }
 
-#[openapi]
 #[get("/dir/<path..>")]
-pub async fn api_get_directory(path: PathBuf, jwt: Option<AuthPayload>) -> HbpApiResult<Directory> {
+async fn api_get_directory(path: PathBuf, jwt: Option<AuthPayload>) -> HbpApiResult<Directory> {
     let path = files_root().join(path);
 
     attempt_access(&path, &jwt)?;
@@ -97,9 +94,8 @@ pub async fn api_get_directory(path: PathBuf, jwt: Option<AuthPayload>) -> HbpAp
     Ok(HbpJson::Item(ApiItem::ok(item)))
 }
 
-#[openapi]
 #[get("/random/raw?<mime>&<preview>")]
-pub async fn api_get_random_file(
+async fn api_get_random_file(
     mime: Option<String>,
     jwt: Option<AuthPayload>,
     preview: Option<bool>,
@@ -207,9 +203,8 @@ pub async fn api_get_random_file(
     }
 }
 
-#[openapi]
 #[get("/preview/<path..>")]
-pub async fn api_get_preview_file(
+async fn api_get_preview_file(
     jwt: Option<AuthPayload>,
     path: PathBuf,
 ) -> HbpResult<HbpResponse> {
@@ -223,9 +218,8 @@ pub async fn api_get_preview_file(
     Ok(HbpResponse::temp_file(thumbnail))
 }
 
-#[openapi]
 #[get("/raw/<path..>", rank = 2)]
-pub async fn api_get_raw_file(jwt: Option<AuthPayload>, path: PathBuf) -> HbpResult<HbpResponse> {
+async fn api_get_raw_file(jwt: Option<AuthPayload>, path: PathBuf) -> HbpResult<HbpResponse> {
     let path = files_root().join(path);
 
     attempt_access(&path, &jwt)?;
@@ -234,9 +228,9 @@ pub async fn api_get_raw_file(jwt: Option<AuthPayload>, path: PathBuf) -> HbpRes
     Ok(HbpResponse::file(path))
 }
 
-pub fn get_routes_and_docs(openapi_settings: &OpenApiSettings) -> (Vec<Route>, OpenApi) {
-    openapi_get_routes_spec![
-        openapi_settings: api_get_raw_file,
+pub fn files_api_routes() -> Vec<Route> {
+    routes![
+        api_get_raw_file,
         api_get_preview_file,
         api_get_random_file,
         api_get_directory

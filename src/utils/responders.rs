@@ -2,7 +2,6 @@ use crate::shared::{ApiItem, ApiList};
 use futures::Future;
 use httpstatus::StatusCode;
 use rocket::http::ContentType;
-use rocket_okapi::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use tempfile::NamedTempFile;
@@ -11,7 +10,7 @@ use crate::shared::interfaces::{ApiError, ApiResult};
 
 use super::template::{action_html_for_401, status_text, ErrorPage, IndexLayout, Templater};
 
-#[derive(Serialize, Deserialize, JsonSchema, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub enum HbpContent {
     Plain(String),
     Html(String),
@@ -142,15 +141,12 @@ mod hbp_response_impls {
     use httpstatus::StatusCode;
     use image::ImageError;
     use log::error;
-    use okapi::openapi3::Responses;
     use rocket::{
         fs::NamedFile,
         http::{ContentType, Header, Status},
         response::Responder,
         Response,
     };
-    use rocket_okapi::gen::OpenApiGenerator;
-    use rocket_okapi::response::OpenApiResponderInner;
     use serde::Serialize;
     use std::{error::Error, io::Cursor};
 
@@ -242,30 +238,6 @@ mod hbp_response_impls {
             response_builder.status(status);
 
             response_builder.finalize()
-        }
-    }
-
-    impl OpenApiResponderInner for HbpResponse {
-        fn responses(_gen: &mut OpenApiGenerator) -> rocket_okapi::Result<Responses> {
-            Ok(Responses {
-                ..Default::default()
-            })
-        }
-    }
-
-    impl OpenApiResponderInner for HbpError {
-        fn responses(_: &mut OpenApiGenerator) -> rocket_okapi::Result<Responses> {
-            Ok(Responses {
-                ..Default::default()
-            })
-        }
-    }
-
-    impl<T: Serialize> OpenApiResponderInner for HbpJson<T> {
-        fn responses(_: &mut OpenApiGenerator) -> rocket_okapi::Result<Responses> {
-            Ok(Responses {
-                ..Default::default()
-            })
         }
     }
 

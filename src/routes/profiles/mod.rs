@@ -1,7 +1,5 @@
 use httpstatus::StatusCode;
-use okapi::openapi3::OpenApi;
-use rocket::{get, Route, State};
-use rocket_okapi::{openapi, openapi_get_routes_spec, settings::OpenApiSettings};
+use rocket::{get, Route, State, routes};
 use sled::Db;
 
 use crate::{
@@ -15,9 +13,8 @@ use crate::{
     },
 };
 
-#[openapi]
 #[get("/")]
-pub async fn api_get_profile(jwt: UserJwt, db: &State<Db>) -> HbpApiResult<DbProfile> {
+async fn api_get_profile(jwt: UserJwt, db: &State<Db>) -> HbpApiResult<DbProfile> {
     let profile = wrap_api_handler(|| async {
         let profile_orm = ProfileOrm::default();
 
@@ -49,6 +46,6 @@ pub async fn api_get_profile(jwt: UserJwt, db: &State<Db>) -> HbpApiResult<DbPro
     Ok(HbpJson::Item(item))
 }
 
-pub fn get_routes_and_docs(settings: &OpenApiSettings) -> (Vec<Route>, OpenApi) {
-    openapi_get_routes_spec![settings: api_get_profile]
+pub fn profiles_api_routes() -> Vec<Route> {
+    routes![api_get_profile]
 }

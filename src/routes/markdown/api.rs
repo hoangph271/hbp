@@ -5,10 +5,8 @@ use crate::{
 use async_std::fs::metadata;
 use response_types::*;
 use rocket::get;
-use rocket_okapi::openapi;
 use std::path::PathBuf;
 
-#[openapi]
 #[get("/users/<username>/<sub_path..>")]
 pub(super) async fn api_user_markdowns(
     username: &str,

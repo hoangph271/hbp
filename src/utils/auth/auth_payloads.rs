@@ -4,10 +4,6 @@ use httpstatus::StatusCode;
 use jsonwebtoken::{decode, errors::Error, DecodingKey, TokenData, Validation};
 use log::error;
 use rocket::serde::{Deserialize, Serialize};
-use rocket_okapi::{
-    gen::OpenApiGenerator,
-    request::{OpenApiFromRequest, RequestHeaderInput},
-};
 
 use crate::{
     data::models::users_model::DbUser,
@@ -83,15 +79,6 @@ impl Default for UserJwt {
             roles: Default::default(),
             exp: timestamp_now() + jwt_expires_in_ms(),
         }
-    }
-}
-impl<'r> OpenApiFromRequest<'r> for UserJwt {
-    fn from_request_input(
-        _gen: &mut OpenApiGenerator,
-        _name: String,
-        _required: bool,
-    ) -> rocket_okapi::Result<RequestHeaderInput> {
-        Ok(RequestHeaderInput::None)
     }
 }
 impl From<DbUser> for UserJwt {
@@ -211,16 +198,6 @@ impl From<TokenData<ResourseJwt>> for AuthPayload {
         AuthPayload::UserResource(token_data.claims)
     }
 }
-impl<'r> OpenApiFromRequest<'r> for AuthPayload {
-    fn from_request_input(
-        _gen: &mut OpenApiGenerator,
-        _name: String,
-        _required: bool,
-    ) -> rocket_okapi::Result<RequestHeaderInput> {
-        Ok(RequestHeaderInput::None)
-    }
-}
-
 #[cfg(test)]
 mod auth_payload_tests {
     use crate::utils::env::{from_env, EnvKey};

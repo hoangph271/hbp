@@ -129,7 +129,7 @@ mod more_impls {
 
 #[cfg(test)]
 mod test {
-    use super::{ApiItem};
+    use super::ApiItem;
 
     #[test]
     fn can_stringify() {

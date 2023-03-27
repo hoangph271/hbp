@@ -9,7 +9,7 @@ use regex::Regex;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::fs;
-use std::path::{Path};
+use std::path::Path;
 
 #[derive(Debug, Serialize, Default)]
 pub struct FsoMarkdown {
@@ -156,7 +156,7 @@ pub struct FsoDirectory {
 #[derive(Serialize, Debug)]
 pub enum FsoFileType {
     Markdown(FsoMarkdown),
-    Plaintext(String),
+    // Plaintext(String),
     Unknown,
 }
 

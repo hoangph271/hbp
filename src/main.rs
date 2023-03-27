@@ -4,16 +4,10 @@
 #[macro_use]
 extern crate dotenv_codegen;
 extern crate mustache;
-extern crate rocket_okapi;
 extern crate serde_derive;
 
 use log::{error, info, warn};
-use rocket::{launch, routes, fs::FileServer};
-use rocket_okapi::{
-    mount_endpoints_and_merged_docs,
-    settings::OpenApiSettings,
-    swagger_ui::{make_swagger_ui, SwaggerUIConfig},
-};
+use rocket::{fs::FileServer, launch, routes};
 
 use crate::utils::env::{from_env, EnvKey};
 
@@ -56,30 +50,17 @@ fn launch() -> rocket::Rocket<rocket::Build> {
         .mount("/blogs", routes![routes::blogs::index])
         .mount("/gallery", routes::nft_gallery::nfs_gallery_routes())
         .mount("/git", routes::git::git_routes())
-        // * Swagger UI routes
+        .mount("/api/v1/markdowns", routes::markdown::markdown_api_routes())
+        .mount("/api/v1/users", routes::users::users_api_routes())
         .mount(
-            "/swagger",
-            make_swagger_ui(&SwaggerUIConfig {
-                url: "../api/v1/openapi.json".to_owned(),
-                ..Default::default()
-            }),
+            "/api/v1/movies_and_tv",
+            routes::movies_and_tv::movies_and_tv_api_routes(),
         )
+        .mount("/api/v1/profiles", routes::profiles::profiles_api_routes())
+        .mount("/api/v1/files", routes::files::files_api_routes())
         // * catchers
         .register("/", routes::catchers::catchers())
         .attach(utils::cors::Cors);
-
-    let openapi_settings = OpenApiSettings::default();
-
-    mount_endpoints_and_merged_docs! {
-        rocket,
-        "/api/v1",
-        openapi_settings,
-        "/markdowns" => routes::markdown::get_routes_and_docs(&openapi_settings),
-        "/users" => routes::users::get_routes_and_docs(&openapi_settings),
-        "/movies_and_tv" => routes::movies_and_tv::get_routes_and_docs(&openapi_settings),
-        "/profiles" => routes::profiles::get_routes_and_docs(&openapi_settings),
-        "/files" => routes::files::get_routes_and_docs(&openapi_settings)
-    };
 
     rocket
 }

@@ -6,7 +6,6 @@ use crate::utils::responders::{wrap_api_handler, HbpApiResult, HbpResult};
 use httpstatus::StatusCode::BadRequest;
 use rocket::serde::json::{Error as JsonError, Json};
 use rocket::{post, put, State};
-use rocket_okapi::openapi;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use sled::Db;
@@ -30,7 +29,6 @@ impl SignupApiPayload {
     }
 }
 
-#[openapi]
 #[post("/signup", data = "<signup_payload>")]
 pub async fn api_post_signup(
     signup_payload: Result<Json<SignupApiPayload>, JsonError<'_>>,
@@ -71,7 +69,6 @@ pub async fn api_post_signup(
     Ok(ApiItem::ok(user).into())
 }
 
-#[openapi]
 #[put("/<username>", data = "<user>")]
 pub async fn api_put_user(
     username: String,
@@ -88,7 +85,6 @@ pub async fn api_put_user(
     Ok(ApiItem::ok(user).into())
 }
 
-#[openapi]
 #[post("/signin", data = "<signin_body>")]
 pub async fn api_post_signin(signin_body: Json<LoginBody>, db: &State<Db>) -> HbpApiResult<String> {
     let jwt: String = wrap_api_handler(|| async {

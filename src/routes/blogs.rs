@@ -21,10 +21,7 @@ pub fn index(jwt: Option<AuthPayload>) -> HbpResponse {
 
     // FIXME: Now with dir, how to sort...?
 
-    match render_markdown_list(
-        IndexLayout::from_title("Blogs").set_auth(jwt),
-        markdowns,
-    ) {
+    match render_markdown_list(IndexLayout::from_title("Blogs").set_auth(jwt), markdowns) {
         Ok(html) => HbpResponse::html(html, StatusCode::Ok),
         Err(e) => HbpResponse::from_status(e.api_error.status_code),
     }

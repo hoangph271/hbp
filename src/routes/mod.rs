@@ -1,12 +1,12 @@
 pub mod blogs;
 pub mod catchers;
 pub mod files;
+pub mod git;
 pub mod index;
 pub mod markdown;
 pub mod movies_and_tv;
+pub mod nft_gallery;
 pub mod posts;
 pub mod profiles;
 pub mod static_files;
 pub mod users;
-pub mod nft_gallery;
-pub mod git;

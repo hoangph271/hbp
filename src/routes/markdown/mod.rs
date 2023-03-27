@@ -1,6 +1,4 @@
-use okapi::openapi3::OpenApi;
 use rocket::{routes, Route};
-use rocket_okapi::{openapi_get_routes_spec, settings::OpenApiSettings};
 use std::path::{Path, PathBuf};
 
 mod api;
@@ -39,6 +37,6 @@ pub fn markdown_routes() -> Vec<Route> {
     ]
 }
 
-pub fn get_routes_and_docs(settings: &OpenApiSettings) -> (Vec<Route>, OpenApi) {
-    openapi_get_routes_spec![settings: api_user_markdowns]
+pub fn markdown_api_routes() -> Vec<Route> {
+    routes![api_user_markdowns]
 }

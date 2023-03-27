@@ -38,8 +38,6 @@ regex = "1.7.3"
 urlencoding = "2.1.2"
 async-std = { version = "1.12.0", features = ["tokio1"] }
 schemars = "0.8.12"
-okapi = { version = "0.7.0-rc.1" }
-rocket_okapi = { version = "0.8.0-rc.2", features = ["swagger"] }
 thiserror = "1.0.40"
 async-recursion = "1.0.4"
 rand = "0.8.5"

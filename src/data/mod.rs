@@ -1,4 +1,4 @@
-use async_std::{fs};
+use async_std::fs;
 use rocket::async_trait;
 
 use self::lib::DbError;
@@ -8,7 +8,6 @@ pub mod models;
 
 pub mod profile_orm;
 pub mod user_orm;
-
 
 #[async_trait]
 pub trait OrmInit {

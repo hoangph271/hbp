@@ -28,7 +28,7 @@ impl Templater {
         Templater::new("static/error.html".into())
     }
 
-    pub fn index () -> Self {
+    pub fn index() -> Self {
         Templater::new("index.html".into())
     }
 

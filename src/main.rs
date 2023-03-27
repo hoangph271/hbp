@@ -37,7 +37,7 @@ async fn rocket() -> _ {
 }
 
 fn launch() -> rocket::Rocket<rocket::Build> {
-    let mut rocket = rocket::build()
+    let rocket = rocket::build()
         .manage(sled::open("hbp.sled.db").unwrap())
         .mount("/", utils::cors::options_routes())
         .mount("/", routes::index::index_routes())

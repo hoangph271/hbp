@@ -3,7 +3,10 @@ use reqwest::Client;
 use rocket::{get, routes, Route};
 use serde::{Deserialize, Serialize};
 
-use crate::utils::{responders::{HbpResponse, HbpResult}, template::{Templater, IndexLayout}};
+use crate::utils::{
+    responders::{HbpResponse, HbpResult},
+    template::{IndexLayout, Templater},
+};
 
 #[derive(Deserialize, Serialize, Debug)]
 struct NftCollection {

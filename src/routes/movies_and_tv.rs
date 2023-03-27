@@ -1,4 +1,4 @@
-use rocket::{get, Route, routes};
+use rocket::{get, routes, Route};
 use serde::Serialize;
 
 use crate::utils::responders::HbpApiResult;

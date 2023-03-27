@@ -204,10 +204,7 @@ async fn api_get_random_file(
 }
 
 #[get("/preview/<path..>")]
-async fn api_get_preview_file(
-    jwt: Option<AuthPayload>,
-    path: PathBuf,
-) -> HbpResult<HbpResponse> {
+async fn api_get_preview_file(jwt: Option<AuthPayload>, path: PathBuf) -> HbpResult<HbpResponse> {
     let path = files_root().join(path);
 
     attempt_access(&path, &jwt)?;

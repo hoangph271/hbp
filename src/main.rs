@@ -7,7 +7,7 @@ extern crate mustache;
 extern crate serde_derive;
 
 use log::{error, info, warn};
-use rocket::{launch, routes, fs::FileServer};
+use rocket::{fs::FileServer, launch, routes};
 
 use crate::utils::env::{from_env, EnvKey};
 
@@ -52,7 +52,10 @@ fn launch() -> rocket::Rocket<rocket::Build> {
         .mount("/git", routes::git::git_routes())
         .mount("/api/v1/markdowns", routes::markdown::markdown_api_routes())
         .mount("/api/v1/users", routes::users::users_api_routes())
-        .mount("/api/v1/movies_and_tv", routes::movies_and_tv::movies_and_tv_api_routes())
+        .mount(
+            "/api/v1/movies_and_tv",
+            routes::movies_and_tv::movies_and_tv_api_routes(),
+        )
         .mount("/api/v1/profiles", routes::profiles::profiles_api_routes())
         .mount("/api/v1/files", routes::files::files_api_routes())
         // * catchers

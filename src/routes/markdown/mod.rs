@@ -38,7 +38,5 @@ pub fn markdown_routes() -> Vec<Route> {
 }
 
 pub fn markdown_api_routes() -> Vec<Route> {
-    routes![
-        api_user_markdowns
-    ]
+    routes![api_user_markdowns]
 }

@@ -1,5 +1,5 @@
 use httpstatus::StatusCode;
-use rocket::{get, Route, State, routes};
+use rocket::{get, routes, Route, State};
 use sled::Db;
 
 use crate::{

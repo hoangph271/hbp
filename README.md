@@ -7,8 +7,8 @@ It's actually live [here](https://sneu.date/)
 ---
 
 ## Issues:
-- Pretty much only work on Linux & macOS
-- Not working on a blockchain (that was the original plan)
+- ~~Pretty much only work on Linux & macOS~~
+- ~~Not working on a blockchain (that was the original plan)~~
 
 ## Build:
 

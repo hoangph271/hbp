@@ -36,6 +36,11 @@ async fn all_galleries() -> HbpResult<HbpResponse> {
     Ok(HbpResponse::html(html, StatusCode::Ok))
 }
 
+#[get("/<slug>")]
+async fn one_gallery (slug: &str) -> HbpResult<HbpResponse> {
+    Ok(HbpResponse::not_implemented())
+}
+
 pub fn nfs_gallery_routes() -> Vec<Route> {
-    routes![all_galleries]
+    routes![all_galleries, one_gallery]
 }

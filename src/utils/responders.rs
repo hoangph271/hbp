@@ -102,6 +102,10 @@ impl HbpResponse {
         HbpResponse::from_error_status(StatusCode::NotFound)
     }
 
+    pub fn not_implemented() -> HbpResponse {
+        HbpResponse::from_error_status(StatusCode::NotImplemented)
+    }
+
     pub fn redirect(uri: rocket::http::uri::Origin) -> HbpResponse {
         HbpResponse {
             status_code: StatusCode::Found,

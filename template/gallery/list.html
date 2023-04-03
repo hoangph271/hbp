@@ -1,12 +1,37 @@
-<ul class="collections-list">
+<h5 class="m-4">My OpenSea NFT collections</h5>
+
+<ul class="collections-list m-4">
   {{#collections}}
-    <li class="collection-item">
-      <a href="/gallery/{{ slug }}" class="collection-name">
-        {{ name }}
-      </a>
-      {{#image_url}}
-        <img src="{{ image_url }}" width="200">
-      {{/image_url}}
-    </li>
+  <li class="collection-item border rounded-1 m-2">
+    <a href="/gallery/{{ slug }}" class="collection-name">
+      {{ name }}
+    </a>
+    {{#image_url}}
+    <div style="background-image: url({{ image_url }});" class="collection-cover anim-fade-in"></div>
+    {{/image_url}}
+  </li>
   {{/collections}}
-  </ul>
+</ul>
+<style>
+  .collections-list {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .collection-item {
+    display: flex;
+    flex-direction: column;
+    list-style: none;
+    width: 10rem;
+    height: 14rem;
+  }
+
+  .collection-name {
+    text-align: center;
+  }
+  .collection-cover {
+    background-position: center;
+    background-size: cover;
+    flex-grow: 1;
+  }
+</style>

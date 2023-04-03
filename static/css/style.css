@@ -24,40 +24,9 @@ body {
 code {
   font-family: 'Ubuntu', Courier, monospace;
 }
-
 /* #endregion */
 
-/* #region GitHub Theme restyles */
-/* FIXME: Bad footer constrast */
-/* html {
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-color: transparent;
-  background-image: url(https://uselasted.netlify.app/static/media/751400.530ccd0e.png);
-}
-
-body {
-  --color-canvas-default: transparent;
-  --color-header-bg: #24292f9e;
-  --color-canvas-subtle: #f6f8fa69;
-}
-
-.Header-link:hover,
-.Header-link:focus {
-  text-decoration: underline;
-}
-
 .Box-header {
-  background-color: var(--color-canvas-subtle);
-}
-
-.hbp-markdown.markdown-body {
-  --color-canvas-default: #f6f8faad;
-} */
-
-.Box-header,
-footer.Box {
   border: none;
 }
 

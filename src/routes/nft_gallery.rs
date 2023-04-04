@@ -38,6 +38,7 @@ async fn all_galleries() -> HbpResult<HbpResponse> {
 
 #[get("/<slug>")]
 async fn one_gallery (slug: &str) -> HbpResult<HbpResponse> {
+    log::warn!("// TODO: View NFT gallery - {slug}");
     Ok(HbpResponse::not_implemented())
 }
 

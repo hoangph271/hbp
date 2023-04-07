@@ -14,7 +14,12 @@ pub trait OrmInit {
     fn db_file_name(&self) -> String;
 
     async fn init_table(&self) -> Result<(), DbError> {
-        fs::File::create(self.db_file_name()).await.unwrap();
+        fs::File::create(self.db_file_name())
+            .await
+            .unwrap_or_else(|e| {
+                log::error!("init_table() failed: {e}");
+                panic!();
+            });
 
         Ok(())
     }

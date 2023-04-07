@@ -38,7 +38,7 @@ async fn rocket() -> _ {
 
 fn launch() -> rocket::Rocket<rocket::Build> {
     let rocket = rocket::build()
-        .manage(sled::open("hbp.sled.db").unwrap())
+        .manage(sled::open("hbp.sled.db").expect("hbp.sled.db doesn't exist...!"))
         .mount("/", utils::cors::options_routes())
         .mount("/", routes::index::index_routes())
         .mount("/ui", FileServer::from(from_env(EnvKey::SneuUiRoot)))

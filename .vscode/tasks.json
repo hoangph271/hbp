@@ -3,15 +3,6 @@
   "tasks": [
     {
       "type": "cargo",
-      "command": "check",
-      "problemMatcher": [
-        "$rustc"
-      ],
-      "group": "build",
-      "label": "Rust: cargo check - hbp"
-    },
-    {
-      "type": "cargo",
       "command": "run",
       "problemMatcher": [
         "$rustc"
@@ -52,6 +43,14 @@
         "instanceLimit": 1,
         "runOn": "folderOpen"
       }
+    },
+    {
+      "label": "rust: cargo clippy",
+      "type": "shell",
+      "command": "cargo",
+      "args": [
+        "clippy"
+      ]
     }
   ]
 }

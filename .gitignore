@@ -6,6 +6,5 @@ tmp/*.sqlite3-*
 markdown/blogs/*
 markdown/users/*
 static/images/users/*
-Rocket.toml
 static/images/avatars/*
 **.sled.db

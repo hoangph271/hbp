@@ -134,7 +134,7 @@ pub(super) async fn user_markdown_file(
             if fso::is_marp(&markdown_data.content) {
                 fso::render_marp(&markdown_data).await
             } else {
-                fso::render_user_markdown(&markdown_data, &jwt, &file_path, &db).await
+                fso::render_user_markdown(&markdown_data, &jwt, &file_path, db).await
             }
         }
         .await?;

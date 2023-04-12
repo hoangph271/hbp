@@ -1,6 +1,6 @@
 use crate::shared::entities::markdown::*;
 use crate::shared::interfaces::ApiError;
-use crate::utils::fso::render_markdown_list;
+use crate::utils::fso::render_fso_list;
 use crate::utils::responders::HbpResult;
 use crate::utils::template::{IndexLayout, MoveUpUrl, Templater};
 
@@ -163,5 +163,5 @@ pub struct MarkdownExtraData {
 fn render_dir(dir_path: &PathBuf, layout_data: IndexLayout) -> HbpResult<HbpResponse> {
     let markdowns: Vec<FsoEntry> = fso::from_dir(dir_path)?;
 
-    render_markdown_list(layout_data, markdowns).map(|html| HbpResponse::html(html, StatusCode::Ok))
+    render_fso_list(layout_data, markdowns).map(|html| HbpResponse::html(html, StatusCode::Ok))
 }

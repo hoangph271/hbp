@@ -130,7 +130,7 @@ pub fn from_dir<P: AsRef<Path>>(path: &P) -> HbpResult<Vec<FsoEntry>> {
     Ok(markdowns)
 }
 
-pub fn render_markdown_list(
+pub fn render_fso_list(
     layout_data: IndexLayout,
     markdowns: Vec<FsoEntry>,
 ) -> HbpResult<String> {

@@ -10,10 +10,10 @@ use crate::{
     utils::responders::{HbpResponse, HbpResult},
 };
 
-#[get("/<slug>")]
-async fn tiny_url_slug(slug: String, db: &State<Db>) -> HbpResult<HbpResponse> {
+#[get("/<id>")]
+pub async fn serve_tiny_url(id: String, db: &State<Db>) -> HbpResult<HbpResponse> {
     let tiny_url = TinyUrlOrm::default()
-        .find_one(db, &slug)
+        .find_one(db, &id)
         .await
         .expect("find_one() TinyUrl failed...!");
 
@@ -31,5 +31,5 @@ async fn tiny_url_slug(slug: String, db: &State<Db>) -> HbpResult<HbpResponse> {
 }
 
 pub fn tiny_urls_routes() -> Vec<Route> {
-    routes![tiny_url_slug]
+    routes![serve_tiny_url]
 }

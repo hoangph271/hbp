@@ -1,15 +1,21 @@
+use crate::data::models::tiny_url::TinyUrl;
+use crate::data::tiny_url_orm::TinyUrlOrm;
 use crate::shared::entities::markdown::*;
 use crate::shared::interfaces::ApiError;
 use crate::utils::template::Templater;
 use httpstatus::StatusCode::BadRequest;
 use log::error;
+use nanoid::nanoid;
 use pulldown_cmark::{html, Options, Parser};
+use rocket::uri;
+use sled::Db;
 use std::collections::HashMap;
 use std::fs::read_dir;
 use std::path::Path;
 
+use crate::routes::tiny_urls::rocket_uri_macro_serve_tiny_url;
+
 use super::auth::{AuthPayload, ResourseJwt};
-use super::env::is_root;
 use super::marper;
 use super::responders::HbpResult;
 use super::template::{IndexLayout, MarkdownTemplate, MoveUpUrl};
@@ -84,6 +90,7 @@ pub async fn render_user_markdown(
     markdown: &FsoMarkdown,
     jwt: &AuthPayload,
     file_path: &Path,
+    db: &Db,
 ) -> HbpResult<String> {
     let layout_data = IndexLayout::default()
         .title(&markdown.title)
@@ -96,9 +103,25 @@ pub async fn render_user_markdown(
         ..Default::default()
     };
 
-    let signed_url = if is_root(jwt.username()) {
-        AuthPayload::UserResource(resource_payload)
+    // * Only root can sign URL for now
+    let signed_url = if jwt.is_root() {
+        let signed_token = AuthPayload::UserResource(resource_payload)
             .sign()
+            .unwrap_or_default();
+
+        let id = nanoid!();
+        let slug = uri!("/tiny", serve_tiny_url(id.clone())).to_string();
+
+        let tiny_url = TinyUrl {
+            slug,
+            id,
+            full_url: format!("/{}?jwt={}", markdown.url, signed_token),
+        };
+
+        TinyUrlOrm::default()
+            .create_tiny_url(db, tiny_url)
+            .await
+            .map(|tiny_url| tiny_url.slug)
             .unwrap_or_default()
     } else {
         String::new()
@@ -130,10 +153,7 @@ pub fn from_dir<P: AsRef<Path>>(path: &P) -> HbpResult<Vec<FsoEntry>> {
     Ok(markdowns)
 }
 
-pub fn render_fso_list(
-    layout_data: IndexLayout,
-    markdowns: Vec<FsoEntry>,
-) -> HbpResult<String> {
+pub fn render_fso_list(layout_data: IndexLayout, markdowns: Vec<FsoEntry>) -> HbpResult<String> {
     let mut render_data = HashMap::new();
     render_data.insert("markdowns", markdowns);
 

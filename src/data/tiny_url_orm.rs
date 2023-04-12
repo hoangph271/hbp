@@ -33,15 +33,15 @@ impl TinyUrlOrm {
         db: &sled::Db,
         tiny_url: TinyUrl,
     ) -> Result<TinyUrl, DbError> {
-        let slug = tiny_url.slug.clone();
+        let id = tiny_url.id.clone();
 
         db.insert(
-            tiny_url.slug.clone(),
+            id.clone(),
             serde_json::to_string(&tiny_url).unwrap().as_bytes(),
         )
         .unwrap();
 
-        self.find_one(db, &slug)
+        self.find_one(db, &id)
             .await
             .unwrap()
             .ok_or(DbError::internal_server_error(

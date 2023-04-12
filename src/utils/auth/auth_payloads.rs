@@ -9,7 +9,7 @@ use crate::{
     data::models::users_model::DbUser,
     shared::interfaces::{ApiError, ApiResult},
     utils::{
-        env::{self, is_root, jwt_secret},
+        env::{self, from_env, jwt_secret},
         responders::{HbpError, HbpResult},
         timestamp_now,
     },
@@ -120,6 +120,14 @@ impl AuthPayload {
         }
     }
 
+    pub fn is_root(&self) -> bool {
+        if let Self::User(jwt) = self {
+            jwt.sub.eq(from_env(env::EnvKey::RootUser))
+        } else {
+            false
+        }
+    }
+
     pub fn decode(token: &str) -> ApiResult<AuthPayload> {
         let key = &DecodingKey::from_secret(&jwt_secret());
         let validation = &Validation::default();
@@ -175,8 +183,8 @@ impl AuthPayload {
     }
 
     pub fn sign(&self) -> Result<String, ApiError> {
-        // FIXME: Maybe permission this, for now only root can sign url
-        if !is_root(self.username()) {
+        // * Maybe permission this, for now only root can sign url
+        if !self.is_root() {
             return Err(ApiError::forbidden());
         };
 

@@ -16,7 +16,7 @@ use crate::utils::create_thumbnail;
 use crate::utils::responders::{HbpApiResult, HbpJson, HbpResult};
 use crate::utils::{
     auth::AuthPayload,
-    env::{files_root, is_root, public_files_root},
+    env::{files_root, public_files_root},
     responders::HbpResponse,
 };
 
@@ -36,8 +36,8 @@ fn attempt_access(path: &Path, jwt: &Option<AuthPayload>) -> HbpResult<()> {
             Some(jwt) => {
                 jwt.match_path(
                     path,
-                    // FIXME: Only root can access for now
-                    |_, _| is_root(jwt.username()),
+                    // * Only root can access for now
+                    |_, _| jwt.is_root(),
                 )
             }
             None => Err(ApiError::forbidden().into()),

@@ -154,7 +154,7 @@ impl IndexLayout {
 pub struct MarkdownTemplate {
     markdown_html: String,
     markdown_url: String,
-    markdown_signed_url: String,
+    signed_url: String,
     markdown_title: String,
 }
 
@@ -164,7 +164,7 @@ impl MarkdownTemplate {
             markdown_html: markdown_to_html(&markdown.content),
             markdown_url: markdown.url.clone(),
             markdown_title: markdown.title.clone(),
-            markdown_signed_url: signed_url.unwrap_or_default(),
+            signed_url: signed_url.unwrap_or_default(),
         }
     }
 }

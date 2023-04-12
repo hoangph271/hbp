@@ -1,14 +1,14 @@
 <div class="hbp-markdown markdown-body">
-  {{#markdown_signed_url}}
+  {{#signed_url}}
     <a
-      href="/{{ markdown_url }}?jwt={{ markdown_signed_url }}"
+      href="{{ . }}"
       class="branch-name tooltipped"
       target="_blank"
       aria-label="Click to open a shareable link to {{ markdown_title }}."
     >
       > {{ markdown_title }}
     </a>
-  {{/markdown_signed_url}}
+  {{/signed_url}}
 
   {{{ markdown_html }}}
 </div>

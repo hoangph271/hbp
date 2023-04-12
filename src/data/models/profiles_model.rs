@@ -11,17 +11,6 @@ pub struct DbProfile {
     pub description: Option<String>,
 }
 
-impl DbProfile {
-    // pub fn from_username(username: String) -> DbProfile {
-    //     DbProfile {
-    //         username: username.clone(),
-    //         title: username,
-    //         avatar_url: None,
-    //         description: None,
-    //     }
-    // }
-}
-
 impl From<DbUser> for DbProfile {
     fn from(db_user: DbUser) -> Self {
         DbProfile {

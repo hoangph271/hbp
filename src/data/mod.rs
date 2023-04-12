@@ -8,6 +8,7 @@ pub mod models;
 
 pub mod profile_orm;
 pub mod user_orm;
+pub mod tiny_url_orm;
 
 #[async_trait]
 pub trait OrmInit {

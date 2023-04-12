@@ -12,8 +12,9 @@ use crate::utils::{
 use async_std::fs;
 use httpstatus::StatusCode;
 use log::*;
-use rocket::{get, uri};
+use rocket::{get, uri, State};
 use serde::Serialize;
+use sled::Db;
 use std::path::PathBuf;
 
 use super::{assert_payload_access, markdown_path_from};
@@ -84,6 +85,7 @@ pub(super) async fn user_markdown_file(
     username: &str,
     sub_path: PathBuf,
     jwt: AuthPayload,
+    db: &State<Db>,
 ) -> HbpResult<HbpResponse> {
     jwt.assert_username(username)?;
 
@@ -132,7 +134,7 @@ pub(super) async fn user_markdown_file(
             if fso::is_marp(&markdown_data.content) {
                 fso::render_marp(&markdown_data).await
             } else {
-                fso::render_user_markdown(&markdown_data, &jwt, &file_path).await
+                fso::render_user_markdown(&markdown_data, &jwt, &file_path, &db).await
             }
         }
         .await?;

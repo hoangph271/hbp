@@ -50,6 +50,8 @@ fn launch() -> rocket::Rocket<rocket::Build> {
         .mount("/blogs", routes![routes::blogs::index])
         .mount("/gallery", routes::nft_gallery::nfs_gallery_routes())
         .mount("/git", routes::git::git_routes())
+        .mount("/tiny", routes::tiny_urls::tiny_urls_routes())
+        // * API routes
         .mount("/api/v1/markdowns", routes::markdown::markdown_api_routes())
         .mount("/api/v1/users", routes::users::users_api_routes())
         .mount(

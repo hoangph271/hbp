@@ -10,3 +10,4 @@ pub mod posts;
 pub mod profiles;
 pub mod static_files;
 pub mod users;
+pub mod tiny_urls;

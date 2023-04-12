@@ -45,7 +45,7 @@ pub fn create_thumbnail(path: &Path) -> HbpResult<NamedTempFile> {
 }
 
 pub fn url_encode_path(path: &str) -> String {
-    path.split('/')
+    path.split(std::path::MAIN_SEPARATOR)
         .map(|part| urlencoding::encode(part).to_string())
         .collect::<Vec<String>>()
         .join("/")

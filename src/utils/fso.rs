@@ -103,11 +103,13 @@ pub async fn render_user_markdown(
         ..Default::default()
     };
 
-    // * Only root can sign URL for now
-    let signed_url = if jwt.is_root() {
+    let signed_url = {
         let signed_token = AuthPayload::UserResource(resource_payload)
             .sign()
-            .unwrap_or_default();
+            .unwrap_or_else(|e| {
+                log::error!("Error creating signed_token: {e:?}");
+                String::new()
+            });
 
         let id = nanoid!();
         let slug = uri!("/tiny", serve_tiny_url(id.clone())).to_string();
@@ -123,8 +125,6 @@ pub async fn render_user_markdown(
             .await
             .map(|tiny_url| tiny_url.slug)
             .unwrap_or_default()
-    } else {
-        String::new()
     };
 
     Templater::new("markdown/markdown.html".into()).to_html_page(

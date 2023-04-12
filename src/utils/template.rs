@@ -63,13 +63,14 @@ impl Templater {
     }
 }
 
-#[derive(Default, Serialize)]
+#[derive(Default, Serialize, Debug)]
 pub struct MoveUpUrl {
     pub title: String,
     pub url: String,
 }
 impl MoveUpUrl {
     pub fn from_path(file_path: &Path) -> Vec<MoveUpUrl> {
+        // TODO: This from_path is too buggy
         match file_path.parent() {
             Some(parent_path) => {
                 let mut moveup_urls: Vec<MoveUpUrl> = vec![];
@@ -77,23 +78,52 @@ impl MoveUpUrl {
                 for sub_path in parent_path.iter() {
                     let title = sub_path.to_string_lossy().to_string();
                     let prev_url: String = match moveup_urls.last() {
-                        Some(moveup_url) => moveup_url.url.clone(),
-                        None => "/".to_string(),
+                        Some(moveup_url) => moveup_url.url.clone(), // BUG HEERE
+                        None => "".to_string(),
                     };
 
-                    let mut url = PathBuf::from(prev_url);
-                    url.push(title.clone());
+                    let url = format!("{prev_url}/{}", url_encode_path(&title));
 
-                    moveup_urls.push(MoveUpUrl {
-                        title,
-                        url: url_encode_path(&url.to_string_lossy()),
-                    })
+                    moveup_urls.push(MoveUpUrl { title, url })
                 }
 
                 moveup_urls
             }
             None => vec![],
         }
+    }
+}
+
+mod test_move_up_url {
+    #[test]
+    fn test_move_up_urls_from_long_path() {
+        use crate::utils::template::MoveUpUrl;
+        use std::path::Path;
+
+        let windows_path = Path::new("markdown\\users\\hbp\\_journal\\2023\\2023.04");
+        let unix_path = Path::new("markdown/users/hbp/_journal/2023/2023.04");
+
+        let to_url_string = |it: &MoveUpUrl| it.url.to_string();
+
+        let move_up_urls = vec![
+            "/markdown",
+            "/markdown/users",
+            "/markdown/users/hbp",
+            "/markdown/users/hbp/_journal",
+            "/markdown/users/hbp/_journal/2023",
+        ];
+
+        let windows_move_up_urls: Vec<String> = MoveUpUrl::from_path(windows_path)
+            .iter()
+            .map(to_url_string)
+            .collect();
+        let unix_move_up_urls: Vec<String> = MoveUpUrl::from_path(unix_path)
+            .iter()
+            .map(to_url_string)
+            .collect();
+
+        assert_eq!(windows_move_up_urls, move_up_urls);
+        assert_eq!(unix_move_up_urls, move_up_urls);
     }
 }
 

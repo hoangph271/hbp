@@ -121,11 +121,7 @@ impl AuthPayload {
     }
 
     pub fn is_root(&self) -> bool {
-        if let Self::User(jwt) = self {
-            jwt.sub.eq(from_env(env::EnvKey::RootUser))
-        } else {
-            false
-        }
+        self.username().eq(from_env(env::EnvKey::RootUser))
     }
 
     pub fn decode(token: &str) -> ApiResult<AuthPayload> {

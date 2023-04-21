@@ -44,6 +44,7 @@ rand = "0.8.5"
 image = "0.24.6"
 mime_guess = "2.0.4"
 sled = "0.34.7"
+sha2 = "0.10.6"
 
 [profile.dev]
 overflow-checks = true

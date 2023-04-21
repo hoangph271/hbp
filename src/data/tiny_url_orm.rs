@@ -28,20 +28,33 @@ impl TinyUrlOrm {
         }
     }
 
+    pub async fn find_one_by_full_url(
+        &self,
+        db: &sled::Db,
+        full_url: &str,
+    ) -> Result<Option<TinyUrl>, DbError> {
+        let slug = TinyUrl::slug_from(full_url);
+
+        if let Some(raw) = db.get(slug).unwrap() {
+            let json = from_utf8_lossy(&raw[..]);
+            Ok(serde_json::from_str(&json).ok())
+        } else {
+            Ok(None)
+        }
+    }
+
     pub async fn create_tiny_url(
         &self,
         db: &sled::Db,
         tiny_url: TinyUrl,
     ) -> Result<TinyUrl, DbError> {
-        let id = tiny_url.id.clone();
-
         db.insert(
-            id.clone(),
+            tiny_url.get_slug(),
             serde_json::to_string(&tiny_url).unwrap().as_bytes(),
         )
         .unwrap();
 
-        self.find_one(db, &id)
+        self.find_one(db, &tiny_url.get_slug())
             .await
             .unwrap()
             .ok_or(DbError::internal_server_error(

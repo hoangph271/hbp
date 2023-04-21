@@ -9,6 +9,17 @@
       > {{ markdown_title }}
     </a>
   {{/signed_url}}
+  {{#signed_url}}
+  <form action="post">
+    <a
+      href="/404-fix-me-here"
+      class="branch-name tooltipped"
+      aria-label="Click to open a shareable link to {{ markdown_title }}."
+    >
+      > {{ markdown_title }}
+    </a>
+  </form>
+  {{/signed_url}}
 
   {{{ markdown_html }}}
 </div>

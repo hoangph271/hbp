@@ -33,7 +33,8 @@ pub fn markdown_routes() -> Vec<Route> {
         markdown_file,
         user_markdown_file,
         user_markdown_editor,
-        user_default
+        user_default,
+        create_signed_url_for_user_markdown_file,
     ]
 }
 

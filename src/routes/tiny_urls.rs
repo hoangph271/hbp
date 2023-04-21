@@ -18,7 +18,7 @@ pub async fn serve_tiny_url(id: String, db: &State<Db>) -> HbpResult<HbpResponse
         .expect("find_one() TinyUrl failed...!");
 
     let response = if let Some(tiny_url) = tiny_url {
-        if let Ok(uri) = Uri::parse::<Origin>(&tiny_url.full_url) {
+        if let Ok(uri) = Uri::parse::<Origin>(&tiny_url.get_full_url()) {
             HbpResponse::redirect(uri.origin().unwrap().to_owned())
         } else {
             HbpResponse::internal_server_error()

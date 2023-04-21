@@ -1,6 +1,9 @@
+use crate::data::models::tiny_url::TinyUrl;
+use crate::data::tiny_url_orm::TinyUrlOrm;
 use crate::shared::entities::markdown::*;
 use crate::shared::interfaces::ApiError;
-use crate::utils::fso::render_fso_list;
+use crate::utils::auth::ResourseJwt;
+use crate::utils::fso::{allowed_glob, render_fso_list};
 use crate::utils::responders::HbpResult;
 use crate::utils::template::{IndexLayout, MoveUpUrl, Templater};
 
@@ -12,7 +15,7 @@ use crate::utils::{
 use async_std::fs;
 use httpstatus::StatusCode;
 use log::*;
-use rocket::{get, uri, State};
+use rocket::{get, post, uri, State};
 use serde::Serialize;
 use sled::Db;
 use std::path::PathBuf;
@@ -79,7 +82,54 @@ pub(super) async fn user_markdown_editor(sub_path: PathBuf, _jwt: AuthPayload) -
     }
 }
 
-// TODO: Rename this route, not a markdown handler anymore
+#[post("/users/<username>/<sub_path..>?action=create_signed_url", rank = 1)]
+
+pub(super) async fn create_signed_url_for_user_markdown_file(
+    username: &str,
+    sub_path: PathBuf,
+    jwt: AuthPayload,
+    db: &State<Db>,
+) -> HbpResult<HbpResponse> {
+    jwt.assert_username(username)?;
+
+    let (_, file_path) = markdown_path_from(username, &sub_path);
+
+    jwt.match_path(&file_path, assert_payload_access)?;
+
+    if !file_path.exists() {
+        info!("{:?} not exists", file_path.to_string_lossy());
+        return Ok(HbpResponse::not_found());
+    }
+
+    let resource_payload = ResourseJwt {
+        sub: jwt.username().to_owned(),
+        path: allowed_glob(&file_path),
+        ..Default::default()
+    };
+
+    let signed_token = AuthPayload::UserResource(resource_payload)
+        .sign()
+        .unwrap_or_else(|e| {
+            log::error!("Error creating signed_token: {e:?}");
+            String::new()
+        });
+
+    let markdown = FsoMarkdown::from_markdown(&file_path)?;
+    let full_url = format!("/{}?jwt={}", markdown.url, signed_token);
+    let tiny_url = TinyUrl::new(full_url);
+
+    TinyUrlOrm::default()
+        .create_tiny_url(db, tiny_url)
+        .await
+        .map(|tiny_url| tiny_url.get_slug())
+        .unwrap_or_default();
+
+    Ok(HbpResponse::redirect(uri!(
+        "/markdown",
+        user_markdown_file(username, sub_path)
+    )))
+}
+
 #[get("/users/<username>/<sub_path..>", rank = 1)]
 pub(super) async fn user_markdown_file(
     username: &str,

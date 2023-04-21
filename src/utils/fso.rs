@@ -1,13 +1,11 @@
-use crate::data::models::tiny_url::TinyUrl;
 use crate::data::tiny_url_orm::TinyUrlOrm;
 use crate::shared::entities::markdown::*;
 use crate::shared::interfaces::ApiError;
 use crate::utils::template::Templater;
 use httpstatus::StatusCode::BadRequest;
 use log::error;
-use nanoid::nanoid;
 use pulldown_cmark::{html, Options, Parser};
-use rocket::uri;
+
 use sled::Db;
 use std::collections::HashMap;
 use std::fs::read_dir;
@@ -71,7 +69,7 @@ pub async fn render_markdown(
         .to_html_page(MarkdownTemplate::of(markdown, None), layout_data)
 }
 
-fn allowed_glob(file_path: &Path) -> String {
+pub fn allowed_glob(file_path: &Path) -> String {
     if file_path.is_file() {
         let file_stem = file_path.file_stem().map(|val| val.to_string_lossy());
         let parent_path = file_path.parent();
@@ -86,6 +84,7 @@ fn allowed_glob(file_path: &Path) -> String {
 
     file_path.to_string_lossy().to_string()
 }
+
 pub async fn render_user_markdown(
     markdown: &FsoMarkdown,
     jwt: &AuthPayload,
@@ -97,40 +96,18 @@ pub async fn render_user_markdown(
         .username(jwt.username())
         .moveup_urls(MoveUpUrl::from_path(file_path));
 
-    let resource_payload = ResourseJwt {
-        sub: jwt.username().to_owned(),
-        path: allowed_glob(file_path),
-        ..Default::default()
-    };
-
     let signed_url = {
-        let signed_token = AuthPayload::UserResource(resource_payload)
-            .sign()
-            .unwrap_or_else(|e| {
-                log::error!("Error creating signed_token: {e:?}");
-                String::new()
-            });
-
-        let id = nanoid!();
-        let slug = uri!("/tiny", serve_tiny_url(id.clone())).to_string();
-
-        let tiny_url = TinyUrl {
-            slug,
-            id,
-            full_url: format!("/{}?jwt={}", markdown.url, signed_token),
-        };
-
         TinyUrlOrm::default()
-            .create_tiny_url(db, tiny_url)
+            .find_one_by_full_url(db, &markdown.url)
             .await
-            .map(|tiny_url| tiny_url.slug)
-            .unwrap_or_default()
+            .unwrap()
+            .map(|tiny_url| {
+                tiny_url.get_full_url()
+            })
     };
 
-    Templater::new("markdown/markdown.html".into()).to_html_page(
-        MarkdownTemplate::of(markdown, Some(signed_url)),
-        layout_data,
-    )
+    Templater::new("markdown/markdown.html".into())
+        .to_html_page(MarkdownTemplate::of(markdown, signed_url), layout_data)
 }
 
 pub fn from_dir<P: AsRef<Path>>(path: &P) -> HbpResult<Vec<FsoEntry>> {

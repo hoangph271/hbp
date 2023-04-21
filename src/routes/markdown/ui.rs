@@ -82,7 +82,7 @@ pub(super) async fn user_markdown_editor(sub_path: PathBuf, _jwt: AuthPayload) -
     }
 }
 
-#[post("/users/<username>/<sub_path..>?action=create_signed_url", rank = 1)]
+#[post("/users/<username>/<sub_path..>", rank = 1)]
 
 pub(super) async fn create_signed_url_for_user_markdown_file(
     username: &str,

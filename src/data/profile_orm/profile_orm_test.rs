@@ -1,12 +1,15 @@
 use anyhow::Result;
 use rocket::tokio;
 
-use crate::data::lib::DbError;
+use crate::data::{lib::DbError, profile_orm::ProfileOrm, OrmInit};
+
+fn get_profile_orm() -> ProfileOrm {
+    ProfileOrm::default()
+}
 
 #[tokio::test]
 async fn can_prepare_each_test() -> Result<(), DbError> {
-    // get_profile_orm().reset_table().await
-    todo!()
+    get_profile_orm().reset_table().await
 }
 
 #[tokio::test]

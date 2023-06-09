@@ -1,7 +1,10 @@
-use async_std::fs;
-use rocket::async_trait;
-
+#[cfg(test)]
 use self::lib::DbError;
+#[cfg(test)]
+use async_std::fs;
+
+use rocket::async_trait;
+use sled::Db;
 
 pub mod lib;
 pub mod models;
@@ -14,8 +17,13 @@ pub mod user_orm;
 pub trait OrmInit {
     fn db_file_name(&self) -> String;
 
+    fn get_db(&self) -> Result<Db, sled::Error> {
+        sled::open(self.db_file_name())
+    }
+
+    #[cfg(test)]
     async fn init_table(&self) -> Result<(), DbError> {
-        fs::File::create(self.db_file_name())
+        fs::create_dir_all(self.db_file_name())
             .await
             .unwrap_or_else(|e| {
                 panic!("init_table() failed: {e}");
@@ -30,7 +38,7 @@ pub trait OrmInit {
             .exists()
             .await
         {
-            fs::remove_file(self.db_file_name())
+            fs::remove_dir_all(self.db_file_name())
                 .await
                 .unwrap_or_else(|e| {
                     panic!("drop_table() failed: {e}");

@@ -11,11 +11,6 @@ pub struct ProfileOrm {}
 
 #[async_trait]
 impl OrmInit for ProfileOrm {
-    #[cfg(test)]
-    fn db_file_name(&self) -> String {
-        "profiles.test.sled.db".to_owned()
-    }
-
     #[cfg(not(test))]
     fn db_file_name(&self) -> String {
         "profiles.sled.db".to_owned()

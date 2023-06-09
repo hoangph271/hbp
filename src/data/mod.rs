@@ -15,6 +15,16 @@ pub mod user_orm;
 
 #[async_trait]
 pub trait OrmInit {
+    #[cfg(test)]
+    fn db_file_name(&self) -> String {
+        tempfile::tempdir()
+            .unwrap()
+            .path()
+            .to_string_lossy()
+            .to_string()
+    }
+
+    #[cfg(not(test))]
     fn db_file_name(&self) -> String;
 
     fn get_db(&self) -> Result<Db, sled::Error> {

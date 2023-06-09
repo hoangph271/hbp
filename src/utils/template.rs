@@ -95,13 +95,39 @@ impl MoveUpUrl {
 }
 
 mod test_move_up_url {
+    #[cfg(target_family="unix")]
     #[test]
-    fn test_move_up_urls_from_long_path() {
+    fn unix_test_move_up_urls_from_long_path() {
+        use crate::utils::template::MoveUpUrl;
+        use std::path::Path;
+
+        let unix_path = Path::new("markdown/users/hbp/_journal/2023/2023.04");
+
+        let to_url_string = |it: &MoveUpUrl| it.url.to_string();
+
+        let move_up_urls = vec![
+            "/markdown",
+            "/markdown/users",
+            "/markdown/users/hbp",
+            "/markdown/users/hbp/_journal",
+            "/markdown/users/hbp/_journal/2023",
+        ];
+
+        let unix_move_up_urls: Vec<String> = MoveUpUrl::from_path(unix_path)
+            .iter()
+            .map(to_url_string)
+            .collect();
+
+        assert_eq!(unix_move_up_urls, move_up_urls);
+    }
+
+    #[cfg(target_family="windows")]
+    #[test]
+    fn windows_test_move_up_urls_from_long_path() {
         use crate::utils::template::MoveUpUrl;
         use std::path::Path;
 
         let windows_path = Path::new("markdown\\users\\hbp\\_journal\\2023\\2023.04");
-        let unix_path = Path::new("markdown/users/hbp/_journal/2023/2023.04");
 
         let to_url_string = |it: &MoveUpUrl| it.url.to_string();
 
@@ -117,13 +143,8 @@ mod test_move_up_url {
             .iter()
             .map(to_url_string)
             .collect();
-        let unix_move_up_urls: Vec<String> = MoveUpUrl::from_path(unix_path)
-            .iter()
-            .map(to_url_string)
-            .collect();
 
         assert_eq!(windows_move_up_urls, move_up_urls);
-        assert_eq!(unix_move_up_urls, move_up_urls);
     }
 }
 

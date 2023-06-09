@@ -18,9 +18,6 @@ fn parse_jwt_from_str() {
 
 #[test]
 fn create_jwt_str_and_parse_again() {
-    use crate::utils::setup_logger;
-    setup_logger::setup_logger();
-
     let jwt_str = UserJwt::default()
         .set_sub("hbp".to_owned())
         .sign_jwt()

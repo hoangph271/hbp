@@ -1,10 +1,10 @@
 <link rel="stylesheet" href="/static/css/auth.css">
 <form action="/users/signup" method="post">
-  <input type="text" name="username" id="username" placeholder="username">
-  <input type="password" name="password" id="password" placeholder="password">
-  <input type="password" name="password-confirm" id="password-confirm" placeholder="password confirm">
-  <button type="submit">Signup</button>
+  <wired-input type="text" name="username" id="username" placeholder="username"></wired-input>
+  <wired-input type="password" name="password" id="password" placeholder="password"></wired-input>
+  <wired-input type="password" name="password-confirm" id="password-confirm" placeholder="password confirm"></wired-input>
+  <wired-button type="submit">Signup</wired-button>
   <div>
-    <a href="/users/login">Login here...!</a>
+    <wired-link elevation="2" href="/users/login">Login here...!</wired-link>
   </div>
 </form>

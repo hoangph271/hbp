@@ -31,15 +31,16 @@
   <!-- * STYLES -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.1.0/github-markdown.min.css" integrity="sha512-KUoB3bZ1XRBYj1QcH4BHCQjurAZnCO3WdrswyLDtp7BMwCw7dPZngSLqILf68SGgvnWHTD5pPaYrXi6wiRJ65g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="/static/css/index.css">
+  <script type="module" src="https://unpkg.com/wired-elements?module"></script>
 </head>
 
 <body class="d-flex flex-column">
   <header>
     <nav class="Header">
       <div>
-        <a href="/" class="Header-link">@sneu</a>
+        <wired-link href="/" class="Header-link">@sneu</wired-link>
         |
-        <a href="/gallery" class="Header-link">gallery</a>
+        <wired-link href="/gallery" class="Header-link">gallery</wired-link>
       </div>
       <ol class="moveup-urls">
         {{#moveup_urls}}

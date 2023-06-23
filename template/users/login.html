@@ -1,9 +1,9 @@
 <link rel="stylesheet" href="/static/css/auth.css">
 <form action="/users/login?{{#redirect_url}}redirect_url={{.}}{{/redirect_url}}" method="post">
-  <input type="text" name="username" id="username" placeholder="username">
-  <input type="password" name="password" id="password" placeholder="password">
-  <button type="submit">Login</button>
+  <wired-input type="text" name="username" id="username" placeholder="username"></wired-input>
+  <wired-input type="password" name="password" id="password" placeholder="password"></wired-input>
+  <wired-button type="submit">Login</wired-button>
   <div>
-    <a href="/users/signup">Signup here...!</a>
+    <wired-link elevation="2" href="/users/signup">Sign up</wired-link>
   </div>
 </form>

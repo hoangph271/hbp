@@ -1,4 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap');
+
+/* input::placeholder {
+  font-family: 'Indie Flower';
+} */
+
 .Header {
+  font-family: 'Indie Flower';
   gap: var(--radius-gentle);
 }
 

@@ -35,7 +35,7 @@ pub struct ApiItem<T: Serialize> {
 }
 
 mod more_impls {
-    use super::{ApiError, ApiItem, ApiList};
+    use super::{ApiError, ApiItem};
     use httpstatus::StatusCode;
     use serde::Serialize;
 
@@ -113,15 +113,6 @@ mod more_impls {
             ApiItem {
                 status_code: StatusCode::Ok,
                 item,
-            }
-        }
-    }
-
-    impl<T: Serialize> ApiList<T> {
-        pub fn ok(items: Vec<T>) -> ApiList<T> {
-            ApiList {
-                status_code: StatusCode::Ok,
-                items,
             }
         }
     }

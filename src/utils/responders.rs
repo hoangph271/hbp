@@ -127,6 +127,7 @@ pub struct HbpError {
     pub api_error: ApiError,
 }
 
+#[allow(unused)]
 #[derive(Debug)]
 pub enum HbpJson<T: Serialize> {
     Item(ApiItem<T>),

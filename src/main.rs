@@ -1,15 +1,9 @@
 #![forbid(unsafe_code)]
 
 // #region imports
-#[macro_use]
-extern crate dotenv_codegen;
-extern crate mustache;
-extern crate serde_derive;
-
+use crate::utils::env::{from_env, EnvKey};
 use log::{error, info, warn};
 use rocket::{fs::FileServer, launch, routes};
-
-use crate::utils::env::{from_env, EnvKey};
 
 mod data;
 mod routes;

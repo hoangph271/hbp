@@ -1,6 +1,6 @@
-use std::path::PathBuf;
-
 use super::constants;
+use dotenv_codegen::dotenv;
+use std::path::PathBuf;
 
 pub enum EnvKey {
     AppName,

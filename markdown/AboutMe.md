@@ -5,7 +5,7 @@ I often create & abandon pet projects...!
 Until I stop, that'll be what I keep doing...! :"}
 
 Things I like:
-  - Coding, `Rust` & `JavaScript`
+  - `Rust` & `JavaScript`
   - Rick and Morty, Gravity Falls
   - DSK
   - Mr. Robot

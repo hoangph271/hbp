@@ -37,7 +37,7 @@ async fn rocket() -> _ {
 }
 
 fn launch() -> rocket::Rocket<rocket::Build> {
-    let rocket = rocket::build()
+    rocket::build()
         .manage(sled::open("hbp.sled.db").expect("hbp.sled.db doesn't exist...!"))
         .mount("/", utils::cors::options_routes())
         .mount("/", routes::index::index_routes())
@@ -61,7 +61,5 @@ fn launch() -> rocket::Rocket<rocket::Build> {
         .mount("/api/v1/files", routes::files::files_api_routes())
         // * catchers
         .register("/", routes::catchers::catchers())
-        .attach(utils::cors::Cors);
-
-    rocket
+        .attach(utils::cors::Cors)
 }

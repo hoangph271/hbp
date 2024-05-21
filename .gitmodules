@@ -1,0 +1,3 @@
+[submodule "markdown/blogs"]
+	path = markdown/blogs
+	url = https://github.com/hoangph271/blogs.git

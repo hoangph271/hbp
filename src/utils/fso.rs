@@ -141,12 +141,21 @@ pub fn from_dir<P: AsRef<Path>>(path: &P) -> HbpResult<Vec<FsoEntry>> {
         })?
         .filter_map(|entry| {
             let entry = entry.ok()?;
+            let entry_filename = entry.file_name();
+            let entry_filename = entry_filename.to_string_lossy();
 
-            if entry.file_name().to_string_lossy().starts_with('.') {
+            if entry_filename.starts_with('.') {
                 return None;
             }
 
-            Some(FsoEntry::from_path(&entry.path()))
+            let entry_ext = entry_filename.split('.').last().map(|ext| ext.to_lowercase());
+
+            match entry_ext.as_deref() {
+                Some("md" | "txt") => {
+                    Some(FsoEntry::from_path(&entry.path()))
+                },
+                _ => None,
+            }
         })
         .collect();
 

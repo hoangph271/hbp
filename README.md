@@ -2,7 +2,7 @@
 
 > To be abandoned `Rocket.rs` website
 
-It's actually live [here](https://sneu.date/)
+~~It's actually live [here](https://sneu.date/)~~
 
 ---
 
